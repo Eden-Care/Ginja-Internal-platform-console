@@ -1,0 +1,350 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ============================================================================
+   THEME — Ginja.AI 2026 (iris/indigo primary + emerald accent, Geist).
+   Tokens are HSL channels, consumed as hsl(var(--token)). The @theme inline
+   block wraps them so Tailwind utilities (bg-primary, text-brand, …) resolve.
+   ========================================================================== */
+@theme inline {
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, "SF Mono", "Cascadia Code",
+    monospace;
+  --font-heading: var(--font-sans);
+
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-brand: hsl(var(--brand));
+  --color-brand-foreground: hsl(var(--brand-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+  --color-warning: hsl(var(--warning));
+  --color-warning-foreground: hsl(var(--warning-foreground));
+  --color-info: hsl(var(--info));
+  --color-info-foreground: hsl(var(--info-foreground));
+
+  --color-success-subtle: hsl(var(--success-subtle));
+  --color-success-subtle-foreground: hsl(var(--success-subtle-foreground));
+  --color-warning-subtle: hsl(var(--warning-subtle));
+  --color-warning-subtle-foreground: hsl(var(--warning-subtle-foreground));
+  --color-destructive-subtle: hsl(var(--destructive-subtle));
+  --color-destructive-subtle-foreground: hsl(var(--destructive-subtle-foreground));
+  --color-info-subtle: hsl(var(--info-subtle));
+  --color-info-subtle-foreground: hsl(var(--info-subtle-foreground));
+
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-5: hsl(var(--chart-5));
+
+  --color-sidebar: hsl(var(--sidebar));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* ============================================================================
+   LAYER 1 — PRIMITIVE RAMPS (Ginja.AI 2026)
+   ========================================================================== */
+:root {
+  /* Iris / Indigo (PRIMARY) — base #5B5BD6 */
+  --c-iris-50: 240 86% 98%;
+  --c-iris-100: 240 88% 96%;
+  --c-iris-200: 240 86% 92%;
+  --c-iris-300: 240 82% 86%;
+  --c-iris-400: 240 78% 77%;
+  --c-iris-500: 240 73% 70%;
+  --c-iris-600: 240 61% 60%; /* PRIMARY */
+  --c-iris-700: 240 50% 52%;
+  --c-iris-800: 240 45% 43%;
+  --c-iris-900: 240 46% 36%;
+
+  /* Emerald (BRAND / positive) — #10B981 */
+  --c-emerald-50: 156 65% 95%;
+  --c-emerald-100: 154 64% 89%;
+  --c-emerald-200: 156 63% 79%;
+  --c-emerald-300: 156 72% 67%;
+  --c-emerald-400: 158 64% 52%;
+  --c-emerald-500: 160 84% 39%;
+  --c-emerald-600: 161 94% 30%;
+  --c-emerald-700: 162 88% 24%;
+  --c-emerald-800: 163 88% 20%;
+  --c-emerald-900: 164 86% 16%;
+
+  /* Slate neutral */
+  --c-slate-0: 0 0% 100%;
+  --c-slate-50: 240 29% 99%;
+  --c-slate-100: 224 24% 96%;
+  --c-slate-200: 226 24% 93%;
+  --c-slate-300: 222 22% 87%;
+  --c-slate-400: 222 16% 72%;
+  --c-slate-500: 222 11% 53%;
+  --c-slate-600: 222 12% 40%;
+  --c-slate-700: 222 15% 28%;
+  --c-slate-800: 223 19% 18%;
+  --c-slate-900: 223 22% 11%;
+  --c-slate-950: 224 24% 6%;
+
+  /* Status ramps */
+  --c-amber-50: 48 100% 96%;
+  --c-amber-100: 45 96% 89%;
+  --c-amber-500: 33 94% 44%;
+  --c-amber-600: 28 90% 37%;
+  --c-amber-700: 26 84% 31%;
+  --c-rose-50: 356 100% 97%;
+  --c-rose-100: 353 100% 95%;
+  --c-rose-500: 350 89% 60%;
+  --c-rose-600: 347 77% 50%;
+  --c-rose-700: 343 82% 41%;
+  --c-sky-50: 204 100% 97%;
+  --c-sky-100: 204 94% 94%;
+  --c-sky-500: 199 89% 48%;
+  --c-sky-600: 200 98% 39%;
+  --c-sky-700: 201 96% 32%;
+
+  /* Fonts + scale */
+  --g-font-sans: "Geist Variable", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", sans-serif;
+  --g-font-mono: "Geist Mono Variable", ui-monospace, "SF Mono", "Cascadia Code",
+    monospace;
+  --g-radius-base: 0.625rem;
+  --g-shadow-color: 224 40% 20%;
+}
+
+/* ============================================================================
+   LAYER 3 — SEMANTIC TOKENS (shadcn/ui contract) — LIGHT
+   ========================================================================== */
+:root {
+  --background: var(--c-slate-50);
+  --foreground: var(--c-slate-900);
+
+  --card: var(--c-slate-0);
+  --card-foreground: var(--c-slate-900);
+  --popover: var(--c-slate-0);
+  --popover-foreground: var(--c-slate-900);
+
+  --primary: var(--c-iris-600);
+  --primary-foreground: 0 0% 100%;
+
+  --brand: var(--c-emerald-700);
+  --brand-foreground: 0 0% 100%;
+
+  --secondary: var(--c-slate-100);
+  --secondary-foreground: var(--c-iris-800);
+
+  --muted: var(--c-slate-100);
+  --muted-foreground: var(--c-slate-600);
+
+  --accent: var(--c-emerald-100);
+  --accent-foreground: var(--c-emerald-800);
+
+  --destructive: var(--c-rose-600);
+  --destructive-foreground: 0 0% 100%;
+  --success: var(--c-emerald-700);
+  --success-foreground: 0 0% 100%;
+  --warning: var(--c-amber-600);
+  --warning-foreground: 0 0% 100%;
+  --info: var(--c-sky-700);
+  --info-foreground: 0 0% 100%;
+
+  --success-subtle: var(--c-emerald-100);
+  --success-subtle-foreground: var(--c-emerald-700);
+  --warning-subtle: var(--c-amber-100);
+  --warning-subtle-foreground: var(--c-amber-700);
+  --destructive-subtle: var(--c-rose-100);
+  --destructive-subtle-foreground: var(--c-rose-700);
+  --info-subtle: var(--c-sky-100);
+  --info-subtle-foreground: var(--c-sky-700);
+
+  --border: var(--c-slate-200);
+  --input: var(--c-slate-300);
+  --ring: var(--c-iris-600);
+
+  --radius: var(--g-radius-base);
+
+  --chart-1: var(--c-iris-600);
+  --chart-2: var(--c-emerald-500);
+  --chart-3: var(--c-amber-500);
+  --chart-4: var(--c-sky-600);
+  --chart-5: var(--c-iris-300);
+
+  /* Sidebar — white rail, iris-tinted hover/active (matches the hi-fi nav) */
+  --sidebar: var(--c-slate-0);
+  --sidebar-foreground: var(--c-slate-700);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: var(--c-iris-100);
+  --sidebar-accent-foreground: var(--c-iris-700);
+  --sidebar-active-bg: var(--c-iris-100);
+  --sidebar-active-fg: var(--c-iris-700);
+  --sidebar-border: var(--c-slate-200);
+  --sidebar-ring: var(--c-iris-600);
+
+  --shadow-xs: 0 1px 2px hsl(var(--g-shadow-color) / 0.05);
+  --shadow-sm: 0 1px 3px hsl(var(--g-shadow-color) / 0.06),
+    0 1px 2px hsl(var(--g-shadow-color) / 0.04);
+  --shadow-md: 0 6px 18px hsl(var(--g-shadow-color) / 0.08),
+    0 2px 6px hsl(var(--g-shadow-color) / 0.05);
+  --shadow-lg: 0 18px 44px hsl(var(--g-shadow-color) / 0.13),
+    0 6px 14px hsl(var(--g-shadow-color) / 0.06);
+}
+
+/* ============================================================================
+   SEMANTIC TOKENS — DARK
+   ========================================================================== */
+.dark {
+  --background: var(--c-slate-950);
+  --foreground: 225 25% 93%;
+  --card: var(--c-slate-900);
+  --card-foreground: 225 25% 93%;
+  --popover: 223 20% 15%;
+  --popover-foreground: 225 25% 93%;
+
+  --primary: 240 72% 72%;
+  --primary-foreground: 240 50% 12%;
+
+  --brand: 162 78% 30%;
+  --brand-foreground: 0 0% 100%;
+
+  --secondary: 223 18% 20%;
+  --secondary-foreground: 225 25% 93%;
+  --muted: 223 18% 20%;
+  --muted-foreground: 222 14% 68%;
+
+  --accent: 162 60% 16%;
+  --accent-foreground: 156 72% 78%;
+
+  --destructive: 350 85% 65%;
+  --destructive-foreground: 350 60% 10%;
+  --success: 158 64% 48%;
+  --success-foreground: 164 80% 8%;
+  --warning: 38 92% 58%;
+  --warning-foreground: 30 90% 8%;
+  --info: 199 85% 62%;
+  --info-foreground: 201 90% 9%;
+
+  --success-subtle: 162 50% 16%;
+  --success-subtle-foreground: 156 65% 78%;
+  --warning-subtle: 33 60% 16%;
+  --warning-subtle-foreground: 44 92% 76%;
+  --destructive-subtle: 348 45% 20%;
+  --destructive-subtle-foreground: 352 90% 84%;
+  --info-subtle: 201 55% 20%;
+  --info-subtle-foreground: 199 90% 82%;
+
+  --border: 223 16% 24%;
+  --input: 223 14% 30%;
+  --ring: 240 72% 72%;
+
+  --chart-1: 240 72% 72%;
+  --chart-2: 158 64% 48%;
+  --chart-3: 38 92% 58%;
+  --chart-4: 199 85% 62%;
+  --chart-5: 240 60% 60%;
+
+  --sidebar: var(--c-slate-900);
+  --sidebar-foreground: 225 20% 82%;
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: 240 50% 12%;
+  --sidebar-accent: 240 30% 22%;
+  --sidebar-accent-foreground: 240 72% 82%;
+  --sidebar-active-bg: 240 30% 22%;
+  --sidebar-active-fg: 240 72% 82%;
+  --sidebar-border: 223 16% 24%;
+  --sidebar-ring: 240 72% 72%;
+
+  --shadow-xs: 0 1px 2px hsl(0 0% 0% / 0.3);
+  --shadow-sm: 0 1px 3px hsl(0 0% 0% / 0.4), 0 1px 2px hsl(0 0% 0% / 0.3);
+  --shadow-md: 0 6px 18px hsl(0 0% 0% / 0.45), 0 2px 6px hsl(0 0% 0% / 0.3);
+  --shadow-lg: 0 18px 44px hsl(0 0% 0% / 0.55), 0 6px 14px hsl(0 0% 0% / 0.35);
+}
+
+/* ============================================================================
+   EXAMPLE TENANT — "Nimbus Health" white-label override (proof of themeability)
+   Apply with <html data-tenant="nimbus">.
+   ========================================================================== */
+[data-tenant="nimbus"] {
+  --c-iris-600: 205 90% 45%;
+  --c-iris-700: 207 88% 38%;
+  --c-iris-800: 208 84% 31%;
+  --c-iris-300: 202 90% 80%;
+  --c-iris-100: 202 90% 95%;
+  --c-emerald-500: 142 71% 45%;
+  --c-emerald-700: 144 70% 28%;
+  --c-emerald-100: 140 60% 92%;
+  --c-slate-50: 210 40% 99%;
+  --c-slate-100: 210 30% 96%;
+  --c-slate-200: 212 28% 92%;
+}
+[data-tenant="nimbus"].dark {
+  --primary: 205 90% 62%;
+  --primary-foreground: 208 80% 10%;
+  --brand: 144 60% 34%;
+  --ring: 205 90% 62%;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+@layer components {
+  .eyebrow {
+    @apply text-xs font-semibold tracking-[0.06em] text-muted-foreground uppercase;
+  }
+  .tabular,
+  .mono {
+    font-variant-numeric: tabular-nums;
+  }
+  .mono {
+    font-family: var(--font-mono);
+  }
+}

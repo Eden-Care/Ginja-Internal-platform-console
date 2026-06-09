@@ -1,0 +1,83 @@
+/** Formatting + small pure helpers for the Platform Console. */
+import {
+  PAYERS,
+  RESERVED,
+  SUBDOMAIN_TAKEN,
+  WIZ_STEPS,
+  type OnboardingForm,
+  type Payer,
+  type WizStepKey,
+} from "@/lib/console-data"
+
+export const fmtUSD = (n: number) => "$" + n.toLocaleString("en-US")
+export const fmtNum = (n: number) => n.toLocaleString("en-US")
+
+/** First two letters of a name, uppercased (avatar fallback). */
+export function initials2(name: string) {
+  return (name || "").slice(0, 2).toUpperCase()
+}
+
+export const emailOk = (v: string) =>
+  /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test((v || "").trim())
+
+/** Find existing tenants with a similar legal name in the same country. */
+export function findDuplicates(legal: string, country: string): Payer[] {
+  const q = (legal || "").trim().toLowerCase()
+  if (q.length < 2) return []
+  const first = q.split(/\s+/)[0]
+  return PAYERS.filter(
+    (p) =>
+      p.country === country &&
+      (p.name.toLowerCase().startsWith(first) ||
+        p.name.toLowerCase().includes(q.slice(0, 4)))
+  )
+}
+
+export type WizStatus = "complete" | "progress" | "todo"
+
+/** Per-section completion derived from the form, so the rail reflects real state. */
+export function sectionStatuses(
+  form: OnboardingForm,
+  d: { subTaken: boolean; subReserved: boolean }
+): Record<WizStepKey, WizStatus> {
+  const c0 = form.contacts[0] || ({} as OnboardingForm["contacts"][number])
+  const primaryFull =
+    !!form.legal.trim() &&
+    !!form.trading.trim() &&
+    !!form.tax.trim() &&
+    !!(c0.name || "").trim() &&
+    emailOk(c0.email) &&
+    !!(form.address || "").trim()
+  const primaryAny =
+    !!form.legal.trim() ||
+    !!form.trading.trim() ||
+    !!form.tax.trim() ||
+    !!(c0.name || "").trim()
+  const technicalFull =
+    !!form.subdomain.trim() &&
+    !d.subTaken &&
+    !d.subReserved &&
+    !!form.region &&
+    !!form.isolation
+
+  const s: Record<WizStepKey, WizStatus> = {
+    primary: primaryFull ? "complete" : primaryAny ? "progress" : "todo",
+    secondary: form.secondaries.every(
+      (x) => x.name.trim() && x.subdomain.trim()
+    )
+      ? "complete"
+      : "progress",
+    technical: technicalFull ? "complete" : "progress",
+    modules: Object.keys(form.modules).length ? "complete" : "todo",
+    billing: form.model && form.freq ? "complete" : "todo",
+    documents: "progress", // demo: 3 of 4 required docs uploaded
+    review: "todo",
+  }
+  s.review = WIZ_STEPS.slice(0, 6).every((step) => s[step.k] === "complete")
+    ? "complete"
+    : "todo"
+  return s
+}
+
+export const isSubTaken = (sub: string) => SUBDOMAIN_TAKEN.includes(sub)
+export const isSubReserved = (sub: string) => RESERVED.includes(sub)
