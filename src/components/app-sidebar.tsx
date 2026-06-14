@@ -7,13 +7,16 @@ import {
   FileTextIcon,
   GalleryVerticalEndIcon,
   HistoryIcon,
+  KeyIcon,
   LayersIcon,
   type LucideIcon,
   LayoutDashboardIcon,
   MailIcon,
+  ServerIcon,
   SettingsIcon,
   ShieldCheckIcon,
   UserIcon,
+  UsersIcon,
 } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -46,6 +49,8 @@ type NavItem = {
   title: string
   url: string
   icon: LucideIcon
+  /** Permission id checked against the current role (gates visibility). */
+  permId: string
   exact?: boolean
   count?: number
 }
@@ -56,7 +61,13 @@ const navGroups: NavGroup[] = [
   {
     label: "Overview",
     items: [
-      { title: "Dashboard", url: "/", icon: LayoutDashboardIcon, exact: true },
+      {
+        title: "Dashboard",
+        url: "/",
+        icon: LayoutDashboardIcon,
+        permId: "dashboard",
+        exact: true,
+      },
     ],
   },
   {
@@ -66,31 +77,70 @@ const navGroups: NavGroup[] = [
         title: "Tenant accounts",
         url: "/tenant-accounts",
         icon: Building2Icon,
+        permId: "payers",
         count: 24,
       },
       {
         title: "Approvals",
         url: "/approvals",
         icon: ShieldCheckIcon,
+        permId: "approvals",
         count: 5,
+      },
+      {
+        title: "Tenant provisioning",
+        url: "/tenant-provisioning",
+        icon: ServerIcon,
+        permId: "provisioning",
+        count: 4,
       },
     ],
   },
   {
     label: "Configuration library",
     items: [
-      { title: "Module registry", url: "/module-registry", icon: LayersIcon },
+      {
+        title: "Module registry",
+        url: "/module-registry",
+        icon: LayersIcon,
+        permId: "registry",
+      },
       {
         title: "Document templates",
         url: "/document-templates",
         icon: FileTextIcon,
+        permId: "doc-templates",
       },
       {
         title: "Email & SMS templates",
         url: "/email-templates",
         icon: MailIcon,
+        permId: "email-templates",
       },
-      { title: "Pricing & plans", url: "/pricing", icon: CreditCardIcon },
+      {
+        title: "Pricing & plans",
+        url: "/pricing",
+        icon: CreditCardIcon,
+        permId: "pricing",
+      },
+    ],
+  },
+  {
+    label: "Access & security",
+    items: [
+      {
+        title: "Users",
+        url: "/access-users",
+        icon: UsersIcon,
+        permId: "access-users",
+        count: 13,
+      },
+      {
+        title: "Roles & permissions",
+        url: "/access-roles",
+        icon: KeyIcon,
+        permId: "access-roles",
+      },
     ],
   },
   {
@@ -100,8 +150,14 @@ const navGroups: NavGroup[] = [
         title: "Platform settings",
         url: "/platform-settings",
         icon: SettingsIcon,
+        permId: "settings",
       },
-      { title: "Audit log", url: "/audit-log", icon: HistoryIcon },
+      {
+        title: "Audit log",
+        url: "/audit-log",
+        icon: HistoryIcon,
+        permId: "audit",
+      },
     ],
   },
 ]
@@ -123,7 +179,14 @@ function isActivePath(pathname: string, url: string, exact?: boolean) {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const location = useLocation()
   const { brand } = useBrand()
-  const { user } = useAccess()
+  const { user, hasPermission } = useAccess()
+
+  const visibleGroups = navGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => hasPermission(item.permId)),
+    }))
+    .filter((group) => group.items.length > 0)
   const [failedLogoUrl, setFailedLogoUrl] = React.useState<string | null>(null)
   const showLogo = Boolean(brand.logoUrl && failedLogoUrl !== brand.logoUrl)
 
@@ -191,7 +254,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
 
       <SidebarContent>
-        {navGroups.map((group) => (
+        {visibleGroups.map((group) => (
           <SidebarGroup key={group.label}>
             <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
             <SidebarMenu>

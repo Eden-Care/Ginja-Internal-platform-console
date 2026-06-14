@@ -24,7 +24,6 @@ import { Panel } from "@/components/console/panel"
 import { useOnboardingForm } from "./use-onboarding-form"
 import { StepPrimary } from "./sections/step-primary"
 import { StepSecondary } from "./sections/step-secondary"
-import { StepTechnical } from "./sections/step-technical"
 import { StepModules } from "./sections/step-modules"
 import { StepBilling } from "./sections/step-billing"
 import { StepDocuments } from "./sections/step-documents"
@@ -44,8 +43,6 @@ export function OnboardTenantPage() {
     setAssignees,
     lastSaved,
     setLastSaved,
-    subTaken,
-    subReserved,
     modCount,
     status,
     doneCount,
@@ -214,14 +211,6 @@ export function OnboardTenantPage() {
             <div className="px-5 py-5">
               {cur.k === "primary" && <StepPrimary form={form} set={set} />}
               {cur.k === "secondary" && <StepSecondary form={form} set={set} />}
-              {cur.k === "technical" && (
-                <StepTechnical
-                  form={form}
-                  set={set}
-                  subTaken={subTaken}
-                  subReserved={subReserved}
-                />
-              )}
               {cur.k === "modules" && <StepModules form={form} set={set} />}
               {cur.k === "billing" && (
                 <StepBilling form={form} set={set} modCount={modCount} />

@@ -7,11 +7,7 @@ import {
   type OnboardingForm,
   type WizStepKey,
 } from "@/lib/console-data"
-import {
-  isSubReserved,
-  isSubTaken,
-  sectionStatuses,
-} from "@/lib/console-format"
+import { sectionStatuses } from "@/lib/console-format"
 
 /** Wizard state: the form object, current step, section owners, and derived status. */
 export function useOnboardingForm(initialStep = 0) {
@@ -34,12 +30,10 @@ export function useOnboardingForm(initialStep = 0) {
     []
   )
 
-  const subTaken = isSubTaken(form.subdomain)
-  const subReserved = isSubReserved(form.subdomain)
   const modCount = Object.keys(form.modules).filter(
     (k) => form.modules[k]?.length
   ).length
-  const status = sectionStatuses(form, { subTaken, subReserved })
+  const status = sectionStatuses(form)
   const doneCount = WIZ_STEPS.filter((s) => status[s.k] === "complete").length
 
   return {
@@ -51,8 +45,6 @@ export function useOnboardingForm(initialStep = 0) {
     setAssignees,
     lastSaved,
     setLastSaved,
-    subTaken,
-    subReserved,
     modCount,
     status,
     doneCount,

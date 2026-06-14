@@ -12,7 +12,7 @@ All data is currently mock (no backend wired).
 
 ## Design source of truth
 
-`Ginja Console - Hi-fi Screens (standalone).html` (repo root) is a self-contained bundle of
+`Ginja Console-v2.html` (repo root) is a self-contained bundle of
 **every** console screen + its mock data. Open it in a browser; it is the spec to match
 when implementing a screen.
 

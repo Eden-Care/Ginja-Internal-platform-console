@@ -24,7 +24,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
-import { PAYERS, type OnbDraft } from "@/lib/console-data"
+import { ONB_DRAFTS, PAYERS, type OnbDraft } from "@/lib/console-data"
 import { fmtNum, fmtUSD } from "@/lib/console-format"
 import { AvatarInitials } from "@/components/console/avatar-initials"
 import { ConsolePageHeader } from "@/components/console/page-header"
@@ -65,6 +65,10 @@ export function TenantAccountsPage() {
   const [status, setStatus] = React.useState("All")
   const [sort, setSort] = React.useState<Sort>({ k: "updated", dir: -1 })
   const [drawer, setDrawer] = React.useState<DrawerView | null>(null)
+  const [drafts, setDrafts] = React.useState<OnbDraft[]>(ONB_DRAFTS)
+
+  const saveAssign = (id: string, assign: Record<string, string | null>) =>
+    setDrafts((ds) => ds.map((d) => (d.id === id ? { ...d, assign } : d)))
 
   const rows = React.useMemo(() => {
     const q = query.toLowerCase()
@@ -113,8 +117,10 @@ export function TenantAccountsPage() {
       />
 
       <OnboardingDraftsStrip
+        drafts={drafts}
         onOpenDraft={(id) => setDrawer({ mode: "detail", id })}
         onViewAll={() => setDrawer({ mode: "list" })}
+        onManageTeam={(id) => setDrawer({ mode: "team", id })}
       />
 
       <Panel className="overflow-hidden">
@@ -244,9 +250,11 @@ export function TenantAccountsPage() {
 
       <DraftsDrawer
         view={drawer}
+        drafts={drafts}
         onChangeView={setDrawer}
         onClose={() => setDrawer(null)}
         onResume={resume}
+        onSaveAssign={saveAssign}
       />
     </div>
   )

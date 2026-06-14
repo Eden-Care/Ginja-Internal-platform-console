@@ -1,5 +1,42 @@
 import { cn } from "@/lib/utils"
 import { initials2 } from "@/lib/console-format"
+import { ROLE_TONE, STAFF_BY_ID, type RoleTone } from "@/lib/console-data"
+
+const ROLE_AVATAR_TONE: Record<RoleTone, string> = {
+  iris: "bg-primary/15 text-primary",
+  emerald: "bg-success/15 text-success",
+  amber: "bg-warning/20 text-warning-subtle-foreground",
+}
+
+/**
+ * Round avatar for an internal staff member, tinted by their role
+ * (iris = onboarding, emerald = engineer, amber = compliance).
+ */
+export function StaffAvatar({
+  id,
+  size,
+  className,
+}: {
+  id: string
+  size?: "sm"
+  className?: string
+}) {
+  const p = STAFF_BY_ID[id]
+  if (!p) return null
+  return (
+    <span
+      title={`${p.name} · ${p.role}`}
+      className={cn(
+        "inline-grid shrink-0 place-items-center rounded-full font-semibold",
+        size === "sm" ? "size-[22px] text-[9px]" : "size-7 text-[10.5px]",
+        ROLE_AVATAR_TONE[ROLE_TONE[p.role]],
+        className
+      )}
+    >
+      {p.initials}
+    </span>
+  )
+}
 
 /** Square, indigo-tinted tenant avatar showing the first two letters of a name. */
 export function AvatarInitials({

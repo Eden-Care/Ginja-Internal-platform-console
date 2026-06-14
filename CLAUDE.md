@@ -10,7 +10,7 @@ configuration libraries and platform policies. Single-page React app. **All data
 (in `src/lib/console-data.ts`) — there is no backend, API client, or data fetching wired.
 
 > **Before building or changing a screen, read [DESIGN-SYSTEM.md](./DESIGN-SYSTEM.md).**
-> The hi-fi design source of truth is `Ginja Console - Hi-fi Screens (standalone).html` at
+> The hi-fi design source of truth is `Ginja Console-v2.html` at
 > the repo root (a self-contained bundle of every screen + its data). `README.md` is the
 > entry-point overview.
 

@@ -26,10 +26,9 @@ import { MiniBadge, Tagpill } from "@/components/console/tagpill"
 const STEP_BY_KEY: Record<string, number> = {
   primary: 0,
   secondary: 1,
-  technical: 2,
-  modules: 3,
-  billing: 4,
-  documents: 5,
+  modules: 2,
+  billing: 3,
+  documents: 4,
 }
 
 const STATUS_BADGE: Record<
@@ -187,23 +186,6 @@ export function StepReview({
             ))}
           </div>
         )}
-      </ReviewSection>
-
-      <ReviewSection
-        title="Technical configuration"
-        sectionKey="technical"
-        {...sectionProps}
-      >
-        <Meta
-          items={[
-            ["Subdomain", form.subdomain + ".ginja.ai"],
-            ["Data residency", form.region],
-            ["Isolation tier", form.isolation],
-            ["Custom domain", form.customDomain || "—"],
-            ["SSO", form.sso],
-            ["MFA", "Required (inherited)"],
-          ]}
-        />
       </ReviewSection>
 
       <ReviewSection

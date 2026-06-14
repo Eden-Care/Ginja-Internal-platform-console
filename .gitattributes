@@ -1,7 +1,0 @@
-# Keep GitHub's language stats accurate. The hi-fi design reference is a single
-# ~1.6 MB self-contained HTML bundle that otherwise dominates Linguist's byte-count
-# heuristic and mislabels this TypeScript/React repo as "HTML".
-#
-#   linguist-documentation — exclude from the repo language stats
-#   linguist-generated     — collapse it in diffs / PR reviews (it's not hand-reviewed code)
-"Ginja Console - Hi-fi Screens (standalone).html" linguist-documentation linguist-generated

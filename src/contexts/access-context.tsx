@@ -1,4 +1,11 @@
 import * as React from "react"
+import {
+  CONSOLE_ROLES,
+  cHasPerm,
+  cReadonly,
+  type ConsoleRole,
+  type ConsoleRoleKey,
+} from "@/lib/console-data"
 
 export type AccessUser = {
   fullName: string
@@ -7,30 +14,49 @@ export type AccessUser = {
 }
 
 type AccessContextValue = {
+  /** The role currently being acted as (demo: switchable from the header). */
+  role: ConsoleRole
+  roleKey: ConsoleRoleKey
+  setRoleKey: (key: ConsoleRoleKey) => void
   user: AccessUser
-  setUser: React.Dispatch<React.SetStateAction<AccessUser>>
   isLoading: boolean
-  hasPermission: (...keys: string[]) => boolean
-}
-
-const DEFAULT_USER: AccessUser = {
-  fullName: "Amara Okeke",
-  email: "amara.okeke@ginja.ai",
-  role: "Platform Admin",
+  /** True if the current role may view a module (by permId, e.g. "approvals"). */
+  hasPermission: (permId: string) => boolean
+  /** True if the current role may view-but-not-edit a module (by permId). */
+  isReadonly: (permId: string) => boolean
 }
 
 const AccessContext = React.createContext<AccessContextValue | undefined>(
   undefined
 )
 
+const STORAGE_KEY = "ginja:roleKey"
+
 export function AccessProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = React.useState<AccessUser>(DEFAULT_USER)
+  const [roleKey, setRoleKeyState] = React.useState<ConsoleRoleKey>(() => {
+    const saved =
+      typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null
+    return saved && saved in CONSOLE_ROLES
+      ? (saved as ConsoleRoleKey)
+      : "platform_admin"
+  })
+  const setRoleKey = React.useCallback((key: ConsoleRoleKey) => {
+    setRoleKeyState(key)
+    localStorage.setItem(STORAGE_KEY, key)
+  }, [])
+  const role = CONSOLE_ROLES[roleKey]
 
-  const hasPermission = React.useCallback(() => true, [])
-
-  const value = React.useMemo(
-    () => ({ user, setUser, isLoading: false, hasPermission }),
-    [user, hasPermission]
+  const value = React.useMemo<AccessContextValue>(
+    () => ({
+      role,
+      roleKey,
+      setRoleKey,
+      user: { fullName: role.name, email: role.email, role: role.label },
+      isLoading: false,
+      hasPermission: (permId: string) => cHasPerm(role, permId),
+      isReadonly: (permId: string) => cReadonly(role, permId),
+    }),
+    [role, roleKey, setRoleKey]
   )
 
   return (

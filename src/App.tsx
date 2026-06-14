@@ -15,23 +15,41 @@ import {
 } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
+import { useAccess } from "@/contexts/access-context"
+import {
+  CONSOLE_ROLES,
+  CONSOLE_ROLE_KEYS,
+  type ConsoleRoleKey,
+} from "@/lib/console-data"
 import { ComingSoonPage } from "@/pages/coming-soon"
 import { ConsoleDashboardPage } from "@/pages/platform-dashboard"
+import { ApprovalsPage } from "@/pages/approvals"
 import { TenantAccountsPage } from "@/pages/tenant-accounts"
 import { OnboardTenantPage } from "@/pages/tenant-accounts/onboard"
+import { TenantProvisioningPage } from "@/pages/tenant-provisioning"
 
 const BREADCRUMB_LABELS: Record<string, string> = {
   "tenant-accounts": "Tenant accounts",
   onboard: "Onboard tenant",
   approvals: "Approvals",
+  "tenant-provisioning": "Tenant provisioning",
   "module-registry": "Module registry",
   "document-templates": "Document templates",
   "email-templates": "Email & SMS templates",
   pricing: "Pricing & plans",
+  "access-users": "Users",
+  "access-roles": "Roles & permissions",
   "platform-settings": "Platform settings",
   "audit-log": "Audit log",
 }
@@ -83,6 +101,35 @@ function AppBreadcrumb() {
   )
 }
 
+function RoleSwitcher() {
+  const { roleKey, setRoleKey, role } = useAccess()
+  return (
+    <div className="flex items-center gap-2">
+      <span className="hidden text-xs text-muted-foreground lg:inline">
+        Viewing as
+      </span>
+      <Select
+        value={roleKey}
+        onValueChange={(v) => setRoleKey(v as ConsoleRoleKey)}
+      >
+        <SelectTrigger className="h-8 gap-2" aria-label="Acting role (demo)">
+          <span className="grid size-5 shrink-0 place-items-center rounded-full bg-primary/12 text-[9px] font-bold text-primary">
+            {role.initials}
+          </span>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent align="end">
+          {CONSOLE_ROLE_KEYS.map((k) => (
+            <SelectItem key={k} value={k}>
+              {CONSOLE_ROLES[k].label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  )
+}
+
 function ThemeToggle() {
   const { theme, setTheme } = useTheme()
   const isDark = theme === "dark"
@@ -108,7 +155,8 @@ function AppShell() {
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
           <AppBreadcrumb />
-          <div className="ml-auto flex items-center gap-1">
+          <div className="ml-auto flex items-center gap-2">
+            <RoleSwitcher />
             <ThemeToggle />
             <Button variant="ghost" size="icon">
               <BellDotIcon />
@@ -125,11 +173,17 @@ function AppShell() {
               path="tenant-accounts/onboard"
               element={<OnboardTenantPage />}
             />
-            <Route path="approvals" element={<ComingSoonPage />} />
+            <Route path="approvals" element={<ApprovalsPage />} />
+            <Route
+              path="tenant-provisioning"
+              element={<TenantProvisioningPage />}
+            />
             <Route path="module-registry" element={<ComingSoonPage />} />
             <Route path="document-templates" element={<ComingSoonPage />} />
             <Route path="email-templates" element={<ComingSoonPage />} />
             <Route path="pricing" element={<ComingSoonPage />} />
+            <Route path="access-users" element={<ComingSoonPage />} />
+            <Route path="access-roles" element={<ComingSoonPage />} />
             <Route path="platform-settings" element={<ComingSoonPage />} />
             <Route path="audit-log" element={<ComingSoonPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />

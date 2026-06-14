@@ -13,7 +13,7 @@ accounts** (payers). Everything is currently mock data — there is no backend w
 The hi-fi design lives in one file at the repo root:
 
 ```
-Ginja Console - Hi-fi Screens (standalone).html
+Ginja Console-v2.html
 ```
 
 Open it directly in a browser. It is a self-contained React (Babel-standalone) bundle of

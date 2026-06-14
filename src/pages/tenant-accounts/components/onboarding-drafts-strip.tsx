@@ -1,7 +1,7 @@
 import { ArrowRightIcon, ClockIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { ONB_DRAFTS } from "@/lib/console-data"
+import { type OnbDraft } from "@/lib/console-data"
 import { Panel } from "@/components/console/panel"
 import { SegLegend } from "@/components/console/seg-track"
 import { Tagpill } from "@/components/console/tagpill"
@@ -11,13 +11,16 @@ const VISIBLE = 3
 
 /** "Onboarding drafts in progress" strip: header + first 3 cards + "+N more". */
 export function OnboardingDraftsStrip({
+  drafts,
   onOpenDraft,
   onViewAll,
+  onManageTeam,
 }: {
+  drafts: OnbDraft[]
   onOpenDraft: (id: string) => void
   onViewAll: () => void
+  onManageTeam: (id: string) => void
 }) {
-  const drafts = ONB_DRAFTS
   const extra = drafts.length - VISIBLE
 
   return (
@@ -43,6 +46,7 @@ export function OnboardingDraftsStrip({
             key={d.id}
             draft={d}
             onOpen={() => onOpenDraft(d.id)}
+            onManageTeam={() => onManageTeam(d.id)}
           />
         ))}
         {extra > 0 ? (
