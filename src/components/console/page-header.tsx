@@ -11,13 +11,19 @@ export function ConsolePageHeader({
   actions,
   className,
 }: {
-  /** Optional breadcrumb override; by default the trail is derived from the route. */
-  crumbs?: Crumb[]
+  /**
+   * Optional breadcrumb override; by default the trail is derived from the
+   * route. Accepts `Crumb[]` (with hrefs) or a plain `string[]` of labels.
+   */
+  crumbs?: Crumb[] | string[]
   title: React.ReactNode
   sub?: React.ReactNode
   actions?: React.ReactNode
   className?: string
 }) {
+  const items: Crumb[] | undefined = crumbs?.map((c) =>
+    typeof c === "string" ? { label: c } : c
+  )
   return (
     <div
       className={cn(
@@ -26,7 +32,7 @@ export function ConsolePageHeader({
       )}
     >
       <div className="flex min-w-0 flex-col gap-2">
-        <Breadcrumbs items={crumbs} />
+        <Breadcrumbs items={items} />
         <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
         {sub ? (
           <p className="max-w-prose text-sm text-muted-foreground">{sub}</p>
