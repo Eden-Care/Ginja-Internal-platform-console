@@ -1,0 +1,58 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e7]:
+        - generic [ref=e8]: Ginja AI
+        - generic [ref=e9]: Platform Console
+      - generic [ref=e10]:
+        - heading "The control plane for your insurer tenants." [level=2] [ref=e11]
+        - paragraph [ref=e12]: Onboard payers, manage entitlements and keep every tenant configuration auditable — from one calm, role-driven console.
+        - list [ref=e13]:
+          - listitem [ref=e14]:
+            - img [ref=e16]
+            - generic [ref=e18]: Onboard & manage insurer tenant accounts
+          - listitem [ref=e19]:
+            - img [ref=e21]
+            - generic [ref=e23]: Entitlements, billing & configuration libraries
+          - listitem [ref=e24]:
+            - img [ref=e26]
+            - generic [ref=e28]: Role-driven, fully auditable platform access
+      - generic [ref=e29]: © 2026 Ginja AI. Internal use only.
+    - generic [ref=e30]:
+      - button "Toggle theme" [ref=e32]:
+        - img
+        - generic [ref=e33]: Toggle theme
+      - generic [ref=e34]:
+        - generic [ref=e35]:
+          - heading "Sign in to your console" [level=1] [ref=e36]
+          - paragraph [ref=e37]: Welcome back. Enter your credentials to continue.
+        - generic [ref=e38]:
+          - generic [ref=e39]:
+            - generic [ref=e40]: Work email
+            - textbox "you@company.com" [ref=e41]: admin@ginja.ai
+          - generic [ref=e42]:
+            - generic [ref=e44]:
+              - generic [ref=e45]: Password
+              - button "Password" [ref=e46]: Forgot password?
+            - group [ref=e47]:
+              - textbox "••••••••" [ref=e48]: Admin@12345
+              - group [ref=e49]:
+                - button "Show password" [ref=e50]:
+                  - img
+          - generic [ref=e51]:
+            - checkbox "Keep me signed in" [checked] [ref=e52]:
+              - generic:
+                - img
+            - checkbox [checked]
+            - text: Keep me signed in
+          - button "Signing in…" [disabled]:
+            - img
+            - text: Signing in…
+          - generic [ref=e54]: OR
+          - button "Continue with SSO" [ref=e57]:
+            - img
+            - text: Continue with SSO
+        - paragraph [ref=e58]:
+          - text: Need access?
+          - button "Contact your platform admin" [ref=e59]
+  - region "Notifications alt+T"

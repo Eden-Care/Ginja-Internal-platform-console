@@ -15,6 +15,10 @@ configuration libraries and platform policies. Single-page React app. **All data
 > widgets in `src/components/console/`, and the conventions in the Architecture section below.
 > `Ginja Console-v2.html` at the repo root is the hi-fi reference bundle (a self-contained
 > bundle of every screen + its data). `README.md` is the entry-point overview.
+> **[API_GUIDE.md](./API_GUIDE.md)** documents the real backend REST contract (base
+> `http://localhost:8082/api/v1`, **snake_case** JSON, a `{status,success,result,error_details}`
+> envelope, JWT `roles`/`modules`/`permissions` claims, payer-onboarding lifecycle). No HTTP layer
+> is wired yet — but match its field names, role names, and state machines when wiring one.
 
 ## Commands
 
@@ -53,29 +57,51 @@ Order matters: `BrowserRouter` → `ThemeProvider` → `BrandProvider` → `Acce
   `document.documentElement` CSS variables (`--primary`, `--ring`, `--accent`, …) from
   `DEFAULT_BRAND.colors`. **Colors are HSL channels** (e.g. `"240 61% 60%"`) to match the
   token contract — never inject `oklch`/hex here (it becomes `hsl(oklch(...))` and breaks).
-- **`AccessProvider`** (`src/contexts/access-context.tsx`) exposes the current user via
-  `useAccess()`.
+- **`AccessProvider`** (`src/contexts/access-context.tsx`) is the client-side RBAC layer.
+  `useAccess()` returns `{ role, roleKey, setRoleKey, user, hasPermission(permId),
+  isReadonly(permId) }`. Roles are defined in `CONSOLE_ROLES` (`src/lib/console-data.ts`) —
+  each has `perms` (`["*"]` or `view:<permId>`), `readonly` permIds, and
+  `maker`/`checker`/`techReviewer` separation-of-duties flags. The acting role is switchable
+  from the sidebar footer ("Viewing as", demo only) and persisted to `localStorage`
+  (`ginja:roleKey`). **Gate UI with `hasPermission`/`isReadonly` by `permId`**, never by role
+  name. `permId`s match nav items (`dashboard`, `payers`, `approvals`, `provisioning`,
+  `registry`, `pricing`, `access-users`, `audit`, …) and mirror the backend's role/permission
+  model in API_GUIDE.md.
 
 ### Routing and shell (`src/App.tsx`)
 
-Owns the shell: `SidebarProvider` + `AppSidebar` + header (sidebar trigger, breadcrumb,
-theme toggle, bell) + `<Routes>`. The breadcrumb derives friendly labels from
-`BREADCRUMB_LABELS` keyed by URL segment — add an entry when introducing a new segment.
+Top-level `<Routes>` splits `/login` (`LoginPage`, no shell) from `/*` → `AppShell`. The
+shell is `SidebarProvider` + `AppSidebar` + header (sidebar trigger, `GlobalSearch`, theme
+toggle, bell) + the inner `<Routes>`.
 
 Routes mirror `src/pages/<area>/index.tsx` (list) and `src/pages/<area>/<step>/` (sub-steps,
-e.g. the onboarding wizard under `tenant-accounts/onboard/`). Unbuilt nav items route to
-`ComingSoonPage`. Catch-all `*` redirects to `/`.
+e.g. the onboarding wizard under `tenant-accounts/onboard/`). Built: dashboard,
+`tenant-accounts` (+ `/onboard`), `approvals`, `tenant-provisioning`. Unbuilt nav items route
+to `ComingSoonPage`. Catch-all `*` redirects to `/`.
+
+**Breadcrumbs** are NOT rendered in the header — pages render their own from
+`src/lib/navigation.ts`: `ROUTE_NODES` declares each route's `label` + optional `parent`, and
+`getBreadcrumbTrail(pathname)` walks the parent chain (top-level pages get an empty trail). Add
+a node there when introducing a route with a parent.
 
 ### Components
 
 - `src/components/ui/` — vendored shadcn primitives; treat as vendored. Don't fork them for
   one page (extend via `className`).
 - `src/components/console/` — the **design-system widgets** (Panel, ConsolePageHeader,
-  StatusPill, KpiStat, Donut, SegTrack, Tagpill, MiniBadge, Note, AvatarInitials,
-  AssigneePicker, Glyph, form atoms). **Compose these** instead of building new markup.
+  StatusPill, KpiStat, Donut, SegTrack, HbarList, Tagpill, MiniBadge (both in `tagpill.tsx`),
+  Note, AvatarInitials, AssigneePicker, Glyph, Breadcrumbs, form atoms). **Compose these**
+  instead of building new markup.
+- `src/components/common/` — generic app building blocks for list/table screens:
+  `custom-search`, `custom-pagination`, `filter-group`, `date-picker`, `date-range-picker`,
+  `date-filter-group`, `breadcrumb`, `loading`. Reach for these before hand-rolling.
+- `src/components/global-search.tsx` — the cmdk palette mounted in the header.
 - `src/components/app-sidebar.tsx` — nav lives in `navGroups` (Overview / Tenant management /
-  Configuration library / Platform), each item `{ title, url, icon, exact?, count? }`. Add
-  new top-level pages there.
+  Configuration library / Access & security / Platform), each item
+  `{ title, url, icon, permId, exact?, count? }`. **`permId` gates visibility** — the sidebar
+  only renders items the acting role's `hasPermission(permId)` passes (and hides empty groups).
+  Add new top-level pages here, and add the matching route in `App.tsx`, a `ROUTE_NODES` entry,
+  and (if needed) the `permId` to roles in `CONSOLE_ROLES`.
 
 ### Styling
 
