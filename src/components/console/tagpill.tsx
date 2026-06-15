@@ -20,13 +20,14 @@ export function Tagpill({
   )
 }
 
-type BadgeTone = "success" | "warning" | "neutral" | "info"
+type BadgeTone = "success" | "warning" | "neutral" | "info" | "error"
 
 const BADGE_TONE: Record<BadgeTone, string> = {
   success: "bg-success-subtle text-success-subtle-foreground",
   warning: "bg-warning-subtle text-warning-subtle-foreground",
   info: "bg-info-subtle text-info-subtle-foreground",
   neutral: "bg-muted text-muted-foreground",
+  error: "bg-destructive-subtle text-destructive-subtle-foreground",
 }
 
 /** Small status badge with a leading LED dot. */
@@ -42,7 +43,7 @@ export function MiniBadge({
   return (
     <span
       className={cn(
-        "inline-flex h-5 items-center gap-1.5 rounded-full px-2 text-[11px] font-medium",
+        "inline-flex h-5 items-center gap-1.5 rounded-md px-2 text-[11px] font-semibold",
         BADGE_TONE[tone],
         className
       )}

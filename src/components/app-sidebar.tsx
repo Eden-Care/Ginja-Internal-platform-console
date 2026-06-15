@@ -7,6 +7,7 @@ import {
   FileTextIcon,
   GalleryVerticalEndIcon,
   HistoryIcon,
+  KeyRoundIcon,
   LayersIcon,
   type LucideIcon,
   LayoutDashboardIcon,
@@ -14,6 +15,7 @@ import {
   SettingsIcon,
   ShieldCheckIcon,
   UserIcon,
+  UsersIcon,
 } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -91,6 +93,17 @@ const navGroups: NavGroup[] = [
         icon: MailIcon,
       },
       { title: "Pricing & plans", url: "/pricing", icon: CreditCardIcon },
+    ],
+  },
+  {
+    label: "Access & security",
+    items: [
+      { title: "Users", url: "/access-users", icon: UsersIcon },
+      {
+        title: "Roles & permissions",
+        url: "/access-roles",
+        icon: KeyRoundIcon,
+      },
     ],
   },
   {

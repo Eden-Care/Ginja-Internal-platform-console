@@ -86,6 +86,45 @@ export type PricingModel = {
   on: boolean
 }
 
+export type DocStatus = "Published" | "Draft"
+
+export type DocTemplate = {
+  id: string
+  name: string
+  cat: string
+  format: string
+  version: string
+  status: DocStatus
+  updated: string
+  overrides: number
+  by: string
+}
+
+export type EmailChannel = "Email" | "Email + SMS"
+
+export type EmailTemplate = {
+  id: string
+  name: string
+  trigger: string
+  channel: EmailChannel
+  status: DocStatus
+  version: string
+  updated: string
+  overrides: number
+  subject: string
+  body: string
+}
+
+export type EmailVar = { n: string; d: string }
+
+export type TierRow = {
+  tier: string
+  threshold: string
+  rate: string
+  disc: string
+}
+export type TierCard = { unit: string; rows: TierRow[] }
+
 export type Approval = {
   id: string
   kind: string
@@ -763,6 +802,319 @@ export const PRICING_MODELS: PricingModel[] = [
 
 export const BILLING_FREQ = ["Monthly", "Quarterly", "Annually"]
 
+/* ----------------------------------------- pricing: volume discount tiers -- */
+
+export const TIERS: Record<string, TierCard> = {
+  pmpm: {
+    unit: "PMPM rate",
+    rows: [
+      {
+        tier: "Tier 1",
+        threshold: "< 50,000 members",
+        rate: "$0.50",
+        disc: "Base",
+      },
+      { tier: "Tier 2", threshold: "≥ 50,000", rate: "$0.45", disc: "−10.0%" },
+      { tier: "Tier 3", threshold: "≥ 150,000", rate: "$0.42", disc: "−16.0%" },
+      { tier: "Tier 4", threshold: "≥ 300,000", rate: "$0.37", disc: "−26.0%" },
+      { tier: "Tier 5", threshold: "≥ 500,000", rate: "$0.33", disc: "−34.0%" },
+    ],
+  },
+  outpatient: {
+    unit: "Per outpatient claim",
+    rows: [
+      {
+        tier: "Tier 1",
+        threshold: "< 100,000 claims",
+        rate: "$1.20",
+        disc: "Base",
+      },
+      { tier: "Tier 2", threshold: "≥ 100,000", rate: "$1.10", disc: "−8.3%" },
+      { tier: "Tier 3", threshold: "≥ 400,000", rate: "$1.05", disc: "−12.5%" },
+      { tier: "Tier 4", threshold: "≥ 800,000", rate: "$0.90", disc: "−25.0%" },
+      {
+        tier: "Tier 5",
+        threshold: "≥ 1,500,000",
+        rate: "$0.85",
+        disc: "−29.2%",
+      },
+    ],
+  },
+  inpatient: {
+    unit: "Per inpatient claim",
+    rows: [
+      {
+        tier: "Tier 1",
+        threshold: "< 25,000 claims",
+        rate: "$11.15",
+        disc: "Base",
+      },
+      { tier: "Tier 2", threshold: "≥ 25,000", rate: "$11.00", disc: "−1.3%" },
+      { tier: "Tier 3", threshold: "≥ 100,000", rate: "$10.50", disc: "−5.8%" },
+      { tier: "Tier 4", threshold: "≥ 200,000", rate: "$9.00", disc: "−19.3%" },
+      { tier: "Tier 5", threshold: "≥ 400,000", rate: "$8.50", disc: "−23.8%" },
+    ],
+  },
+  gwp: {
+    unit: "% of GWP",
+    rows: [
+      { tier: "Tier 1", threshold: "< $50M GWP", rate: "4.00%", disc: "Base" },
+      {
+        tier: "Tier 2",
+        threshold: "$50M – $100M",
+        rate: "3.50%",
+        disc: "−12.5%",
+      },
+      { tier: "Tier 3", threshold: "> $100M", rate: "3.10%", disc: "−22.5%" },
+      { tier: "Tier 4", threshold: "> $200M", rate: "2.85%", disc: "−28.8%" },
+    ],
+  },
+}
+
+/* ------------------------------------------------- document template library -- */
+
+export const DOC_TEMPLATES: DocTemplate[] = [
+  {
+    id: "DOC-WEL",
+    name: "Member Welcome Pack",
+    cat: "Membership",
+    format: "PDF",
+    version: "v3.2",
+    status: "Published",
+    updated: "02 Jun 2026",
+    overrides: 7,
+    by: "Amara Okeke",
+  },
+  {
+    id: "DOC-CARD",
+    name: "Membership Card",
+    cat: "Membership",
+    format: "PDF",
+    version: "v2.0",
+    status: "Published",
+    updated: "28 May 2026",
+    overrides: 11,
+    by: "Lily Tesfaye",
+  },
+  {
+    id: "DOC-SCH",
+    name: "Policy Schedule",
+    cat: "Policy",
+    format: "PDF",
+    version: "v4.1",
+    status: "Published",
+    updated: "20 May 2026",
+    overrides: 9,
+    by: "Amara Okeke",
+  },
+  {
+    id: "DOC-SOB",
+    name: "Statement of Benefits",
+    cat: "Policy",
+    format: "PDF",
+    version: "v1.8",
+    status: "Published",
+    updated: "15 May 2026",
+    overrides: 5,
+    by: "David Kimani",
+  },
+  {
+    id: "DOC-CLS",
+    name: "Claim Settlement Letter",
+    cat: "Claims",
+    format: "PDF / DOCX",
+    version: "v2.5",
+    status: "Published",
+    updated: "30 May 2026",
+    overrides: 14,
+    by: "Amara Okeke",
+  },
+  {
+    id: "DOC-PAA",
+    name: "Pre-authorisation Approval",
+    cat: "Claims",
+    format: "PDF",
+    version: "v1.3",
+    status: "Published",
+    updated: "12 May 2026",
+    overrides: 6,
+    by: "Lily Tesfaye",
+  },
+  {
+    id: "DOC-PAR",
+    name: "Pre-authorisation Rejection",
+    cat: "Claims",
+    format: "PDF",
+    version: "v1.3",
+    status: "Published",
+    updated: "12 May 2026",
+    overrides: 6,
+    by: "Lily Tesfaye",
+  },
+  {
+    id: "DOC-INV",
+    name: "Tax Invoice",
+    cat: "Finance",
+    format: "PDF",
+    version: "v5.0",
+    status: "Published",
+    updated: "04 Jun 2026",
+    overrides: 3,
+    by: "Amara Okeke",
+  },
+  {
+    id: "DOC-KYB",
+    name: "KYB Document Checklist",
+    cat: "Onboarding",
+    format: "PDF",
+    version: "v2.1",
+    status: "Draft",
+    updated: "06 Jun 2026",
+    overrides: 0,
+    by: "David Kimani",
+  },
+]
+
+/* ----------------------------------------------- email / SMS template library -- */
+
+export const EMAIL_TEMPLATES: EmailTemplate[] = [
+  {
+    id: "EML-INV",
+    name: "Tenant Admin Invitation",
+    trigger: "On account activation",
+    channel: "Email",
+    status: "Published",
+    version: "v3.0",
+    updated: "04 Jun 2026",
+    overrides: 2,
+    subject: "You're invited to administer {{org_name}} on Ginja",
+    body: "Hi {{admin_name}},\n\nYour Ginja workspace for {{org_name}} is ready. You have been assigned as Tenant Administrator.\n\nSet up your account using the secure link below. This link expires in {{expiry_hours}} hours.\n\n{{invite_link}}\n\nWelcome aboard,\nThe Ginja Team",
+  },
+  {
+    id: "EML-ACT",
+    name: "Activation Confirmation",
+    trigger: "On Tenant activation",
+    channel: "Email",
+    status: "Published",
+    version: "v2.1",
+    updated: "01 Jun 2026",
+    overrides: 1,
+    subject: "{{org_name}} is now live on Ginja",
+    body: "Hi {{admin_name}},\n\nGreat news — {{org_name}} has been activated. Your tenant URL is now live:\n\nhttps://{{subdomain}}.ginja.ai\n\nModules enabled: {{module_list}}.",
+  },
+  {
+    id: "EML-SUS",
+    name: "Suspension Notice",
+    trigger: "On account suspension",
+    channel: "Email",
+    status: "Published",
+    version: "v1.4",
+    updated: "22 May 2026",
+    overrides: 0,
+    subject: "Important: {{org_name}} access has been suspended",
+    body: "Hi {{admin_name}},\n\nAccess to {{org_name}} has been suspended. Reason: {{suspend_reason}}.\n\nPlease contact your account manager to resolve this.",
+  },
+  {
+    id: "EML-PWD",
+    name: "Password Reset",
+    trigger: "On user request",
+    channel: "Email",
+    status: "Published",
+    version: "v4.2",
+    updated: "18 May 2026",
+    overrides: 4,
+    subject: "Reset your Ginja password",
+    body: "Hi {{user_name}},\n\nUse the link below to reset your password. It expires in {{expiry_minutes}} minutes.\n\n{{reset_link}}",
+  },
+  {
+    id: "EML-MFA",
+    name: "MFA Enrollment",
+    trigger: "On first login",
+    channel: "Email",
+    status: "Published",
+    version: "v1.1",
+    updated: "10 May 2026",
+    overrides: 0,
+    subject: "Secure your account — set up MFA",
+    body: "Hi {{user_name}},\n\nMulti-factor authentication is required. Complete enrollment here:\n\n{{mfa_link}}",
+  },
+  {
+    id: "EML-CLA",
+    name: "Claim Approved (Member)",
+    trigger: "On claim approval",
+    channel: "Email + SMS",
+    status: "Published",
+    version: "v2.0",
+    updated: "30 May 2026",
+    overrides: 8,
+    subject: "Your claim {{claim_id}} has been approved",
+    body: "Hi {{member_name}},\n\nYour claim {{claim_id}} for {{provider_name}} has been approved. Amount: {{claim_amount}}.",
+  },
+  {
+    id: "EML-CLR",
+    name: "Claim Rejected (Member)",
+    trigger: "On claim rejection",
+    channel: "Email",
+    status: "Published",
+    version: "v2.0",
+    updated: "30 May 2026",
+    overrides: 8,
+    subject: "Update on your claim {{claim_id}}",
+    body: "Hi {{member_name}},\n\nYour claim {{claim_id}} could not be approved. Reason: {{reject_reason}}.",
+  },
+  {
+    id: "EML-INVO",
+    name: "Invoice Issued",
+    trigger: "On invoice generation",
+    channel: "Email",
+    status: "Draft",
+    version: "v1.0",
+    updated: "07 Jun 2026",
+    overrides: 0,
+    subject: "Invoice {{invoice_no}} for {{org_name}}",
+    body: "Hi {{admin_name}},\n\nInvoice {{invoice_no}} for {{billing_period}} is now available. Amount due: {{amount_due}}.",
+  },
+]
+
+export const EMAIL_VARS: EmailVar[] = [
+  { n: "org_name", d: "Organisation" },
+  { n: "admin_name", d: "Tenant admin" },
+  { n: "subdomain", d: "Tenant subdomain" },
+  { n: "invite_link", d: "Secure link" },
+  { n: "expiry_hours", d: "Link expiry" },
+  { n: "module_list", d: "Enabled modules" },
+  { n: "member_name", d: "Member" },
+  { n: "claim_id", d: "Claim ref" },
+  { n: "claim_amount", d: "Amount" },
+  { n: "provider_name", d: "Provider" },
+]
+
+/** Sample merge values used by the live template preview (renderTpl). */
+export const SAMPLE: Record<string, string> = {
+  org_name: "Jubilee Health Insurance",
+  org_address: "Jubilee Centre, Mama Ngina St, Nairobi",
+  admin_name: "Faith Wanjiru",
+  subdomain: "jubilee",
+  invite_link: "https://jubilee.ginja.ai/setup/8f2a…",
+  expiry_hours: "72",
+  module_list: "Claims, Members, Finance",
+  member_name: "Achieng O.",
+  claim_id: "CLM-48213",
+  claim_amount: "$420.00",
+  provider_name: "Aga Khan Hospital",
+  user_name: "Faith Wanjiru",
+  reset_link: "https://…/reset",
+  expiry_minutes: "30",
+  mfa_link: "https://…/mfa",
+  suspend_reason: "Non-Payment",
+  invoice_no: "INV-20260",
+  billing_period: "June 2026",
+  amount_due: "$185,400",
+  reject_reason: "Out of benefit",
+  document_date: "08 Jun 2026",
+  policy_no: "POL-99231",
+}
+
 /* --------------------------------------------------------- approval queue -- */
 
 export const APPROVALS: Approval[] = [
@@ -1214,6 +1566,833 @@ export const STEP_INTRO: Record<WizStepKey, string> = {
   review:
     "Review the full submission. On submit, all records are created in a single transaction in Draft status.",
 }
+
+/* ===================================================== access & security == */
+/**
+ * Internal staff users, roles and the permission catalogue — ported from the
+ * hi-fi "Access · Users" and "Access · Roles & permissions" screens.
+ */
+
+export type RolePaletteKey =
+  | "iris"
+  | "emerald"
+  | "amber"
+  | "sky"
+  | "rose"
+  | "violet"
+
+export type Perm = {
+  id: string
+  label: string
+  desc: string
+  sensitive?: boolean
+}
+
+export type PermGroup = {
+  id: string
+  label: string
+  icon: string
+  desc: string
+  perms: Perm[]
+}
+
+export type AccessRole = {
+  id: string
+  name: string
+  system: boolean
+  /** A palette key (RolePaletteKey) or a custom hex like "#E8590C". */
+  color: string
+  desc: string
+  /** Perm ids, or `["*"]` for "every permission". */
+  perms: string[]
+}
+
+export type UserStatus = "Active" | "Invited" | "Suspended" | "Deactivated"
+
+export type AccessTone = "success" | "warning" | "info" | "neutral" | "error"
+
+export type TimelineKind =
+  | "invited"
+  | "resent"
+  | "accepted"
+  | "revoked"
+  | "role_added"
+  | "role_removed"
+  | "login"
+  | "suspended"
+  | "reactivated"
+  | "scope_change"
+  | "created"
+
+export type TimelineEvent = {
+  kind: TimelineKind | string
+  when: string
+  date: string
+  by: string
+  meta?: string
+}
+
+export type AccessUser = {
+  id: string
+  name: string
+  email: string
+  initials: string
+  status: UserStatus
+  roles: string[]
+  lastActive: string
+  addedBy: string
+  joined: string
+  mfa: boolean
+  invitedAgo?: string
+  expiresIn?: string
+  inviteExpired?: boolean
+  suspendReason?: string | null
+  timeline: TimelineEvent[]
+}
+
+/** The full permission catalogue — 5 groups, 14 individual permissions. */
+export const PERM_CATALOG: PermGroup[] = [
+  {
+    id: "tenants",
+    label: "Tenant management",
+    icon: "building",
+    desc: "Onboarding and the lifecycle of tenant accounts.",
+    perms: [
+      {
+        id: "tenants.view",
+        label: "View tenants",
+        desc: "See the directory and tenant records.",
+      },
+      {
+        id: "tenants.create",
+        label: "Onboard tenants",
+        desc: "Start, fill and submit new onboarding.",
+      },
+      {
+        id: "tenants.edit",
+        label: "Edit tenant details",
+        desc: "Change org details and entitlements.",
+      },
+      {
+        id: "tenants.lifecycle",
+        label: "Manage lifecycle",
+        desc: "Suspend, reactivate and retire tenants.",
+        sensitive: true,
+      },
+    ],
+  },
+  {
+    id: "approvals",
+    label: "Approvals",
+    icon: "shieldCheck",
+    desc: "The maker-checker review queue.",
+    perms: [
+      {
+        id: "approvals.view",
+        label: "View approval queue",
+        desc: "See pending and historical requests.",
+      },
+      {
+        id: "approvals.decide",
+        label: "Approve / reject",
+        desc: "Make checker decisions on submissions.",
+        sensitive: true,
+      },
+    ],
+  },
+  {
+    id: "config",
+    label: "Configuration library",
+    icon: "layers",
+    desc: "Modules, templates and pricing shared by tenants.",
+    perms: [
+      {
+        id: "config.modules",
+        label: "Manage module registry",
+        desc: "Publish, version and sunset modules.",
+      },
+      {
+        id: "config.templates",
+        label: "Manage templates",
+        desc: "Edit document, email & SMS templates.",
+      },
+      {
+        id: "config.pricing",
+        label: "Manage pricing & plans",
+        desc: "Edit subscription models and tiers.",
+        sensitive: true,
+      },
+    ],
+  },
+  {
+    id: "access",
+    label: "Access & security",
+    icon: "key",
+    desc: "Roles, users and platform-wide policy.",
+    perms: [
+      {
+        id: "access.users",
+        label: "Manage users",
+        desc: "Invite, assign roles, suspend & remove.",
+        sensitive: true,
+      },
+      {
+        id: "access.roles",
+        label: "Manage roles",
+        desc: "Create and edit custom roles & scopes.",
+        sensitive: true,
+      },
+      {
+        id: "access.settings",
+        label: "Manage platform settings",
+        desc: "MFA, password, residency & provisioning.",
+        sensitive: true,
+      },
+    ],
+  },
+  {
+    id: "platform",
+    label: "Observability",
+    icon: "history",
+    desc: "Read-only operational visibility.",
+    perms: [
+      {
+        id: "platform.audit",
+        label: "View audit log",
+        desc: "Read the immutable platform audit trail.",
+      },
+      {
+        id: "platform.export",
+        label: "Export data",
+        desc: "Export directories, logs and reports.",
+      },
+    ],
+  },
+]
+
+export const ALL_PERMS: string[] = PERM_CATALOG.flatMap((g) =>
+  g.perms.map((p) => p.id)
+)
+export const PERM_TOTAL = ALL_PERMS.length
+
+export function permLabel(id: string): string {
+  for (const g of PERM_CATALOG) {
+    const p = g.perms.find((x) => x.id === id)
+    if (p) return p.label
+  }
+  return id
+}
+
+/** Accent per role badge. `dot` is an HSL channel expression (or raw channels). */
+export const ROLE_PALETTE: { id: RolePaletteKey; dot: string }[] = [
+  { id: "iris", dot: "var(--primary)" },
+  { id: "emerald", dot: "var(--success)" },
+  { id: "amber", dot: "var(--warning)" },
+  { id: "sky", dot: "var(--info)" },
+  { id: "rose", dot: "var(--destructive)" },
+  { id: "violet", dot: "262 83% 62%" },
+]
+
+/** Roles: 4 system (locked) + 4 custom (editable). */
+export const ACCESS_ROLES: AccessRole[] = [
+  {
+    id: "platform_admin",
+    name: "Platform Admin",
+    system: true,
+    color: "iris",
+    desc: "Full administrative control of the platform. Maker in maker-checker.",
+    perms: ["*"],
+  },
+  {
+    id: "platform_approver",
+    name: "Platform Approver",
+    system: true,
+    color: "emerald",
+    desc: "Reviews and approves submissions. Checker — cannot approve own changes.",
+    perms: [
+      "tenants.view",
+      "approvals.view",
+      "approvals.decide",
+      "config.modules",
+      "config.templates",
+      "config.pricing",
+      "platform.audit",
+    ],
+  },
+  {
+    id: "platform_engineer",
+    name: "Platform Engineer",
+    system: true,
+    color: "sky",
+    desc: "Configures modules, registry and infrastructure. Tenants read-only.",
+    perms: [
+      "tenants.view",
+      "config.modules",
+      "access.settings",
+      "platform.audit",
+      "platform.export",
+    ],
+  },
+  {
+    id: "read_only",
+    name: "Read-only (Support)",
+    system: true,
+    color: "amber",
+    desc: "View-only access across the console for support staff.",
+    perms: ["tenants.view", "approvals.view", "platform.audit"],
+  },
+  {
+    id: "onboarding_specialist",
+    name: "Onboarding Specialist",
+    system: false,
+    color: "violet",
+    desc: "Owns tenant onboarding end-to-end without lifecycle or billing authority.",
+    perms: [
+      "tenants.view",
+      "tenants.create",
+      "tenants.edit",
+      "config.templates",
+      "platform.audit",
+    ],
+  },
+  {
+    id: "compliance_officer",
+    name: "Compliance Officer",
+    system: false,
+    color: "rose",
+    desc: "KYB review and document verification. Read access to audit & approvals.",
+    perms: [
+      "tenants.view",
+      "approvals.view",
+      "platform.audit",
+      "platform.export",
+    ],
+  },
+  {
+    id: "billing_manager",
+    name: "Billing Manager",
+    system: false,
+    color: "emerald",
+    desc: "Manages pricing, plans and subscription configuration.",
+    perms: [
+      "tenants.view",
+      "config.pricing",
+      "platform.audit",
+      "platform.export",
+    ],
+  },
+  {
+    id: "support_agent",
+    name: "Support Agent",
+    system: false,
+    color: "#E8590C",
+    desc: "Front-line support across the whole team. Read-only tenant & approval visibility.",
+    perms: ["tenants.view", "approvals.view"],
+  },
+]
+
+export const roleById = (id: string): AccessRole | undefined =>
+  ACCESS_ROLES.find((r) => r.id === id)
+
+export const rolePermCount = (r: AccessRole): number =>
+  r.perms.includes("*") ? PERM_TOTAL : r.perms.length
+
+export const USER_STATUS_TONE: Record<UserStatus, AccessTone> = {
+  Active: "success",
+  Invited: "info",
+  Suspended: "warning",
+  Deactivated: "error",
+}
+
+/** Timeline event kinds → icon name + tone + label. */
+export const TL_KIND: Record<
+  string,
+  { icon: string; tone: AccessTone; label: string }
+> = {
+  invited: { icon: "mail", tone: "info", label: "Invitation sent" },
+  resent: { icon: "rotateCcw", tone: "info", label: "Invitation resent" },
+  accepted: {
+    icon: "userCheck",
+    tone: "success",
+    label: "Invitation accepted",
+  },
+  revoked: { icon: "ban", tone: "error", label: "Invitation revoked" },
+  role_added: { icon: "plus", tone: "success", label: "Role assigned" },
+  role_removed: { icon: "minus", tone: "warning", label: "Role unassigned" },
+  login: { icon: "logIn", tone: "neutral", label: "Signed in" },
+  suspended: { icon: "pause", tone: "warning", label: "Account suspended" },
+  reactivated: { icon: "play", tone: "success", label: "Account reactivated" },
+  scope_change: { icon: "globe", tone: "neutral", label: "Scope changed" },
+  created: { icon: "sparkles", tone: "neutral", label: "User created" },
+}
+
+export const ACCESS_USERS: AccessUser[] = [
+  {
+    id: "USR-001",
+    name: "Amara Okeke",
+    email: "amara.okeke@ginja.ai",
+    initials: "AO",
+    status: "Active",
+    roles: ["platform_admin"],
+    lastActive: "2 min ago",
+    addedBy: "System",
+    joined: "12 Jan 2026",
+    mfa: true,
+    timeline: [
+      { kind: "login", when: "09:48", date: "08 Jun 2026", by: "Amara Okeke" },
+      {
+        kind: "role_added",
+        when: "10:02",
+        date: "12 Jan 2026",
+        by: "System",
+        meta: "Platform Admin",
+      },
+      {
+        kind: "accepted",
+        when: "09:58",
+        date: "12 Jan 2026",
+        by: "Amara Okeke",
+      },
+      { kind: "invited", when: "16:20", date: "11 Jan 2026", by: "System" },
+    ],
+  },
+  {
+    id: "USR-002",
+    name: "David Kimani",
+    email: "david.kimani@ginja.ai",
+    initials: "DK",
+    status: "Active",
+    roles: ["platform_approver", "compliance_officer", "support_agent"],
+    lastActive: "1 hr ago",
+    addedBy: "Amara Okeke",
+    joined: "20 Jan 2026",
+    mfa: true,
+    timeline: [
+      { kind: "login", when: "08:30", date: "08 Jun 2026", by: "David Kimani" },
+      {
+        kind: "role_added",
+        when: "11:15",
+        date: "02 Mar 2026",
+        by: "Amara Okeke",
+        meta: "Compliance Officer",
+      },
+      {
+        kind: "role_added",
+        when: "09:20",
+        date: "20 Jan 2026",
+        by: "Amara Okeke",
+        meta: "Platform Approver",
+      },
+      {
+        kind: "accepted",
+        when: "09:12",
+        date: "20 Jan 2026",
+        by: "David Kimani",
+      },
+      {
+        kind: "invited",
+        when: "14:40",
+        date: "18 Jan 2026",
+        by: "Amara Okeke",
+      },
+    ],
+  },
+  {
+    id: "USR-003",
+    name: "Lily Tesfaye",
+    email: "lily.tesfaye@ginja.ai",
+    initials: "LT",
+    status: "Active",
+    roles: ["platform_engineer"],
+    lastActive: "3 hr ago",
+    addedBy: "Amara Okeke",
+    joined: "01 Feb 2026",
+    mfa: true,
+    timeline: [
+      { kind: "login", when: "06:50", date: "08 Jun 2026", by: "Lily Tesfaye" },
+      {
+        kind: "role_added",
+        when: "10:30",
+        date: "01 Feb 2026",
+        by: "Amara Okeke",
+        meta: "Platform Engineer",
+      },
+      {
+        kind: "accepted",
+        when: "10:22",
+        date: "01 Feb 2026",
+        by: "Lily Tesfaye",
+      },
+      {
+        kind: "invited",
+        when: "09:00",
+        date: "30 Jan 2026",
+        by: "Amara Okeke",
+      },
+    ],
+  },
+  {
+    id: "USR-004",
+    name: "Fatima Hassan",
+    email: "fatima.hassan@ginja.ai",
+    initials: "FH",
+    status: "Active",
+    roles: ["onboarding_specialist", "support_agent"],
+    lastActive: "Yesterday",
+    addedBy: "Amara Okeke",
+    joined: "14 Feb 2026",
+    mfa: true,
+    timeline: [
+      {
+        kind: "role_added",
+        when: "11:00",
+        date: "14 Feb 2026",
+        by: "Amara Okeke",
+        meta: "Onboarding Specialist",
+      },
+      {
+        kind: "accepted",
+        when: "10:51",
+        date: "14 Feb 2026",
+        by: "Fatima Hassan",
+      },
+      {
+        kind: "invited",
+        when: "15:30",
+        date: "13 Feb 2026",
+        by: "Amara Okeke",
+      },
+    ],
+  },
+  {
+    id: "USR-005",
+    name: "Kwame Mensah",
+    email: "kwame.mensah@ginja.ai",
+    initials: "KM",
+    status: "Invited",
+    roles: ["platform_engineer"],
+    lastActive: "—",
+    addedBy: "Amara Okeke",
+    joined: "—",
+    mfa: false,
+    invitedAgo: "2 days ago",
+    expiresIn: "5 days",
+    timeline: [
+      {
+        kind: "invited",
+        when: "11:20",
+        date: "06 Jun 2026",
+        by: "Amara Okeke",
+        meta: "Platform Engineer",
+      },
+    ],
+  },
+  {
+    id: "USR-006",
+    name: "Naledi Dube",
+    email: "naledi.dube@ginja.ai",
+    initials: "ND",
+    status: "Invited",
+    roles: ["compliance_officer"],
+    lastActive: "—",
+    addedBy: "David Kimani",
+    joined: "—",
+    mfa: false,
+    invitedAgo: "9 days ago",
+    expiresIn: "expired",
+    inviteExpired: true,
+    timeline: [
+      {
+        kind: "revoked",
+        when: "00:00",
+        date: "07 Jun 2026",
+        by: "System",
+        meta: "Invitation expired (not accepted in time)",
+      },
+      {
+        kind: "resent",
+        when: "09:10",
+        date: "07 Jun 2026",
+        by: "David Kimani",
+      },
+      {
+        kind: "invited",
+        when: "16:00",
+        date: "02 Jun 2026",
+        by: "David Kimani",
+        meta: "Compliance Officer",
+      },
+    ],
+  },
+  {
+    id: "USR-007",
+    name: "Brian Nshuti",
+    email: "brian.nshuti@ginja.ai",
+    initials: "BN",
+    status: "Suspended",
+    roles: ["read_only"],
+    lastActive: "12 days ago",
+    addedBy: "Amara Okeke",
+    joined: "05 Mar 2026",
+    mfa: true,
+    suspendReason: "Extended leave of absence",
+    timeline: [
+      {
+        kind: "suspended",
+        when: "14:02",
+        date: "27 May 2026",
+        by: "Amara Okeke",
+        meta: "Extended leave of absence",
+      },
+      {
+        kind: "login",
+        when: "08:40",
+        date: "27 May 2026",
+        by: "Brian Nshuti",
+      },
+      {
+        kind: "role_added",
+        when: "09:30",
+        date: "05 Mar 2026",
+        by: "Amara Okeke",
+        meta: "Read-only (Support)",
+      },
+      {
+        kind: "accepted",
+        when: "09:22",
+        date: "05 Mar 2026",
+        by: "Brian Nshuti",
+      },
+      {
+        kind: "invited",
+        when: "11:10",
+        date: "04 Mar 2026",
+        by: "Amara Okeke",
+      },
+    ],
+  },
+  {
+    id: "USR-008",
+    name: "Grace Wanjiku",
+    email: "grace.wanjiku@ginja.ai",
+    initials: "GW",
+    status: "Active",
+    roles: ["billing_manager", "support_agent", "compliance_officer"],
+    lastActive: "5 hr ago",
+    addedBy: "Amara Okeke",
+    joined: "18 Mar 2026",
+    mfa: true,
+    timeline: [
+      {
+        kind: "login",
+        when: "04:30",
+        date: "08 Jun 2026",
+        by: "Grace Wanjiku",
+      },
+      {
+        kind: "role_added",
+        when: "10:00",
+        date: "12 Apr 2026",
+        by: "Amara Okeke",
+        meta: "Billing Manager",
+      },
+      {
+        kind: "role_added",
+        when: "09:35",
+        date: "18 Mar 2026",
+        by: "Amara Okeke",
+        meta: "Support Agent",
+      },
+      {
+        kind: "accepted",
+        when: "09:30",
+        date: "18 Mar 2026",
+        by: "Grace Wanjiku",
+      },
+      {
+        kind: "invited",
+        when: "14:00",
+        date: "17 Mar 2026",
+        by: "Amara Okeke",
+      },
+    ],
+  },
+  {
+    id: "USR-009",
+    name: "Joseph Otieno",
+    email: "joseph.otieno@ginja.ai",
+    initials: "JO",
+    status: "Active",
+    roles: ["support_agent"],
+    lastActive: "20 min ago",
+    addedBy: "David Kimani",
+    joined: "02 Apr 2026",
+    mfa: true,
+    timeline: [
+      {
+        kind: "role_added",
+        when: "10:10",
+        date: "02 Apr 2026",
+        by: "David Kimani",
+        meta: "Support Agent",
+      },
+      {
+        kind: "accepted",
+        when: "10:02",
+        date: "02 Apr 2026",
+        by: "Joseph Otieno",
+      },
+      {
+        kind: "invited",
+        when: "09:00",
+        date: "01 Apr 2026",
+        by: "David Kimani",
+      },
+    ],
+  },
+  {
+    id: "USR-010",
+    name: "Aisha Bello",
+    email: "aisha.bello@ginja.ai",
+    initials: "AB",
+    status: "Active",
+    roles: ["support_agent", "onboarding_specialist"],
+    lastActive: "1 hr ago",
+    addedBy: "Amara Okeke",
+    joined: "15 Apr 2026",
+    mfa: true,
+    timeline: [
+      {
+        kind: "role_added",
+        when: "11:30",
+        date: "20 Apr 2026",
+        by: "Amara Okeke",
+        meta: "Onboarding Specialist",
+      },
+      {
+        kind: "role_added",
+        when: "09:20",
+        date: "15 Apr 2026",
+        by: "Amara Okeke",
+        meta: "Support Agent",
+      },
+      {
+        kind: "accepted",
+        when: "09:14",
+        date: "15 Apr 2026",
+        by: "Aisha Bello",
+      },
+      {
+        kind: "invited",
+        when: "16:00",
+        date: "14 Apr 2026",
+        by: "Amara Okeke",
+      },
+    ],
+  },
+  {
+    id: "USR-011",
+    name: "Tendai Moyo",
+    email: "tendai.moyo@ginja.ai",
+    initials: "TM",
+    status: "Active",
+    roles: ["support_agent"],
+    lastActive: "Yesterday",
+    addedBy: "David Kimani",
+    joined: "28 Apr 2026",
+    mfa: false,
+    timeline: [
+      {
+        kind: "role_added",
+        when: "14:00",
+        date: "28 Apr 2026",
+        by: "David Kimani",
+        meta: "Support Agent",
+      },
+      {
+        kind: "accepted",
+        when: "13:52",
+        date: "28 Apr 2026",
+        by: "Tendai Moyo",
+      },
+      {
+        kind: "invited",
+        when: "10:00",
+        date: "27 Apr 2026",
+        by: "David Kimani",
+      },
+    ],
+  },
+  {
+    id: "USR-012",
+    name: "Sarah Mwangi",
+    email: "sarah.mwangi@ginja.ai",
+    initials: "SM",
+    status: "Active",
+    roles: ["support_agent"],
+    lastActive: "4 hr ago",
+    addedBy: "Amara Okeke",
+    joined: "05 May 2026",
+    mfa: true,
+    timeline: [
+      {
+        kind: "role_added",
+        when: "09:00",
+        date: "05 May 2026",
+        by: "Amara Okeke",
+        meta: "Support Agent",
+      },
+      {
+        kind: "accepted",
+        when: "08:55",
+        date: "05 May 2026",
+        by: "Sarah Mwangi",
+      },
+      {
+        kind: "invited",
+        when: "15:00",
+        date: "04 May 2026",
+        by: "Amara Okeke",
+      },
+    ],
+  },
+  {
+    id: "USR-013",
+    name: "Emeka Nwosu",
+    email: "emeka.nwosu@ginja.ai",
+    initials: "EN",
+    status: "Active",
+    roles: ["support_agent"],
+    lastActive: "2 days ago",
+    addedBy: "David Kimani",
+    joined: "12 May 2026",
+    mfa: true,
+    timeline: [
+      {
+        kind: "role_added",
+        when: "11:00",
+        date: "12 May 2026",
+        by: "David Kimani",
+        meta: "Support Agent",
+      },
+      {
+        kind: "accepted",
+        when: "10:51",
+        date: "12 May 2026",
+        by: "Emeka Nwosu",
+      },
+      {
+        kind: "invited",
+        when: "09:30",
+        date: "11 May 2026",
+        by: "David Kimani",
+      },
+    ],
+  },
+]
+
+export const usersWithRole = (roleId: string): AccessUser[] =>
+  ACCESS_USERS.filter((u) => u.roles.includes(roleId))
 
 export const BASE_FORM: OnboardingForm = {
   legal: "CIC Insurance Group",

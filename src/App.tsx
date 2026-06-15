@@ -23,6 +23,14 @@ import { ComingSoonPage } from "@/pages/coming-soon"
 import { ConsoleDashboardPage } from "@/pages/platform-dashboard"
 import { TenantAccountsPage } from "@/pages/tenant-accounts"
 import { OnboardTenantPage } from "@/pages/tenant-accounts/onboard"
+import { ModuleRegistryPage } from "@/pages/module-registry"
+import { DocumentTemplatesPage } from "@/pages/document-templates"
+import { EmailTemplatesPage } from "@/pages/email-templates"
+import { PricingPage } from "@/pages/pricing"
+import { PlatformSettingsPage } from "@/pages/platform-settings"
+import { AuditLogPage } from "@/pages/audit-log"
+import { AccessUsersPage } from "@/pages/access/users"
+import { AccessRolesPage } from "@/pages/access/roles"
 
 const BREADCRUMB_LABELS: Record<string, string> = {
   "tenant-accounts": "Tenant accounts",
@@ -34,6 +42,8 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   pricing: "Pricing & plans",
   "platform-settings": "Platform settings",
   "audit-log": "Audit log",
+  "access-users": "Users",
+  "access-roles": "Roles & permissions",
 }
 
 function formatSegment(segment: string) {
@@ -126,12 +136,20 @@ function AppShell() {
               element={<OnboardTenantPage />}
             />
             <Route path="approvals" element={<ComingSoonPage />} />
-            <Route path="module-registry" element={<ComingSoonPage />} />
-            <Route path="document-templates" element={<ComingSoonPage />} />
-            <Route path="email-templates" element={<ComingSoonPage />} />
-            <Route path="pricing" element={<ComingSoonPage />} />
-            <Route path="platform-settings" element={<ComingSoonPage />} />
-            <Route path="audit-log" element={<ComingSoonPage />} />
+            <Route path="module-registry" element={<ModuleRegistryPage />} />
+            <Route
+              path="document-templates"
+              element={<DocumentTemplatesPage />}
+            />
+            <Route path="email-templates" element={<EmailTemplatesPage />} />
+            <Route path="pricing" element={<PricingPage />} />
+            <Route
+              path="platform-settings"
+              element={<PlatformSettingsPage />}
+            />
+            <Route path="audit-log" element={<AuditLogPage />} />
+            <Route path="access-users" element={<AccessUsersPage />} />
+            <Route path="access-roles" element={<AccessRolesPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>

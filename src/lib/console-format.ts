@@ -2,6 +2,7 @@
 import {
   PAYERS,
   RESERVED,
+  SAMPLE,
   SUBDOMAIN_TAKEN,
   WIZ_STEPS,
   type OnboardingForm,
@@ -81,3 +82,9 @@ export function sectionStatuses(
 
 export const isSubTaken = (sub: string) => SUBDOMAIN_TAKEN.includes(sub)
 export const isSubReserved = (sub: string) => RESERVED.includes(sub)
+
+/** Replace {{var}} tokens with SAMPLE values; unknown tokens stay literal. */
+export const renderTpl = (t: string) =>
+  (t || "").replace(/\{\{\s*([\w.]+)\s*\}\}/g, (m, k) =>
+    k in SAMPLE ? SAMPLE[k] : m
+  )
