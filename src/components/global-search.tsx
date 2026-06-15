@@ -63,7 +63,9 @@ export function GlobalSearch({ className }: { className?: string }) {
         )}
       >
         <SearchIcon className="size-4 shrink-0" />
-        <span className="flex-1 truncate text-left">Search…</span>
+        <span className="flex-1 truncate text-left">
+          Search tenants, modules, templates…
+        </span>
         <kbd className="pointer-events-none hidden items-center gap-0.5 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium sm:inline-flex">
           {isMac ? "⌘" : "Ctrl"} K
         </kbd>
