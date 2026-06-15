@@ -10,13 +10,20 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
-import { ComingSoonPage } from "@/pages/coming-soon"
 import { LoginPage } from "@/pages/login"
 import { ConsoleDashboardPage } from "@/pages/platform-dashboard"
 import { ApprovalsPage } from "@/pages/approvals"
 import { TenantAccountsPage } from "@/pages/tenant-accounts"
 import { OnboardTenantPage } from "@/pages/tenant-accounts/onboard"
 import { TenantProvisioningPage } from "@/pages/tenant-provisioning"
+import { ModuleRegistryPage } from "@/pages/module-registry"
+import { DocumentTemplatesPage } from "@/pages/document-templates"
+import { EmailTemplatesPage } from "@/pages/email-templates"
+import { PricingPage } from "@/pages/pricing"
+import { AccessUsersPage } from "@/pages/access/users"
+import { AccessRolesPage } from "@/pages/access/roles"
+import { PlatformSettingsPage } from "@/pages/platform-settings"
+import { AuditLogPage } from "@/pages/audit-log"
 
 function ThemeToggle() {
   const { theme, setTheme } = useTheme()
@@ -64,14 +71,17 @@ function AppShell() {
               path="tenant-provisioning"
               element={<TenantProvisioningPage />}
             />
-            <Route path="module-registry" element={<ComingSoonPage />} />
-            <Route path="document-templates" element={<ComingSoonPage />} />
-            <Route path="email-templates" element={<ComingSoonPage />} />
-            <Route path="pricing" element={<ComingSoonPage />} />
-            <Route path="access-users" element={<ComingSoonPage />} />
-            <Route path="access-roles" element={<ComingSoonPage />} />
-            <Route path="platform-settings" element={<ComingSoonPage />} />
-            <Route path="audit-log" element={<ComingSoonPage />} />
+            <Route path="module-registry" element={<ModuleRegistryPage />} />
+            <Route
+              path="document-templates"
+              element={<DocumentTemplatesPage />}
+            />
+            <Route path="email-templates" element={<EmailTemplatesPage />} />
+            <Route path="pricing" element={<PricingPage />} />
+            <Route path="access-users" element={<AccessUsersPage />} />
+            <Route path="access-roles" element={<AccessRolesPage />} />
+            <Route path="platform-settings" element={<PlatformSettingsPage />} />
+            <Route path="audit-log" element={<AuditLogPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
