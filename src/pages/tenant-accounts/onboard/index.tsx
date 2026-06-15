@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import {
   ArrowRightIcon,
   CheckIcon,
@@ -21,10 +21,10 @@ import {
 import { AssigneePicker } from "@/components/console/assignee-picker"
 import { MiniAvatar } from "@/components/console/avatar-initials"
 import { Panel } from "@/components/console/panel"
+import { Breadcrumbs } from "@/components/console/breadcrumbs"
 import { useOnboardingForm } from "./use-onboarding-form"
 import { StepPrimary } from "./sections/step-primary"
 import { StepSecondary } from "./sections/step-secondary"
-import { StepTechnical } from "./sections/step-technical"
 import { StepModules } from "./sections/step-modules"
 import { StepBilling } from "./sections/step-billing"
 import { StepDocuments } from "./sections/step-documents"
@@ -44,8 +44,6 @@ export function OnboardTenantPage() {
     setAssignees,
     lastSaved,
     setLastSaved,
-    subTaken,
-    subReserved,
     modCount,
     status,
     doneCount,
@@ -78,74 +76,89 @@ export function OnboardTenantPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
-        <Link to="/tenant-accounts" className="hover:text-foreground">
-          Tenant accounts
-        </Link>
-        <span className="text-muted-foreground/50">/</span>
-        <span className="font-medium text-foreground">
-          Onboard tenant · {DRAFT_ID}
-        </span>
-      </nav>
+      <Breadcrumbs
+        items={[
+          { label: "Tenant accounts", href: "/tenant-accounts" },
+          { label: `Onboard tenant · ${DRAFT_ID}` },
+        ]}
+      />
 
       <Panel className="overflow-hidden">
         <div className="grid lg:grid-cols-[280px_minmax(0,1fr)]">
           {/* Section navigation rail */}
-          <aside className="flex flex-col gap-1 border-b p-4 lg:border-r lg:border-b-0">
-            <div className="text-[15px] font-bold">
+          <aside className="border-b px-[18px] py-[22px] lg:border-r lg:border-b-0">
+            <div className="text-[13px] font-semibold">
               {form.legal || "New tenant"}
             </div>
-            <div className="mb-2 text-xs text-muted-foreground">
+            <div className="mt-[3px] mb-[18px] text-xs text-muted-foreground">
               {form.type} onboarding · {total} sections
             </div>
-            {WIZ_STEPS.map((s, i) => {
-              const st = status[s.k]
-              const owner = ONB_TEAM[assignees[s.k]]
-              const dotCls =
-                st === "complete"
-                  ? "bg-brand text-brand-foreground"
-                  : i === step
-                    ? "bg-primary text-primary-foreground"
-                    : st === "progress"
-                      ? "bg-warning-subtle text-warning-subtle-foreground"
-                      : "bg-muted text-muted-foreground"
-              return (
-                <button
-                  key={s.k}
-                  type="button"
-                  onClick={() => setStep(i)}
-                  className={cn(
-                    "flex w-full items-start gap-3 rounded-lg p-2.5 text-left transition-colors",
-                    i === step
-                      ? "bg-primary/5 ring-1 ring-primary/30"
-                      : "hover:bg-muted/50"
-                  )}
-                >
-                  <span
+            <div className="relative grid gap-0.5">
+              {WIZ_STEPS.map((s, i) => {
+                const st = status[s.k]
+                const active = i === step
+                const owner = ONB_TEAM[assignees[s.k]]
+                const dotCls =
+                  st === "complete"
+                    ? "border-brand bg-brand text-brand-foreground"
+                    : active
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : st === "progress"
+                        ? "border-warning bg-warning-subtle text-warning"
+                        : "border-input bg-card text-muted-foreground"
+                return (
+                  <button
+                    key={s.k}
+                    type="button"
+                    onClick={() => setStep(i)}
                     className={cn(
-                      "mt-0.5 grid size-6 shrink-0 place-items-center rounded-full text-[11px] font-semibold",
-                      dotCls
+                      "relative flex w-full items-start gap-3 rounded-[9px] px-2 py-[9px] text-left transition-colors",
+                      active ? "bg-primary/[0.07]" : "hover:bg-muted/60"
                     )}
                   >
-                    {st === "complete" ? (
-                      <CheckIcon className="size-3.5" />
-                    ) : (
-                      i + 1
-                    )}
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block text-[13px] font-medium">{s.l}</span>
-                    <span className="block text-[11.5px] text-muted-foreground">
-                      {s.d}
+                    {/* Vertical connector line linking the step dots */}
+                    {i < total - 1 ? (
+                      <span
+                        aria-hidden
+                        className={cn(
+                          "absolute top-[33px] -bottom-0.5 left-[21px] w-[1.5px]",
+                          st === "complete" ? "bg-brand" : "bg-border"
+                        )}
+                      />
+                    ) : null}
+                    <span
+                      className={cn(
+                        "mono relative z-[1] grid size-[26px] shrink-0 place-items-center rounded-full border-[1.5px] text-[12px] font-semibold",
+                        dotCls
+                      )}
+                    >
+                      {st === "complete" ? (
+                        <CheckIcon className="size-3.5" />
+                      ) : (
+                        i + 1
+                      )}
                     </span>
-                    <span className="mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                      <MiniAvatar initials={owner.initials} />
-                      {owner.role}
+                    <span className="min-w-0">
+                      <span
+                        className={cn(
+                          "block text-[13px] leading-[1.3]",
+                          active ? "font-semibold text-primary" : "font-medium"
+                        )}
+                      >
+                        {s.l}
+                      </span>
+                      <span className="mt-px block text-[11.5px] text-muted-foreground">
+                        {s.d}
+                      </span>
+                      <span className="mt-1.5 flex items-center gap-1.5 text-[10.5px] font-medium text-muted-foreground">
+                        <MiniAvatar initials={owner.initials} />
+                        {owner.role}
+                      </span>
                     </span>
-                  </span>
-                </button>
-              )
-            })}
+                  </button>
+                )
+              })}
+            </div>
             <div className="mt-3">
               <div className="flex items-start gap-2.5 rounded-[9px] bg-info-subtle px-3 py-2.5 text-[11.5px] leading-normal text-info-subtle-foreground">
                 <InfoIcon className="mt-px size-[15px] shrink-0" />
@@ -214,14 +227,6 @@ export function OnboardTenantPage() {
             <div className="px-5 py-5">
               {cur.k === "primary" && <StepPrimary form={form} set={set} />}
               {cur.k === "secondary" && <StepSecondary form={form} set={set} />}
-              {cur.k === "technical" && (
-                <StepTechnical
-                  form={form}
-                  set={set}
-                  subTaken={subTaken}
-                  subReserved={subReserved}
-                />
-              )}
               {cur.k === "modules" && <StepModules form={form} set={set} />}
               {cur.k === "billing" && (
                 <StepBilling form={form} set={set} modCount={modCount} />

@@ -1,7 +1,9 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
+import { Breadcrumbs } from "@/components/console/breadcrumbs"
+import { type Crumb } from "@/lib/navigation"
 
-/** Page header: small breadcrumb, large title, subtitle, right-aligned actions. */
+/** Page header: route-derived breadcrumb, large title, subtitle, right-aligned actions. */
 export function ConsolePageHeader({
   crumbs,
   title,
@@ -9,12 +11,19 @@ export function ConsolePageHeader({
   actions,
   className,
 }: {
-  crumbs?: string[]
+  /**
+   * Optional breadcrumb override; by default the trail is derived from the
+   * route. Accepts `Crumb[]` (with hrefs) or a plain `string[]` of labels.
+   */
+  crumbs?: Crumb[] | string[]
   title: React.ReactNode
   sub?: React.ReactNode
   actions?: React.ReactNode
   className?: string
 }) {
+  const items: Crumb[] | undefined = crumbs?.map((c) =>
+    typeof c === "string" ? { label: c } : c
+  )
   return (
     <div
       className={cn(
@@ -23,22 +32,7 @@ export function ConsolePageHeader({
       )}
     >
       <div className="flex min-w-0 flex-col gap-2">
-        {crumbs && crumbs.length > 0 ? (
-          <nav className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            {crumbs.map((c, i) => (
-              <React.Fragment key={i}>
-                {i > 0 && <span className="text-muted-foreground/50">/</span>}
-                <span
-                  className={cn(
-                    i === crumbs.length - 1 && "font-medium text-foreground"
-                  )}
-                >
-                  {c}
-                </span>
-              </React.Fragment>
-            ))}
-          </nav>
-        ) : null}
+        <Breadcrumbs items={items} />
         <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
         {sub ? (
           <p className="max-w-prose text-sm text-muted-foreground">{sub}</p>

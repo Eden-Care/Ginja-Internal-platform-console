@@ -43,7 +43,7 @@ export function MiniBadge({
   return (
     <span
       className={cn(
-        "inline-flex h-5 items-center gap-1.5 rounded-md px-2 text-[11px] font-semibold",
+        "inline-flex h-5 items-center gap-1.5 rounded-full px-2 text-[11px] font-medium",
         BADGE_TONE[tone],
         className
       )}

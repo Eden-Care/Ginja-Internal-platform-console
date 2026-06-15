@@ -1,97 +1,29 @@
-import * as React from "react"
-import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom"
+import { Navigate, Route, Routes } from "react-router-dom"
 import { BellDotIcon, MoonIcon, SunIcon } from "lucide-react"
 
 import { AppSidebar } from "@/components/app-sidebar"
+import { GlobalSearch } from "@/components/global-search"
 import { useTheme } from "@/components/theme-provider"
 import { Button } from "@/components/ui/button"
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Separator } from "@/components/ui/separator"
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
-import { ComingSoonPage } from "@/pages/coming-soon"
+import { LoginPage } from "@/pages/login"
 import { ConsoleDashboardPage } from "@/pages/platform-dashboard"
+import { ApprovalsPage } from "@/pages/approvals"
 import { TenantAccountsPage } from "@/pages/tenant-accounts"
 import { OnboardTenantPage } from "@/pages/tenant-accounts/onboard"
+import { TenantProvisioningPage } from "@/pages/tenant-provisioning"
 import { ModuleRegistryPage } from "@/pages/module-registry"
 import { DocumentTemplatesPage } from "@/pages/document-templates"
 import { EmailTemplatesPage } from "@/pages/email-templates"
 import { PricingPage } from "@/pages/pricing"
-import { PlatformSettingsPage } from "@/pages/platform-settings"
-import { AuditLogPage } from "@/pages/audit-log"
 import { AccessUsersPage } from "@/pages/access/users"
 import { AccessRolesPage } from "@/pages/access/roles"
-
-const BREADCRUMB_LABELS: Record<string, string> = {
-  "tenant-accounts": "Tenant accounts",
-  onboard: "Onboard tenant",
-  approvals: "Approvals",
-  "module-registry": "Module registry",
-  "document-templates": "Document templates",
-  "email-templates": "Email & SMS templates",
-  pricing: "Pricing & plans",
-  "platform-settings": "Platform settings",
-  "audit-log": "Audit log",
-  "access-users": "Users",
-  "access-roles": "Roles & permissions",
-}
-
-function formatSegment(segment: string) {
-  return (
-    BREADCRUMB_LABELS[segment] ??
-    segment
-      .split("-")
-      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-      .join(" ")
-  )
-}
-
-function AppBreadcrumb() {
-  const { pathname } = useLocation()
-  const segments = pathname.split("/").filter(Boolean)
-  const crumbs = [
-    { label: "Dashboard", href: "/" },
-    ...segments.map((segment, index) => ({
-      label: formatSegment(segment),
-      href: `/${segments.slice(0, index + 1).join("/")}`,
-    })),
-  ]
-
-  return (
-    <Breadcrumb>
-      <BreadcrumbList>
-        {crumbs.map((crumb, index) => {
-          const isLast = index === crumbs.length - 1
-
-          return (
-            <React.Fragment key={crumb.href}>
-              {index > 0 && <BreadcrumbSeparator />}
-              <BreadcrumbItem>
-                {isLast ? (
-                  <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
-                ) : (
-                  <BreadcrumbLink asChild>
-                    <Link to={crumb.href}>{crumb.label}</Link>
-                  </BreadcrumbLink>
-                )}
-              </BreadcrumbItem>
-            </React.Fragment>
-          )
-        })}
-      </BreadcrumbList>
-    </Breadcrumb>
-  )
-}
+import { PlatformSettingsPage } from "@/pages/platform-settings"
+import { AuditLogPage } from "@/pages/audit-log"
 
 function ThemeToggle() {
   const { theme, setTheme } = useTheme()
@@ -114,11 +46,10 @@ function AppShell() {
     <SidebarProvider defaultOpen={true}>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex h-14 shrink-0 items-center gap-2 border-b bg-background px-4">
+        <header className="flex h-14 shrink-0 items-center gap-3 border-b bg-background px-4">
           <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-2 h-4" />
-          <AppBreadcrumb />
-          <div className="ml-auto flex items-center gap-1">
+          <GlobalSearch />
+          <div className="ml-auto flex items-center gap-2">
             <ThemeToggle />
             <Button variant="ghost" size="icon">
               <BellDotIcon />
@@ -135,7 +66,11 @@ function AppShell() {
               path="tenant-accounts/onboard"
               element={<OnboardTenantPage />}
             />
-            <Route path="approvals" element={<ComingSoonPage />} />
+            <Route path="approvals" element={<ApprovalsPage />} />
+            <Route
+              path="tenant-provisioning"
+              element={<TenantProvisioningPage />}
+            />
             <Route path="module-registry" element={<ModuleRegistryPage />} />
             <Route
               path="document-templates"
@@ -143,13 +78,10 @@ function AppShell() {
             />
             <Route path="email-templates" element={<EmailTemplatesPage />} />
             <Route path="pricing" element={<PricingPage />} />
-            <Route
-              path="platform-settings"
-              element={<PlatformSettingsPage />}
-            />
-            <Route path="audit-log" element={<AuditLogPage />} />
             <Route path="access-users" element={<AccessUsersPage />} />
             <Route path="access-roles" element={<AccessRolesPage />} />
+            <Route path="platform-settings" element={<PlatformSettingsPage />} />
+            <Route path="audit-log" element={<AuditLogPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
@@ -159,7 +91,12 @@ function AppShell() {
 }
 
 export function App() {
-  return <AppShell />
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/*" element={<AppShell />} />
+    </Routes>
+  )
 }
 
 export default App

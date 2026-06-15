@@ -876,7 +876,7 @@ function DetailRow({
 
 export function AccessUsersPage() {
   const { user, hasPermission } = useAccess()
-  const canManage = hasPermission("access.users")
+  const canManage = hasPermission("access-users")
   const actor = user.fullName || "You"
 
   const [users, setUsers] = React.useState<AccessUser[]>(ACCESS_USERS)

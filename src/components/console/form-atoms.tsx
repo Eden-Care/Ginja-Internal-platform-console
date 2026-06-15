@@ -16,20 +16,24 @@ export function ConsoleSelect({
   value,
   onChange,
   options,
+  placeholder,
+  disabled,
   className,
 }: {
   value: string
   onChange: (v: string) => void
   options: SelectOption[]
+  placeholder?: string
+  disabled?: boolean
   className?: string
 }) {
   const opts = options.map((o) =>
     typeof o === "string" ? { value: o, label: o } : o
   )
   return (
-    <Select value={value} onValueChange={onChange}>
+    <Select value={value} onValueChange={onChange} disabled={disabled}>
       <SelectTrigger className={cn("w-full", className)}>
-        <SelectValue />
+        <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
         {opts.map((o) => (

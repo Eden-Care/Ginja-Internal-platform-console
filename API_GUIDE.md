@@ -531,6 +531,28 @@ unknown/inactive tenant or bad credentials (uniform error).
 > Tenant Admins are created `INVITED` at activation; setting their first password (and MFA) is the
 > deferred first-login flow (PRD §5.10).
 
+## 10A. Tenant provisioning / system configuration (PRD step 6)
+Base: `/platform/provisioning` · roles **PLATFORM_ADMIN** (full queue + assign) and
+**PLATFORM_ENGINEER** (configure + own queue). On **submit**, each tenant enters the provisioning
+queue (`AWAITING_START`) with five config sections (`DATABASE, DOMAINS_SSL, EMAIL, SMS,
+DATA_MIGRATION`). An engineer saves + tests each; when all are `DONE` the tenant is
+`READY_TO_ACTIVATE`. Stage auto-advances `AWAITING_START → IN_PROGRESS → READY_TO_ACTIVATE` (a manual
+`BLOCKED` is preserved until changed).
+
+| Method | Path | Role | Purpose |
+| :----- | :--- | :--- | :------ |
+| GET | `/platform/provisioning` `?stage=&assignee=` | admin/engineer | the queue (`ProvisioningResponse[]`) |
+| GET | `/platform/provisioning/mine` | engineer | only my assignments |
+| GET | `/platform/provisioning/{tenant_id}` | admin/engineer | one tenant's provisioning + sections |
+| POST | `/platform/provisioning/{tenant_id}/assign` | **admin** | `{ "assignee":"erin" }` |
+| PUT | `/platform/provisioning/{tenant_id}/sections/{section}` | admin/engineer | `{ "config":{…}, "status":"CONFIGURED" }` |
+| POST | `/platform/provisioning/{tenant_id}/sections/{section}/test` | admin/engineer | test/verify/send-test → marks the section `DONE` |
+| POST | `/platform/provisioning/{tenant_id}/stage` | admin/engineer | `{ "stage":"BLOCKED" }` |
+
+`ProvisioningResponse`: `{ provisioning_id, tenant_id, tenant_code, subdomain, legal_entity_name,
+stage, assignee, sections_done, sections_total, sections:[ { config_id, section, status, config,
+last_result, last_tested_at } ] }`.
+
 ---
 
 ## 11. End-to-end walkthrough (copy-paste, dev profile)
@@ -604,4 +626,7 @@ password/session **policies** (§5.9–5.10.1); **module registry** CRUD (sub-mo
 
 _(Done since M1: pricing CRUD; lifecycle suspend/reactivate/retire; approvals queue;
 add-secondary-to-active; subscription FLAT/HYBRID + overrides; onboarding technical-config,
-subdomain-check, tenant-lookup, contacts, required-doc gate, and per-step assignment.)_
+subdomain-check, tenant-lookup, contacts, required-doc gate, and per-step assignment; Access &
+Security — invitations, sessions admin, role edit/delete, permissions catalogue + role permission
+matrix + region scopes, read-only SUPPORT, member suspend reason, users directory search/filter/
+pagination; **tenant provisioning / system configuration + queue (PRD step 6)**.)_

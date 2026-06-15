@@ -38,8 +38,7 @@ export type WizStatus = "complete" | "progress" | "todo"
 
 /** Per-section completion derived from the form, so the rail reflects real state. */
 export function sectionStatuses(
-  form: OnboardingForm,
-  d: { subTaken: boolean; subReserved: boolean }
+  form: OnboardingForm
 ): Record<WizStepKey, WizStatus> {
   const c0 = form.contacts[0] || ({} as OnboardingForm["contacts"][number])
   const primaryFull =
@@ -54,12 +53,6 @@ export function sectionStatuses(
     !!form.trading.trim() ||
     !!form.tax.trim() ||
     !!(c0.name || "").trim()
-  const technicalFull =
-    !!form.subdomain.trim() &&
-    !d.subTaken &&
-    !d.subReserved &&
-    !!form.region &&
-    !!form.isolation
 
   const s: Record<WizStepKey, WizStatus> = {
     primary: primaryFull ? "complete" : primaryAny ? "progress" : "todo",
@@ -68,13 +61,14 @@ export function sectionStatuses(
     )
       ? "complete"
       : "progress",
-    technical: technicalFull ? "complete" : "progress",
     modules: Object.keys(form.modules).length ? "complete" : "todo",
     billing: form.model && form.freq ? "complete" : "todo",
     documents: "progress", // demo: 3 of 4 required docs uploaded
     review: "todo",
   }
-  s.review = WIZ_STEPS.slice(0, 6).every((step) => s[step.k] === "complete")
+  s.review = WIZ_STEPS.filter((step) => step.k !== "review").every(
+    (step) => s[step.k] === "complete"
+  )
     ? "complete"
     : "todo"
   return s

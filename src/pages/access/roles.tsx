@@ -685,7 +685,7 @@ function RoleCard({
 export function AccessRolesPage() {
   const navigate = useNavigate()
   const { hasPermission } = useAccess()
-  const canManage = hasPermission("access.roles")
+  const canManage = hasPermission("access-roles")
   const readonly = !canManage
   const editParam = useEditParam()
 
