@@ -4,6 +4,7 @@ import {
   Building2Icon,
   ChevronsUpDownIcon,
   CreditCardIcon,
+  EyeIcon,
   FileTextIcon,
   GalleryVerticalEndIcon,
   HistoryIcon,
@@ -26,7 +27,12 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
@@ -44,8 +50,13 @@ import {
 } from "@/components/ui/sidebar"
 import { useAccess } from "@/contexts/access-context"
 import { useBrand } from "@/contexts/brand-context"
+import {
+  CONSOLE_ROLES,
+  CONSOLE_ROLE_KEYS,
+  type ConsoleRoleKey,
+} from "@/lib/console-data"
 
-type NavItem = {
+export type NavItem = {
   title: string
   url: string
   icon: LucideIcon
@@ -55,9 +66,9 @@ type NavItem = {
   count?: number
 }
 
-type NavGroup = { label: string; items: NavItem[] }
+export type NavGroup = { label: string; items: NavItem[] }
 
-const navGroups: NavGroup[] = [
+export const navGroups: NavGroup[] = [
   {
     label: "Overview",
     items: [
@@ -179,7 +190,7 @@ function isActivePath(pathname: string, url: string, exact?: boolean) {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const location = useLocation()
   const { brand } = useBrand()
-  const { user, hasPermission } = useAccess()
+  const { user, hasPermission, role, roleKey, setRoleKey } = useAccess()
 
   const visibleGroups = navGroups
     .map((group) => ({
@@ -201,7 +212,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   size="lg"
                   className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 >
-                  <div className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                  <div className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg">
                     {showLogo ? (
                       <img
                         src={brand.logoUrl}
@@ -345,6 +356,31 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     Preferences
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <EyeIcon data-icon="inline-start" />
+                    <span>Viewing as</span>
+                    <span className="ml-auto max-w-28 truncate text-xs text-muted-foreground">
+                      {role.label}
+                    </span>
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuLabel className="text-xs text-muted-foreground">
+                      Acting role (demo)
+                    </DropdownMenuLabel>
+                    <DropdownMenuRadioGroup
+                      value={roleKey}
+                      onValueChange={(v) => setRoleKey(v as ConsoleRoleKey)}
+                    >
+                      {CONSOLE_ROLE_KEYS.map((k) => (
+                        <DropdownMenuRadioItem key={k} value={k}>
+                          {CONSOLE_ROLES[k].label}
+                        </DropdownMenuRadioItem>
+                      ))}
+                    </DropdownMenuRadioGroup>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
               </DropdownMenuContent>
             </DropdownMenu>
           </SidebarMenuItem>

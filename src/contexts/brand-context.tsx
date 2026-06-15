@@ -22,6 +22,7 @@ type BrandContextValue = {
 const DEFAULT_BRAND: BrandSettings = {
   brandName: "Ginja AI",
   tagline: "Platform Console",
+  logoUrl: "/ginja_icon.svg",
   colors: {
     primary: "240 61% 60%",
     secondary: "224 24% 96%",

@@ -76,7 +76,6 @@ export function ApprovalsPage() {
   return (
     <div className="flex flex-col gap-5">
       <ConsolePageHeader
-        crumbs={["Tenant management", "Approvals"]}
         title="Approval queue"
         sub="Maker-checker review of onboarding submissions and account changes. A second approver is always required."
       />

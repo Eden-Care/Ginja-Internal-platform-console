@@ -3,7 +3,7 @@
  *
  * Self-contained port of the hi-fi design source — see
  * "Ginja Console-v2.html" at the repo root (and
- * DESIGN-SYSTEM.md). The console is the internal ops platform for onboarding &
+ * DESIGN-GUIDE.md). The console is the internal ops platform for onboarding &
  * managing insurer "tenant" accounts. Everything here is demo data — no API.
  */
 

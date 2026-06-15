@@ -129,7 +129,6 @@ export function TenantProvisioningPage() {
   return (
     <div className="flex flex-col gap-5">
       <ConsolePageHeader
-        crumbs={["Tenant management", "Tenant provisioning"]}
         title={engineerView ? "My provisioning queue" : "Tenant provisioning"}
         sub={
           engineerView

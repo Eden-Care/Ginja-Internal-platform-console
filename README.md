@@ -6,9 +6,10 @@ tenant lifecycle, entitlements, billing, configuration libraries and platform po
 Built with **Vite 7 · React 19 · TypeScript · Tailwind 4 · shadcn/ui · React Router 7**.
 All data is currently mock (no backend wired).
 
-> **Designing or adding a screen?** Read **[DESIGN-SYSTEM.md](./DESIGN-SYSTEM.md)** first —
-> it covers the tokens, the console widget catalog, page conventions, and a step-by-step
-> recipe for building new pages consistently.
+> **Designing or adding a screen?** Read **[DESIGN-GUIDE.md](./DESIGN-GUIDE.md)** first — the
+> design source of truth (fonts, type, colour, spacing, shape, motion, components). Build
+> details live with the code: tokens in `src/index.css`, console widgets in
+> `src/components/console/`, and conventions in `CLAUDE.md`.
 
 ## Design source of truth
 
@@ -42,8 +43,8 @@ bun run format   # Prettier
 | `/platform-settings` | Platform settings | ⬜ coming soon |
 | `/audit-log` | Audit log | ⬜ coming soon |
 
-The roadmap for the remaining screens is in
-[DESIGN-SYSTEM.md §7](./DESIGN-SYSTEM.md#7-remaining-pages-roadmap).
+The remaining screens are specced in the hi-fi bundle (`Ginja Console-v2.html`) — match it
+when implementing one.
 
 ## Structure
 
@@ -70,6 +71,7 @@ src/
 
 The iris/indigo + emerald palette and Geist fonts are defined as tokens in `src/index.css`
 and driven at runtime by `BrandProvider`. Components read semantic tokens only (never
-hardcoded colors), so white-label and dark mode work everywhere. See
-[DESIGN-SYSTEM.md §2](./DESIGN-SYSTEM.md#2-theme--tokens).
+hardcoded colors), so white-label and dark mode work everywhere. The palette and semantic
+roles are documented in [DESIGN-GUIDE.md §3](./DESIGN-GUIDE.md#3-colour); the token
+definitions live in `src/index.css`.
 # Ginja-Internal-platform-console

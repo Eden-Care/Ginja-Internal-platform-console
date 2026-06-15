@@ -96,7 +96,6 @@ export function TenantAccountsPage() {
   return (
     <div className="flex flex-col gap-5">
       <ConsolePageHeader
-        crumbs={["Tenant management", "Tenant accounts"]}
         title="Tenant accounts"
         sub="Health insurers, TPAs and self-managed schemes onboarded to the platform."
         actions={

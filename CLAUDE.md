@@ -9,10 +9,12 @@ insurer **tenant accounts** (payers): tenant lifecycle, entitlements, billing,
 configuration libraries and platform policies. Single-page React app. **All data is mock**
 (in `src/lib/console-data.ts`) — there is no backend, API client, or data fetching wired.
 
-> **Before building or changing a screen, read [DESIGN-SYSTEM.md](./DESIGN-SYSTEM.md).**
-> The hi-fi design source of truth is `Ginja Console-v2.html` at
-> the repo root (a self-contained bundle of every screen + its data). `README.md` is the
-> entry-point overview.
+> **Before building or changing a screen, read [DESIGN-GUIDE.md](./DESIGN-GUIDE.md) — it is
+> the design source of truth (the visual language: fonts, type, colour, spacing, shape, motion,
+> components).** How it's *built* lives with the code: tokens in `src/index.css`, design-system
+> widgets in `src/components/console/`, and the conventions in the Architecture section below.
+> `Ginja Console-v2.html` at the repo root is the hi-fi reference bundle (a self-contained
+> bundle of every screen + its data). `README.md` is the entry-point overview.
 
 ## Commands
 
@@ -81,7 +83,8 @@ Tailwind 4. Design tokens are CSS custom properties in `src/index.css` as **HSL 
 (iris/indigo primary + emerald brand, Geist font), exposed to Tailwind via the
 `@theme inline` block wrapped in `hsl(var(--token))`. **Read semantic tokens only — never
 hardcode hex/oklch in components** (this is what keeps white-label + dark mode working). See
-DESIGN-SYSTEM.md §2 for the token list and status→tone mappings. Prettier sorts class lists
+DESIGN-GUIDE.md §3 for the palette + status→tone mappings; the tokens themselves are defined
+in `src/index.css`. Prettier sorts class lists
 (`prettier-plugin-tailwindcss`, with `cn`/`cva` registered).
 
 ### Build chunking

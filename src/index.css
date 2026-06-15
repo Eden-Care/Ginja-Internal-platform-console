@@ -338,7 +338,7 @@
 
 @layer components {
   .eyebrow {
-    @apply text-xs font-semibold tracking-[0.06em] text-muted-foreground uppercase;
+    @apply text-xs font-semibold tracking-[0.04em] text-muted-foreground uppercase;
   }
   .tabular,
   .mono {

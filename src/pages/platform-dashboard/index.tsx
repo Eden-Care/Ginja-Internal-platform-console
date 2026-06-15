@@ -50,7 +50,6 @@ export function ConsoleDashboardPage() {
   return (
     <div className="flex flex-col gap-3.5">
       <ConsolePageHeader
-        crumbs={["Console", "Dashboard"]}
         title={`Good morning, ${firstName}`}
         sub="Tenant onboarding, approvals and platform health at a glance."
         actions={
