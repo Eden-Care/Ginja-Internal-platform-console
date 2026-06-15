@@ -2900,6 +2900,24 @@ export const cHasPerm = (role: ConsoleRole, permId: string) =>
 export const cReadonly = (role: ConsoleRole, permId: string) =>
   role.readonly.includes(permId) && !role.perms.includes("*")
 
+/* Maps a backend role (JWT `roles` claim, e.g. "PLATFORM_ADMIN") to the console
+   role that drives nav-gating + separation-of-duties. See API_GUIDE.md §1. */
+const API_ROLE_TO_KEY: Record<string, ConsoleRoleKey> = {
+  PLATFORM_ADMIN: "platform_admin",
+  PLATFORM_APPROVER: "platform_approver",
+  PLATFORM_ENGINEER: "platform_engineer",
+  SUPPORT: "read_only",
+}
+
+/** Resolve the acting console role from the login token's roles (least-privilege fallback). */
+export function roleKeyFromApiRoles(roles?: string[] | null): ConsoleRoleKey {
+  for (const r of roles ?? []) {
+    const key = API_ROLE_TO_KEY[r]
+    if (key) return key
+  }
+  return "read_only"
+}
+
 /* Approval kind → icon key (mapped to a lucide icon in the Approvals page). */
 export const APPROVAL_KIND_ICON: Record<string, string> = {
   "Tenant onboarding": "building",

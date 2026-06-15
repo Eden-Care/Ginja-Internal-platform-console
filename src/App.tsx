@@ -1,4 +1,10 @@
-import { Navigate, Route, Routes } from "react-router-dom"
+import {
+  Navigate,
+  Outlet,
+  Route,
+  Routes,
+  useLocation,
+} from "react-router-dom"
 import { BellDotIcon, MoonIcon, SunIcon } from "lucide-react"
 
 import { AppSidebar } from "@/components/app-sidebar"
@@ -10,6 +16,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
+import { useAuth } from "@/contexts/auth-context"
 import { LoginPage } from "@/pages/login"
 import { ConsoleDashboardPage } from "@/pages/platform-dashboard"
 import { ApprovalsPage } from "@/pages/approvals"
@@ -90,11 +97,25 @@ function AppShell() {
   )
 }
 
+/** Gate for the authenticated shell — bounces to /login (remembering where the
+   user was headed) when there's no live session. */
+function RequireAuth() {
+  const { isAuthenticated } = useAuth()
+  const location = useLocation()
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />
+  }
+  return <Outlet />
+}
+
 export function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/*" element={<AppShell />} />
+      <Route element={<RequireAuth />}>
+        <Route path="/*" element={<AppShell />} />
+      </Route>
     </Routes>
   )
 }
