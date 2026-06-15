@@ -11,6 +11,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { ComingSoonPage } from "@/pages/coming-soon"
+import { LoginPage } from "@/pages/login"
 import { ConsoleDashboardPage } from "@/pages/platform-dashboard"
 import { ApprovalsPage } from "@/pages/approvals"
 import { TenantAccountsPage } from "@/pages/tenant-accounts"
@@ -80,7 +81,12 @@ function AppShell() {
 }
 
 export function App() {
-  return <AppShell />
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/*" element={<AppShell />} />
+    </Routes>
+  )
 }
 
 export default App
