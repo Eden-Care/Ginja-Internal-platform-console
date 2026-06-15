@@ -1,4 +1,4 @@
-# Ginja AI — Design Guide
+# Ginja AI — Design Guide - sample
 
 The visual language of the **Ginja AI Platform Console**. This is the reference for keeping
 every screen, mockup and component **consistent**: the fonts, type scale, colours, spacing,
