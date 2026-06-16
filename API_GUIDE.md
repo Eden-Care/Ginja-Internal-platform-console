@@ -244,22 +244,41 @@ Hard-deletes the member (role assignments + sessions cascade). `200`.
 ---
 
 ## 6. Audit log
-`GET /platform/organization/audit-logs` · role **PLATFORM_ADMIN**. Append-only compliance trail.
+`GET /platform/organization/audit-logs` · role **PLATFORM_ADMIN** / **SUPPORT** (read-only).
+Append-only compliance trail.
 
-Query params (all optional): `entity_type`, `entity_id`, `action`, `actor`, `page` (0-based),
-`size` (default 20), `sort` (default `created_at,desc`).
+Query params (all optional): `entity_type`, `entity_id`, `action`, `actor`, **`module`**, `page`
+(0-based), `size` (default 20), `sort` (default `created_at,desc`).
 
-`result`:
+Every entry is tagged with the **functional module** it belongs to (derived from its `action`), so the
+trail can be browsed per feature area. Each row carries `module` (code) + `module_label`:
 ```json
 { "content":[ { "audit_id":"AUD000001","actor":"1","actor_name":"admin@ginja.ai","action":"ROLE_CREATED",
+  "module":"ROLE_MANAGEMENT","module_label":"Roles & permissions",
   "entity_type":"Role","entity_id":"ROL000002","entity_label":"FINANCE_OPERATOR",
   "before":null,"after":{...},"changes":{"status":{"from":"ACTIVE","to":"SUSPENDED"}},"reason":null,"created_at":"..." } ],
   "page":0,"size":20,"total_elements":8,"total_pages":1 }
 ```
 Examples: all changes to one member → `?entity_type=OrgMember&entity_id=MBR000001`; all approvals →
-`?action=PAYER_APPROVED`.
+`?action=PAYER_APPROVED`; **everything under member invites** → `?module=MEMBER_INVITATION`.
+
+### 6.1 Module catalogue — `GET /platform/organization/audit-logs/modules`
+Role **PLATFORM_ADMIN** / **SUPPORT**. Returns the filter chips for the UI: each module's `code`,
+`label`, and the `actions` it covers.
+```json
+[ { "code":"TENANT_ONBOARDING","label":"Tenant onboarding","actions":["PAYER_CREATED","SECONDARY_TENANT_ADDED", ...] },
+  { "code":"TENANT_PROVISIONING","label":"Tenant provisioning","actions":["PROVISIONING_STARTED", ...] },
+  { "code":"TECHNICAL_REVIEW","label":"Technical reviewer","actions":["CONFIG_REMARK_ADDED","CONFIG_REMARK_RESOLVED","CONFIG_SECTION_APPROVED"] },
+  { "code":"MEMBER_INVITATION","label":"Member invite", ... }, { "code":"MEMBER_MANAGEMENT", ... },
+  { "code":"ROLE_MANAGEMENT", ... }, { "code":"PERMISSION_MANAGEMENT", ... }, { "code":"FUNCTIONALITY_REGISTRY", ... },
+  { "code":"AUTHENTICATION", ... }, { "code":"PRICING", ... }, { "code":"TENANT_APPROVAL", ... }, { "code":"TENANT_LIFECYCLE", ... } ]
+```
+The 12 modules: **Tenant onboarding · Tenant approval · Tenant lifecycle · Tenant provisioning ·
+Technical reviewer · Member management · Member invite · Roles & permissions · Permissions ·
+Functionalities · Authentication & sessions · Pricing & plans**.
 > Tenant-scoped operations write their audit rows into the **tenant** schema's `audit_log`; this
-> endpoint reads the schema resolved from the caller's token (platform admin → `public`).
+> endpoint reads the schema resolved from the caller's token (platform admin → `public`). The module
+> tag is derived at read time from `action`, so it applies uniformly across platform and tenant trails.
 
 ---
 
@@ -550,8 +569,25 @@ DATA_MIGRATION`). An engineer saves + tests each; when all are `DONE` the tenant
 | POST | `/platform/provisioning/{tenant_id}/stage` | admin/engineer | `{ "stage":"BLOCKED" }` |
 
 `ProvisioningResponse`: `{ provisioning_id, tenant_id, tenant_code, subdomain, legal_entity_name,
-stage, assignee, sections_done, sections_total, sections:[ { config_id, section, status, config,
-last_result, last_tested_at } ] }`.
+stage, assignee, sections_done, sections_total, sections_approved, open_remarks,
+sections:[ { config_id, section, status, config, last_result, last_tested_at, review_status,
+configured_by, reviewed_by, open_remarks } ] }`.
+
+### 10A.1 Technical review over configs (Hi-fi _3 reviewer flow)
+A **Technical Reviewer** (`PLATFORM_APPROVER`) leaves per-section remarks, the engineer resolves them,
+and the reviewer approves each section. **Maker ≠ checker** — the engineer who configured a section
+cannot approve it (`403`); a section must be `DONE` to approve.
+
+| Method | Path | Role | Purpose |
+| :----- | :--- | :--- | :------ |
+| POST | `…/provisioning/{tenant_id}/sections/{section}/remarks` | admin/approver | add a remark — `{ "body":"…", "severity":"ACTION" }` → section `CHANGES_REQUESTED` |
+| GET | `…/provisioning/{tenant_id}/remarks` | admin/engineer/approver | open + resolved remark trail (`RemarkResponse[]`) |
+| POST | `…/provisioning/remarks/{remark_id}/resolve` | admin/engineer | resolve a remark |
+| POST | `…/provisioning/{tenant_id}/sections/{section}/approve` | admin/approver | approve a section (SoD enforced) → `review_status=APPROVED` |
+
+Editing/saving a section resets its `review_status` to `PENDING` (re-review required). The provisioning
+queue (`GET …/provisioning`) and detail are also readable by `PLATFORM_APPROVER` for the reviewer
+dashboard, and each item carries `open_remarks` + `sections_approved` counts.
 
 ---
 

@@ -2,7 +2,7 @@
   "info": {
     "name": "Ginja Console \u2014 Platform API",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Generated from the controller classes (verified against docs/API_GUIDE.md). 70 endpoints across 15 controllers. Set baseUrl + token variables; mint tokens via Dev (token helper)."
+    "description": "Generated from controller classes (verified). 75 endpoints across 15 controllers."
   },
   "item": [
     {
@@ -1251,6 +1251,11 @@
               ],
               "query": [
                 {
+                  "key": "module",
+                  "value": "MEMBER_INVITATION",
+                  "disabled": true
+                },
+                {
                   "key": "entity_type",
                   "value": "OrgMember",
                   "disabled": false
@@ -1298,6 +1303,35 @@
               ]
             }
           }
+        },
+        {
+          "name": "GET /platform/organization/audit-logs/modules  \u00b7 listModules",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/audit-logs/modules",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "audit-logs",
+                "modules"
+              ]
+            }
+          }
         }
       ]
     },
@@ -1336,7 +1370,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Custom PMPM\",\n  \"description\": \"custom\",\n  \"model\": \"TRANSACTION_BASED\",\n  \"currency\": \"USD\",\n  \"implementation_fee\": 250000,\n  \"platform_fee_annual\": 0,\n  \"savings_capture_pct\": 12.5,\n  \"components\": [\n    {\n      \"component_type\": \"CORE_PLATFORM_PMPM\",\n      \"unit\": \"PER_MEMBER_MONTH\",\n      \"sort_order\": 1,\n      \"tiers\": [\n        {\n          \"tier_number\": 1,\n          \"volume_threshold_min\": 0,\n          \"rate\": 0.55,\n          \"discount_pct\": 0\n        },\n        {\n          \"tier_number\": 2,\n          \"volume_threshold_min\": 100000,\n          \"rate\": 0.48,\n          \"discount_pct\": -12.7\n        }\n      ]\n    }\n  ]\n}",
+              "raw": "{\n  \"name\": \"Custom PMPM\",\n  \"description\": \"custom\",\n  \"model\": \"TRANSACTION_BASED\",\n  \"currency\": \"USD\",\n  \"implementation_fee\": 250000,\n  \"platform_fee_annual\": 0,\n  \"savings_capture_pct\": 12.5,\n  \"components\": [\n    {\n      \"component_type\": \"CORE_PLATFORM_PMPM\",\n      \"unit\": \"PER_MEMBER_MONTH\",\n      \"sort_order\": 1,\n      \"tiers\": [\n        {\n          \"tier_number\": 1,\n          \"volume_threshold_min\": 0,\n          \"rate\": 0.55,\n          \"discount_pct\": 0\n        }\n      ]\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2536,7 +2570,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"config\": {\n    \"provider\": \"demo\",\n    \"host\": \"db.internal\",\n    \"from\": \"no-reply@ginja.ai\"\n  },\n  \"status\": \"CONFIGURED\"\n}",
+              "raw": "{\n  \"config\": {\n    \"provider\": \"postgres\",\n    \"host\": \"db.internal\",\n    \"from\": \"no-reply@ginja.ai\"\n  },\n  \"status\": \"CONFIGURED\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2618,6 +2652,127 @@
               }
             }
           }
+        },
+        {
+          "name": "POST /platform/provisioning/{tenantId}/sections/{section}/remarks  \u00b7 addRemark",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/provisioning/{{tenantId}}/sections/{{section}}/remarks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "provisioning",
+                "{{tenantId}}",
+                "sections",
+                "{{section}}",
+                "remarks"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{approverToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /platform/provisioning/{tenantId}/remarks  \u00b7 listRemarks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/provisioning/{{tenantId}}/remarks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "provisioning",
+                "{{tenantId}}",
+                "remarks"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{approverToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /platform/provisioning/remarks/{remarkId}/resolve  \u00b7 resolveRemark",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/provisioning/remarks/{{remarkId}}/resolve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "provisioning",
+                "remarks",
+                "{{remarkId}}",
+                "resolve"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /platform/provisioning/{tenantId}/sections/{section}/approve  \u00b7 approveSection",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/provisioning/{{tenantId}}/sections/{{section}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "provisioning",
+                "{{tenantId}}",
+                "sections",
+                "{{section}}",
+                "approve"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{approverToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
         }
       ]
     }
@@ -2686,6 +2841,10 @@
     {
       "key": "functionalityCode",
       "value": "CLAIMS"
+    },
+    {
+      "key": "remarkId",
+      "value": "RMK000001"
     }
   ]
 }
