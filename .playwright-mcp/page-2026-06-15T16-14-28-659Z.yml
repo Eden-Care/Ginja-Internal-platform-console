@@ -1,0 +1,266 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - generic [ref=e6]:
+      - list [ref=e8]:
+        - listitem [ref=e9]:
+          - button "Ginja AI Ginja AI Platform Console" [ref=e10]:
+            - img "Ginja AI" [ref=e12]
+            - generic [ref=e13]:
+              - generic [ref=e14]: Ginja AI
+              - generic [ref=e15]: Platform Console
+            - img [ref=e16]
+      - generic [ref=e19]:
+        - generic [ref=e20]:
+          - generic [ref=e21]: Overview
+          - list [ref=e22]:
+            - listitem [ref=e23]:
+              - link "Dashboard" [ref=e24] [cursor=pointer]:
+                - /url: /
+                - img [ref=e25]
+                - generic [ref=e30]: Dashboard
+        - generic [ref=e31]:
+          - generic [ref=e32]: Tenant management
+          - list [ref=e33]:
+            - listitem [ref=e34]:
+              - link "Tenant accounts" [ref=e35] [cursor=pointer]:
+                - /url: /tenant-accounts
+                - img [ref=e36]
+                - generic [ref=e40]: Tenant accounts
+              - generic: "24"
+            - listitem [ref=e41]:
+              - link "Approvals" [ref=e42] [cursor=pointer]:
+                - /url: /approvals
+                - img [ref=e43]
+                - generic [ref=e46]: Approvals
+              - generic: "5"
+            - listitem [ref=e47]:
+              - link "Tenant provisioning" [ref=e48] [cursor=pointer]:
+                - /url: /tenant-provisioning
+                - img [ref=e49]
+                - generic [ref=e52]: Tenant provisioning
+              - generic: "4"
+        - generic [ref=e53]:
+          - generic [ref=e54]: Configuration library
+          - list [ref=e55]:
+            - listitem [ref=e56]:
+              - link "Module registry" [ref=e57] [cursor=pointer]:
+                - /url: /module-registry
+                - img [ref=e58]
+                - generic [ref=e62]: Module registry
+            - listitem [ref=e63]:
+              - link "Document templates" [ref=e64] [cursor=pointer]:
+                - /url: /document-templates
+                - img [ref=e65]
+                - generic [ref=e68]: Document templates
+            - listitem [ref=e69]:
+              - link "Email & SMS templates" [ref=e70] [cursor=pointer]:
+                - /url: /email-templates
+                - img [ref=e71]
+                - generic [ref=e74]: Email & SMS templates
+            - listitem [ref=e75]:
+              - link "Pricing & plans" [ref=e76] [cursor=pointer]:
+                - /url: /pricing
+                - img [ref=e77]
+                - generic [ref=e79]: Pricing & plans
+        - generic [ref=e80]:
+          - generic [ref=e81]: Access & security
+          - list [ref=e82]:
+            - listitem [ref=e83]:
+              - link "Users" [ref=e84] [cursor=pointer]:
+                - /url: /access-users
+                - img [ref=e85]
+                - generic [ref=e90]: Users
+              - generic: "13"
+            - listitem [ref=e91]:
+              - link "Roles & permissions" [ref=e92] [cursor=pointer]:
+                - /url: /access-roles
+                - img [ref=e93]
+                - generic [ref=e97]: Roles & permissions
+        - generic [ref=e98]:
+          - generic [ref=e99]: Platform
+          - list [ref=e100]:
+            - listitem [ref=e101]:
+              - link "Platform settings" [ref=e102] [cursor=pointer]:
+                - /url: /platform-settings
+                - img [ref=e103]
+                - generic [ref=e106]: Platform settings
+            - listitem [ref=e107]:
+              - link "Audit log" [ref=e108] [cursor=pointer]:
+                - /url: /audit-log
+                - img [ref=e109]
+                - generic [ref=e113]: Audit log
+      - list [ref=e115]:
+        - listitem [ref=e116]:
+          - button "A Admin admin@ginja.ai" [ref=e117]:
+            - generic [ref=e119]: A
+            - generic [ref=e120]:
+              - generic [ref=e121]: Admin
+              - generic [ref=e122]: admin@ginja.ai
+            - img [ref=e123]
+      - button "Toggle Sidebar" [ref=e126]
+    - main [ref=e127]:
+      - generic [ref=e128]:
+        - button "Toggle Sidebar" [ref=e129]:
+          - img
+          - generic [ref=e130]: Toggle Sidebar
+        - button "Search tenants, modules, templates… ⌘ K" [ref=e131]:
+          - img [ref=e132]
+          - generic [ref=e135]: Search tenants, modules, templates…
+          - generic: ⌘ K
+        - generic [ref=e136]:
+          - heading "Search" [level=2] [ref=e137]
+          - paragraph [ref=e138]: Search across pages and tenants
+        - generic [ref=e139]:
+          - button "Toggle theme" [ref=e140]:
+            - img
+            - generic [ref=e141]: Toggle theme
+          - button "Notifications" [ref=e142]:
+            - img
+            - generic [ref=e143]: Notifications
+      - main [ref=e144]:
+        - generic [ref=e398]:
+          - generic [ref=e399]:
+            - generic [ref=e400]:
+              - navigation "Breadcrumb" [ref=e401]:
+                - generic [ref=e402]: Access & security
+                - generic [ref=e403]: /
+                - generic [ref=e404]: Roles & permissions
+              - heading "Roles & permissions" [level=1] [ref=e405]
+              - paragraph [ref=e406]: Build roles from the platform modules, then assign them to users from the Users tab. Modules can be changed anytime.
+            - button "Create role" [ref=e408]:
+              - img
+              - text: Create role
+          - tablist [ref=e409]:
+            - tab "Users" [ref=e410]:
+              - img [ref=e411]
+              - text: Users
+            - tab "Roles & permissions" [selected] [ref=e416]:
+              - img [ref=e417]
+              - text: Roles & permissions
+          - generic [ref=e420]:
+            - group [ref=e421]:
+              - group [ref=e422]:
+                - img [ref=e423]
+              - textbox "Search roles…" [ref=e426]
+            - generic [ref=e427]:
+              - img [ref=e428]
+              - text: 8 roles
+          - generic [ref=e431]:
+            - generic [ref=e432]: System roles · built-in, cannot be deleted
+            - generic [ref=e433]:
+              - button "PLATFORM_ADMIN System Platform administrator — full access 8 modules View" [ref=e434] [cursor=pointer]:
+                - generic [ref=e435]:
+                  - img [ref=e437]
+                  - generic [ref=e440]:
+                    - generic [ref=e441]:
+                      - text: PLATFORM_ADMIN
+                      - generic [ref=e442]:
+                        - img [ref=e443]
+                        - text: System
+                    - generic [ref=e446]: Platform administrator — full access
+                - generic [ref=e448]:
+                  - text: "8"
+                  - generic [ref=e449]: modules
+                - generic [ref=e451]:
+                  - text: View
+                  - img [ref=e452]
+              - button "PLATFORM_ENGINEER System Configures tenant system provisioning 0 modules View" [ref=e454] [cursor=pointer]:
+                - generic [ref=e455]:
+                  - img [ref=e457]
+                  - generic [ref=e460]:
+                    - generic [ref=e461]:
+                      - text: PLATFORM_ENGINEER
+                      - generic [ref=e462]:
+                        - img [ref=e463]
+                        - text: System
+                    - generic [ref=e466]: Configures tenant system provisioning
+                - generic [ref=e468]:
+                  - text: "0"
+                  - generic [ref=e469]: modules
+                - generic [ref=e471]:
+                  - text: View
+                  - img [ref=e472]
+              - button "SUPPORT System Read-only support access 0 modules View" [ref=e474] [cursor=pointer]:
+                - generic [ref=e475]:
+                  - img [ref=e477]
+                  - generic [ref=e480]:
+                    - generic [ref=e481]:
+                      - text: SUPPORT
+                      - generic [ref=e482]:
+                        - img [ref=e483]
+                        - text: System
+                    - generic [ref=e486]: Read-only support access
+                - generic [ref=e488]:
+                  - text: "0"
+                  - generic [ref=e489]: modules
+                - generic [ref=e491]:
+                  - text: View
+                  - img [ref=e492]
+          - generic [ref=e494]:
+            - generic [ref=e495]: Custom roles · created by your team
+            - generic [ref=e496]:
+              - button "AUDIT_TEST_ROLE_2 x 1 module Edit" [ref=e497] [cursor=pointer]:
+                - generic [ref=e498]:
+                  - img [ref=e500]
+                  - generic [ref=e503]:
+                    - generic [ref=e504]: AUDIT_TEST_ROLE_2
+                    - generic [ref=e505]: x
+                - generic [ref=e507]:
+                  - text: "1"
+                  - generic [ref=e508]: module
+                - generic [ref=e510]:
+                  - text: Edit
+                  - img [ref=e511]
+              - button "CLAIMS_OFFICER No description. 1 module Edit" [ref=e513] [cursor=pointer]:
+                - generic [ref=e514]:
+                  - img [ref=e516]
+                  - generic [ref=e519]:
+                    - generic [ref=e520]: CLAIMS_OFFICER
+                    - generic [ref=e521]: No description.
+                - generic [ref=e523]:
+                  - text: "1"
+                  - generic [ref=e524]: module
+                - generic [ref=e526]:
+                  - text: Edit
+                  - img [ref=e527]
+              - button "FINANCE_OPERATOR Finance + claims 2 modules Edit" [ref=e529] [cursor=pointer]:
+                - generic [ref=e530]:
+                  - img [ref=e532]
+                  - generic [ref=e535]:
+                    - generic [ref=e536]: FINANCE_OPERATOR
+                    - generic [ref=e537]: Finance + claims
+                - generic [ref=e539]:
+                  - text: "2"
+                  - generic [ref=e540]: modules
+                - generic [ref=e542]:
+                  - text: Edit
+                  - img [ref=e543]
+              - button "REGIONAL_CLAIMS No description. 0 modules Edit" [ref=e545] [cursor=pointer]:
+                - generic [ref=e546]:
+                  - img [ref=e548]
+                  - generic [ref=e551]:
+                    - generic [ref=e552]: REGIONAL_CLAIMS
+                    - generic [ref=e553]: No description.
+                - generic [ref=e555]:
+                  - text: "0"
+                  - generic [ref=e556]: modules
+                - generic [ref=e558]:
+                  - text: Edit
+                  - img [ref=e559]
+              - button "ZZ_PLAYWRIGHT_TEST Temporary role created by an automated UI test. 2 modules Edit" [ref=e561] [cursor=pointer]:
+                - generic [ref=e562]:
+                  - img [ref=e564]
+                  - generic [ref=e567]:
+                    - generic [ref=e568]: ZZ_PLAYWRIGHT_TEST
+                    - generic [ref=e569]: Temporary role created by an automated UI test.
+                - generic [ref=e571]:
+                  - text: "2"
+                  - generic [ref=e572]: modules
+                - generic [ref=e574]:
+                  - text: Edit
+                  - img [ref=e575]
+  - region "Notifications alt+T":
+    - list:
+      - listitem [ref=e577]:
+        - img [ref=e579]
+        - generic [ref=e583]: Role “ZZ_PLAYWRIGHT_TEST” created.

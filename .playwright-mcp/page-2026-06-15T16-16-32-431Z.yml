@@ -1,0 +1,238 @@
+- generic:
+  - generic:
+    - generic:
+      - generic:
+        - generic:
+          - generic:
+            - generic:
+              - list:
+                - listitem:
+                  - button:
+                    - generic:
+                      - img
+                    - generic:
+                      - generic: Ginja AI
+                      - generic: Platform Console
+                    - img
+            - generic:
+              - generic:
+                - generic: Overview
+                - list:
+                  - listitem:
+                    - link:
+                      - /url: /
+                      - img
+                      - generic: Dashboard
+              - generic:
+                - generic: Tenant management
+                - list:
+                  - listitem:
+                    - link:
+                      - /url: /tenant-accounts
+                      - img
+                      - generic: Tenant accounts
+                    - generic: "24"
+                  - listitem:
+                    - link:
+                      - /url: /approvals
+                      - img
+                      - generic: Approvals
+                    - generic: "5"
+                  - listitem:
+                    - link:
+                      - /url: /tenant-provisioning
+                      - img
+                      - generic: Tenant provisioning
+                    - generic: "4"
+              - generic:
+                - generic: Configuration library
+                - list:
+                  - listitem:
+                    - link:
+                      - /url: /module-registry
+                      - img
+                      - generic: Module registry
+                  - listitem:
+                    - link:
+                      - /url: /document-templates
+                      - img
+                      - generic: Document templates
+                  - listitem:
+                    - link:
+                      - /url: /email-templates
+                      - img
+                      - generic: Email & SMS templates
+                  - listitem:
+                    - link:
+                      - /url: /pricing
+                      - img
+                      - generic: Pricing & plans
+              - generic:
+                - generic: Access & security
+                - list:
+                  - listitem:
+                    - link:
+                      - /url: /access-users
+                      - img
+                      - generic: Users
+                    - generic: "13"
+                  - listitem:
+                    - link:
+                      - /url: /access-roles
+                      - img
+                      - generic: Roles & permissions
+              - generic:
+                - generic: Platform
+                - list:
+                  - listitem:
+                    - link:
+                      - /url: /platform-settings
+                      - img
+                      - generic: Platform settings
+                  - listitem:
+                    - link:
+                      - /url: /audit-log
+                      - img
+                      - generic: Audit log
+            - generic:
+              - list:
+                - listitem:
+                  - button:
+                    - generic:
+                      - generic: A
+                    - generic:
+                      - generic: Admin
+                      - generic: admin@ginja.ai
+                    - img
+            - button
+      - main:
+        - generic:
+          - button:
+            - img
+            - generic: Toggle Sidebar
+          - button:
+            - img
+            - generic: Search tenants, modules, templates…
+            - generic: ⌘ K
+          - generic:
+            - heading [level=2]: Search
+            - paragraph: Search across pages and tenants
+          - generic:
+            - button:
+              - img
+              - generic: Toggle theme
+            - button:
+              - img
+              - generic: Notifications
+        - main:
+          - generic:
+            - generic:
+              - button:
+                - img
+                - text: Back to roles
+              - generic:
+                - generic:
+                  - heading [level=1]: ZZ_PLAYWRIGHT_TEST
+                  - paragraph: Edit the role’s details and the modules it can access.
+                - generic:
+                  - button [disabled]:
+                    - img
+                    - text: Delete
+            - generic:
+              - generic:
+                - generic: Identity
+                - generic:
+                  - generic:
+                    - text: Role name
+                    - generic: "*"
+                  - textbox:
+                    - /placeholder: e.g. Onboarding Specialist
+                    - text: ZZ_PLAYWRIGHT_TEST
+                - generic:
+                  - generic:
+                    - text: Description
+                    - generic: optional
+                  - textbox:
+                    - /placeholder: What is this role for?
+                    - text: Temporary role created by an automated UI test.
+              - generic:
+                - generic:
+                  - generic:
+                    - generic: Modules · what this role can access
+                    - generic: Grant the platform modules this role should reach.
+                  - generic: 2 / 9 selected
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - text: Access & Control
+                        - generic: ACCESS
+                      - generic: Manage members, roles and functionality assignments
+                  - generic:
+                    - generic:
+                      - generic:
+                        - text: Billing X
+                        - generic: BILLING_X
+                      - generic: audit module test
+                  - generic:
+                    - generic:
+                      - img
+                    - generic:
+                      - generic:
+                        - text: Claims
+                        - generic: CLAIMS
+                      - generic: Claims intake and adjudication operations
+                  - generic:
+                    - generic:
+                      - generic:
+                        - text: Employer
+                        - generic: EMPLOYER
+                      - generic: Employer group administration
+                  - generic:
+                    - generic:
+                      - generic:
+                        - text: Finance
+                        - generic: FINANCE
+                      - generic: Billing, invoicing and financial operations
+                  - generic:
+                    - generic:
+                      - generic:
+                        - text: Member Management
+                        - generic: MEMBER
+                      - generic: Member portal and membership operations
+                  - generic:
+                    - generic:
+                      - generic:
+                        - text: Service Provider
+                        - generic: PROVIDER
+                      - generic: Provider network and contracting
+                  - generic:
+                    - generic:
+                      - generic:
+                        - text: Reporting
+                        - generic: REPORTING
+                      - generic: Dashboards and analytical reporting
+                  - generic:
+                    - generic:
+                      - img
+                    - generic:
+                      - generic:
+                        - text: Tenant & Org Control
+                        - generic: TENANT
+                      - generic: Onboard payers/tenants, entitlements, activation
+            - generic:
+              - generic: 2 modules selected
+              - button: Cancel
+              - button:
+                - img
+                - text: Save changes
+    - region "Notifications alt+T"
+  - dialog [ref=e944]:
+    - img [ref=e946]
+    - heading "Delete “ZZ_PLAYWRIGHT_TEST”?" [level=3] [ref=e949]
+    - paragraph [ref=e951]: This permanently removes the role. Members currently holding it lose its module access immediately. A role that is still assigned can’t be deleted.
+    - generic [ref=e952]:
+      - button "Cancel" [ref=e953]
+      - button "Delete role" [active] [ref=e954]:
+        - img
+        - text: Delete role

@@ -1,0 +1,147 @@
+- generic [ref=e2]:
+  - generic [ref=e60]:
+    - generic [ref=e63]:
+      - list [ref=e65]:
+        - listitem [ref=e66]:
+          - button "Ginja AI Ginja AI Platform Console" [ref=e67]:
+            - img "Ginja AI" [ref=e69]
+            - generic [ref=e70]:
+              - generic [ref=e71]: Ginja AI
+              - generic [ref=e72]: Platform Console
+            - img [ref=e73]
+      - generic [ref=e76]:
+        - generic [ref=e77]:
+          - generic [ref=e78]: Overview
+          - list [ref=e79]:
+            - listitem [ref=e80]:
+              - link "Dashboard" [ref=e81] [cursor=pointer]:
+                - /url: /
+                - img [ref=e82]
+                - generic [ref=e87]: Dashboard
+        - generic [ref=e88]:
+          - generic [ref=e89]: Tenant management
+          - list [ref=e90]:
+            - listitem [ref=e91]:
+              - link "Tenant accounts" [ref=e92] [cursor=pointer]:
+                - /url: /tenant-accounts
+                - img [ref=e93]
+                - generic [ref=e97]: Tenant accounts
+              - generic: "24"
+            - listitem [ref=e98]:
+              - link "Approvals" [ref=e99] [cursor=pointer]:
+                - /url: /approvals
+                - img [ref=e100]
+                - generic [ref=e103]: Approvals
+              - generic: "5"
+            - listitem [ref=e104]:
+              - link "Tenant provisioning" [ref=e105] [cursor=pointer]:
+                - /url: /tenant-provisioning
+                - img [ref=e106]
+                - generic [ref=e109]: Tenant provisioning
+              - generic: "4"
+        - generic [ref=e110]:
+          - generic [ref=e111]: Configuration library
+          - list [ref=e112]:
+            - listitem [ref=e113]:
+              - link "Module registry" [ref=e114] [cursor=pointer]:
+                - /url: /module-registry
+                - img [ref=e115]
+                - generic [ref=e119]: Module registry
+            - listitem [ref=e120]:
+              - link "Document templates" [ref=e121] [cursor=pointer]:
+                - /url: /document-templates
+                - img [ref=e122]
+                - generic [ref=e125]: Document templates
+            - listitem [ref=e126]:
+              - link "Email & SMS templates" [ref=e127] [cursor=pointer]:
+                - /url: /email-templates
+                - img [ref=e128]
+                - generic [ref=e131]: Email & SMS templates
+            - listitem [ref=e132]:
+              - link "Pricing & plans" [ref=e133] [cursor=pointer]:
+                - /url: /pricing
+                - img [ref=e134]
+                - generic [ref=e136]: Pricing & plans
+        - generic [ref=e137]:
+          - generic [ref=e138]: Access & security
+          - list [ref=e139]:
+            - listitem [ref=e140]:
+              - link "Users" [ref=e141] [cursor=pointer]:
+                - /url: /access-users
+                - img [ref=e142]
+                - generic [ref=e147]: Users
+              - generic: "13"
+            - listitem [ref=e148]:
+              - link "Roles & permissions" [ref=e149] [cursor=pointer]:
+                - /url: /access-roles
+                - img [ref=e150]
+                - generic [ref=e154]: Roles & permissions
+        - generic [ref=e155]:
+          - generic [ref=e156]: Platform
+          - list [ref=e157]:
+            - listitem [ref=e158]:
+              - link "Platform settings" [ref=e159] [cursor=pointer]:
+                - /url: /platform-settings
+                - img [ref=e160]
+                - generic [ref=e163]: Platform settings
+            - listitem [ref=e164]:
+              - link "Audit log" [ref=e165] [cursor=pointer]:
+                - /url: /audit-log
+                - img [ref=e166]
+                - generic [ref=e170]: Audit log
+      - list [ref=e172]:
+        - listitem [ref=e173]:
+          - button "A Admin admin@ginja.ai" [ref=e174]:
+            - generic [ref=e176]: A
+            - generic [ref=e177]:
+              - generic [ref=e178]: Admin
+              - generic [ref=e179]: admin@ginja.ai
+            - img [ref=e180]
+      - button "Toggle Sidebar" [ref=e183]
+    - main [ref=e184]:
+      - generic [ref=e185]:
+        - button "Toggle Sidebar" [ref=e186]:
+          - img
+          - generic [ref=e187]: Toggle Sidebar
+        - button "Search tenants, modules, templates… ⌘ K" [ref=e188]:
+          - img [ref=e189]
+          - generic [ref=e192]: Search tenants, modules, templates…
+          - generic: ⌘ K
+        - generic [ref=e193]:
+          - heading "Search" [level=2] [ref=e194]
+          - paragraph [ref=e195]: Search across pages and tenants
+        - generic [ref=e196]:
+          - button "Toggle theme" [ref=e197]:
+            - img
+            - generic [ref=e198]: Toggle theme
+          - button "Notifications" [ref=e199]:
+            - img
+            - generic [ref=e200]: Notifications
+      - main [ref=e201]:
+        - generic [ref=e202]:
+          - generic [ref=e203]:
+            - generic [ref=e204]:
+              - navigation "Breadcrumb" [ref=e205]:
+                - generic [ref=e206]: Access & security
+                - generic [ref=e207]: /
+                - generic [ref=e208]: Users
+              - heading "Users" [level=1] [ref=e209]
+              - paragraph [ref=e210]: Invite internal Ginja staff, assign them roles, and manage their access lifecycle.
+            - button "Invite user" [ref=e212]:
+              - img
+              - text: Invite user
+          - tablist [ref=e213]:
+            - tab "Users" [selected] [ref=e214]:
+              - img [ref=e215]
+              - text: Users
+            - tab "Roles & permissions" [ref=e220]:
+              - img [ref=e221]
+              - text: Roles & permissions
+          - img [ref=e225]
+  - region "Notifications alt+T":
+    - list:
+      - listitem [ref=e227]:
+        - img [ref=e229]
+        - generic [ref=e232]:
+          - generic [ref=e233]: Signed in
+          - generic [ref=e234]: Welcome back — admin@ginja.ai
