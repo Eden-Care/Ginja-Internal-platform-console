@@ -8,6 +8,7 @@ import {
   HistoryIcon,
   KeyRoundIcon,
   LayersIcon,
+  Loader2Icon,
   LockIcon,
   type LucideIcon,
   LogInIcon,
@@ -262,6 +263,7 @@ export function ConfirmDialog({
   confirmWord,
   reasonRequired,
   reasonLabel = "Reason",
+  busy,
   onConfirm,
   onCancel,
 }: {
@@ -273,6 +275,9 @@ export function ConfirmDialog({
   confirmWord?: string
   reasonRequired?: boolean
   reasonLabel?: string
+  /** While true the action is in flight: both buttons lock and the confirm
+      button shows a spinner; the dialog can't be dismissed. */
+  busy?: boolean
   onConfirm: (reason: string) => void
   onCancel: () => void
 }) {
@@ -283,7 +288,7 @@ export function ConfirmDialog({
   const ok = wordOk && reasonOk
 
   return (
-    <Dialog open onOpenChange={(o) => !o && onCancel()}>
+    <Dialog open onOpenChange={(o) => !o && !busy && onCancel()}>
       <DialogContent showCloseButton={false} className="sm:max-w-[470px]">
         <span
           className={cn(
@@ -330,15 +335,15 @@ export function ConfirmDialog({
         )}
 
         <DialogFooter className="mx-0 mb-0 border-0 bg-transparent p-0 pt-2">
-          <Button variant="ghost" onClick={onCancel}>
+          <Button variant="ghost" onClick={onCancel} disabled={busy}>
             Cancel
           </Button>
           <Button
             variant={tone === "danger" ? "destructive" : "default"}
-            disabled={!ok}
+            disabled={!ok || busy}
             onClick={() => onConfirm(reason)}
           >
-            {icon}
+            {busy ? <Loader2Icon className="animate-spin" /> : icon}
             {confirmLabel}
           </Button>
         </DialogFooter>

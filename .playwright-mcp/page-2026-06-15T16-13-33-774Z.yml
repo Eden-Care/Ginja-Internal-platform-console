@@ -1,0 +1,299 @@
+- generic [ref=e2]:
+  - generic [ref=e60]:
+    - generic [ref=e63]:
+      - list [ref=e65]:
+        - listitem [ref=e66]:
+          - button "Ginja AI Ginja AI Platform Console" [ref=e67]:
+            - img "Ginja AI" [ref=e69]
+            - generic [ref=e70]:
+              - generic [ref=e71]: Ginja AI
+              - generic [ref=e72]: Platform Console
+            - img [ref=e73]
+      - generic [ref=e76]:
+        - generic [ref=e77]:
+          - generic [ref=e78]: Overview
+          - list [ref=e79]:
+            - listitem [ref=e80]:
+              - link "Dashboard" [ref=e81] [cursor=pointer]:
+                - /url: /
+                - img [ref=e82]
+                - generic [ref=e87]: Dashboard
+        - generic [ref=e88]:
+          - generic [ref=e89]: Tenant management
+          - list [ref=e90]:
+            - listitem [ref=e91]:
+              - link "Tenant accounts" [ref=e92] [cursor=pointer]:
+                - /url: /tenant-accounts
+                - img [ref=e93]
+                - generic [ref=e97]: Tenant accounts
+              - generic: "24"
+            - listitem [ref=e98]:
+              - link "Approvals" [ref=e99] [cursor=pointer]:
+                - /url: /approvals
+                - img [ref=e100]
+                - generic [ref=e103]: Approvals
+              - generic: "5"
+            - listitem [ref=e104]:
+              - link "Tenant provisioning" [ref=e105] [cursor=pointer]:
+                - /url: /tenant-provisioning
+                - img [ref=e106]
+                - generic [ref=e109]: Tenant provisioning
+              - generic: "4"
+        - generic [ref=e110]:
+          - generic [ref=e111]: Configuration library
+          - list [ref=e112]:
+            - listitem [ref=e113]:
+              - link "Module registry" [ref=e114] [cursor=pointer]:
+                - /url: /module-registry
+                - img [ref=e115]
+                - generic [ref=e119]: Module registry
+            - listitem [ref=e120]:
+              - link "Document templates" [ref=e121] [cursor=pointer]:
+                - /url: /document-templates
+                - img [ref=e122]
+                - generic [ref=e125]: Document templates
+            - listitem [ref=e126]:
+              - link "Email & SMS templates" [ref=e127] [cursor=pointer]:
+                - /url: /email-templates
+                - img [ref=e128]
+                - generic [ref=e131]: Email & SMS templates
+            - listitem [ref=e132]:
+              - link "Pricing & plans" [ref=e133] [cursor=pointer]:
+                - /url: /pricing
+                - img [ref=e134]
+                - generic [ref=e136]: Pricing & plans
+        - generic [ref=e137]:
+          - generic [ref=e138]: Access & security
+          - list [ref=e139]:
+            - listitem [ref=e140]:
+              - link "Users" [ref=e141] [cursor=pointer]:
+                - /url: /access-users
+                - img [ref=e142]
+                - generic [ref=e147]: Users
+              - generic: "13"
+            - listitem [ref=e148]:
+              - link "Roles & permissions" [ref=e149] [cursor=pointer]:
+                - /url: /access-roles
+                - img [ref=e150]
+                - generic [ref=e154]: Roles & permissions
+        - generic [ref=e155]:
+          - generic [ref=e156]: Platform
+          - list [ref=e157]:
+            - listitem [ref=e158]:
+              - link "Platform settings" [ref=e159] [cursor=pointer]:
+                - /url: /platform-settings
+                - img [ref=e160]
+                - generic [ref=e163]: Platform settings
+            - listitem [ref=e164]:
+              - link "Audit log" [ref=e165] [cursor=pointer]:
+                - /url: /audit-log
+                - img [ref=e166]
+                - generic [ref=e170]: Audit log
+      - list [ref=e172]:
+        - listitem [ref=e173]:
+          - button "A Admin admin@ginja.ai" [ref=e174]:
+            - generic [ref=e176]: A
+            - generic [ref=e177]:
+              - generic [ref=e178]: Admin
+              - generic [ref=e179]: admin@ginja.ai
+            - img [ref=e180]
+      - button "Toggle Sidebar" [ref=e183]
+    - main [ref=e184]:
+      - generic [ref=e185]:
+        - button "Toggle Sidebar" [ref=e186]:
+          - img
+          - generic [ref=e187]: Toggle Sidebar
+        - button "Search tenants, modules, templates… ⌘ K" [ref=e188]:
+          - img [ref=e189]
+          - generic [ref=e192]: Search tenants, modules, templates…
+          - generic: ⌘ K
+        - generic [ref=e193]:
+          - heading "Search" [level=2] [ref=e194]
+          - paragraph [ref=e195]: Search across pages and tenants
+        - generic [ref=e196]:
+          - button "Toggle theme" [ref=e197]:
+            - img
+            - generic [ref=e198]: Toggle theme
+          - button "Notifications" [ref=e199]:
+            - img
+            - generic [ref=e200]: Notifications
+      - main [ref=e201]:
+        - generic [ref=e202]:
+          - generic [ref=e203]:
+            - generic [ref=e204]:
+              - heading "Good morning, Admin" [level=1] [ref=e205]
+              - paragraph [ref=e206]: Tenant onboarding, approvals and platform health at a glance.
+            - generic [ref=e207]:
+              - button "Last 30 days" [ref=e208]:
+                - img
+                - text: Last 30 days
+              - button "Onboard tenant" [ref=e209]:
+                - img
+                - text: Onboard tenant
+          - generic [ref=e210]:
+            - generic [ref=e211]:
+              - generic [ref=e212]:
+                - img [ref=e214]
+                - img [ref=e218]
+              - generic [ref=e221]: Active tenants
+              - generic [ref=e222]: "18"
+              - generic [ref=e223]: +2 this week
+            - generic [ref=e224]:
+              - generic [ref=e225]:
+                - img [ref=e227]
+                - img [ref=e230]
+              - generic [ref=e233]: In onboarding
+              - generic [ref=e234]: "4"
+              - generic [ref=e235]: 3 awaiting docs
+            - generic [ref=e236]:
+              - generic [ref=e237]:
+                - img [ref=e239]
+                - img [ref=e242]
+              - generic [ref=e245]: Pending approvals
+              - generic [ref=e246]: "5"
+              - generic [ref=e247]: 2 high priority
+            - generic [ref=e248]:
+              - generic [ref=e249]:
+                - img [ref=e251]
+                - img [ref=e256]
+              - generic [ref=e259]: Covered members
+              - generic [ref=e260]: 2.1M
+              - generic [ref=e261]: across 41 tenants
+          - generic [ref=e262]:
+            - generic [ref=e263]:
+              - generic [ref=e264]:
+                - img [ref=e266]
+                - heading "Tenant accounts by status" [level=3] [ref=e270]
+              - generic [ref=e271]:
+                - generic [ref=e275]:
+                  - text: "24"
+                  - generic [ref=e276]: Total
+                - generic [ref=e277]:
+                  - generic [ref=e278]:
+                    - generic [ref=e280]: Active
+                    - generic [ref=e281]: "18"
+                  - generic [ref=e282]:
+                    - generic [ref=e284]: Draft
+                    - generic [ref=e285]: "4"
+                  - generic [ref=e286]:
+                    - generic [ref=e288]: Suspended
+                    - generic [ref=e289]: "1"
+                  - generic [ref=e290]:
+                    - generic [ref=e292]: Retired
+                    - generic [ref=e293]: "1"
+            - generic [ref=e294]:
+              - generic [ref=e295]:
+                - img [ref=e297]
+                - heading "Onboarding pipeline" [level=3] [ref=e299]
+                - generic [ref=e301]: 4 in progress
+              - generic [ref=e303]:
+                - generic [ref=e304]:
+                  - generic [ref=e305]: Details captured
+                  - generic [ref=e308]: "4"
+                - generic [ref=e309]:
+                  - generic [ref=e310]: Modules assigned
+                  - generic [ref=e313]: "4"
+                - generic [ref=e314]:
+                  - generic [ref=e315]: Billing set
+                  - generic [ref=e318]: "3"
+                - generic [ref=e319]:
+                  - generic [ref=e320]: Docs uploaded
+                  - generic [ref=e323]: "3"
+                - generic [ref=e324]:
+                  - generic [ref=e325]: Submitted for review
+                  - generic [ref=e328]: "2"
+          - generic [ref=e329]:
+            - generic [ref=e330]:
+              - generic [ref=e331]:
+                - img [ref=e333]
+                - heading "Approvals needing attention" [level=3] [ref=e336]
+                - link "View all" [ref=e338] [cursor=pointer]:
+                  - /url: /approvals
+                  - text: View all
+                  - img
+              - generic [ref=e339]:
+                - link "CI CIC Insurance Group Tenant onboarding · by Amara Okeke · 2h ago High" [ref=e340] [cursor=pointer]:
+                  - /url: /approvals
+                  - generic [ref=e341]: CI
+                  - generic [ref=e342]:
+                    - generic [ref=e343]: CIC Insurance Group
+                    - generic [ref=e344]: Tenant onboarding · by Amara Okeke · 2h ago
+                  - generic [ref=e345]: High
+                  - img [ref=e347]
+                - link "ST Strategis Insurance Tenant onboarding · by Amara Okeke · 5h ago" [ref=e349] [cursor=pointer]:
+                  - /url: /approvals
+                  - generic [ref=e350]: ST
+                  - generic [ref=e351]:
+                    - generic [ref=e352]: Strategis Insurance
+                    - generic [ref=e353]: Tenant onboarding · by Amara Okeke · 5h ago
+                  - img [ref=e354]
+                - link "AA AAR Insurance Entitlement change · by Lily Tesfaye · 1d ago" [ref=e356] [cursor=pointer]:
+                  - /url: /approvals
+                  - generic [ref=e357]: AA
+                  - generic [ref=e358]:
+                    - generic [ref=e359]: AAR Insurance
+                    - generic [ref=e360]: Entitlement change · by Lily Tesfaye · 1d ago
+                  - img [ref=e361]
+                - link "BR Britam Health Org details change · by Amara Okeke · 1d ago" [ref=e363] [cursor=pointer]:
+                  - /url: /approvals
+                  - generic [ref=e364]: BR
+                  - generic [ref=e365]:
+                    - generic [ref=e366]: Britam Health
+                    - generic [ref=e367]: Org details change · by Amara Okeke · 1d ago
+                  - img [ref=e368]
+            - generic [ref=e370]:
+              - generic [ref=e371]:
+                - img [ref=e373]
+                - heading "Recent platform activity" [level=3] [ref=e377]
+              - list [ref=e379]:
+                - listitem [ref=e380]:
+                  - generic [ref=e382]:
+                    - generic [ref=e383]: 08 Jun · 09:42
+                    - generic [ref=e384]: Submitted Tenant onboarding
+                    - generic [ref=e385]: CIC Insurance Group · PYR-0205 — Amara Okeke
+                - listitem [ref=e386]:
+                  - generic [ref=e388]:
+                    - generic [ref=e389]: 08 Jun · 09:15
+                    - generic [ref=e390]: Tenant resources provisioned
+                    - generic [ref=e391]: jubilee-ug.ginja.ai — System
+                - listitem [ref=e392]:
+                  - generic [ref=e394]:
+                    - generic [ref=e395]: 08 Jun · 08:58
+                    - generic [ref=e396]: Approved KYB documents (6/6)
+                    - generic [ref=e397]: Equity Afia Care · PYR-0212 — David Kimani
+                - listitem [ref=e398]:
+                  - generic [ref=e400]:
+                    - generic [ref=e401]: 07 Jun · 17:30
+                    - generic [ref=e402]: Updated module registry — Reinsurance v1.6.0
+                    - generic [ref=e403]: "Module: reinsurance — Lily Tesfaye"
+                - listitem [ref=e404]:
+                  - generic [ref=e406]:
+                    - generic [ref=e407]: 07 Jun · 16:04
+                    - generic [ref=e408]: Suspended Tenant account
+                    - generic [ref=e409]: Radiant Insurance · PYR-0154 — Amara Okeke
+          - generic [ref=e410]:
+            - generic [ref=e411]:
+              - img [ref=e413]
+              - generic [ref=e416]:
+                - generic [ref=e417]: Data residency regions
+                - generic [ref=e418]: 6 active
+                - generic [ref=e419]: 1 provisioning · Lagos
+            - generic [ref=e420]:
+              - img [ref=e422]
+              - generic [ref=e426]:
+                - generic [ref=e427]: Published modules
+                - generic [ref=e428]: 9 live
+                - generic [ref=e429]: 1 beta · 1 sunset
+            - generic [ref=e430]:
+              - img [ref=e432]
+              - generic [ref=e436]:
+                - generic [ref=e437]: Tenant environments
+                - generic [ref=e438]: 41 live
+                - generic [ref=e439]: 100% isolation verified
+  - region "Notifications alt+T":
+    - list:
+      - listitem [ref=e440]:
+        - img [ref=e442]
+        - generic [ref=e445]:
+          - generic [ref=e446]: Signed in
+          - generic [ref=e447]: Welcome back — admin@ginja.ai

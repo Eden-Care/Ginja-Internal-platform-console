@@ -1,0 +1,315 @@
+- generic:
+  - generic:
+    - generic:
+      - generic:
+        - generic:
+          - generic:
+            - generic:
+              - list:
+                - listitem:
+                  - button:
+                    - generic:
+                      - img
+                    - generic:
+                      - generic: Ginja AI
+                      - generic: Platform Console
+                    - img
+            - generic:
+              - generic:
+                - generic: Overview
+                - list:
+                  - listitem:
+                    - link:
+                      - /url: /
+                      - img
+                      - generic: Dashboard
+              - generic:
+                - generic: Tenant management
+                - list:
+                  - listitem:
+                    - link:
+                      - /url: /tenant-accounts
+                      - img
+                      - generic: Tenant accounts
+                    - generic: "24"
+                  - listitem:
+                    - link:
+                      - /url: /approvals
+                      - img
+                      - generic: Approvals
+                    - generic: "5"
+                  - listitem:
+                    - link:
+                      - /url: /tenant-provisioning
+                      - img
+                      - generic: Tenant provisioning
+                    - generic: "4"
+              - generic:
+                - generic: Configuration library
+                - list:
+                  - listitem:
+                    - link:
+                      - /url: /module-registry
+                      - img
+                      - generic: Module registry
+                  - listitem:
+                    - link:
+                      - /url: /document-templates
+                      - img
+                      - generic: Document templates
+                  - listitem:
+                    - link:
+                      - /url: /email-templates
+                      - img
+                      - generic: Email & SMS templates
+                  - listitem:
+                    - link:
+                      - /url: /pricing
+                      - img
+                      - generic: Pricing & plans
+              - generic:
+                - generic: Access & security
+                - list:
+                  - listitem:
+                    - link:
+                      - /url: /access-users
+                      - img
+                      - generic: Users
+                    - generic: "13"
+                  - listitem:
+                    - link:
+                      - /url: /access-roles
+                      - img
+                      - generic: Roles & permissions
+              - generic:
+                - generic: Platform
+                - list:
+                  - listitem:
+                    - link:
+                      - /url: /platform-settings
+                      - img
+                      - generic: Platform settings
+                  - listitem:
+                    - link:
+                      - /url: /audit-log
+                      - img
+                      - generic: Audit log
+            - generic:
+              - list:
+                - listitem:
+                  - button:
+                    - generic:
+                      - generic: A
+                    - generic:
+                      - generic: Admin
+                      - generic: admin@ginja.ai
+                    - img
+            - button
+      - main:
+        - generic:
+          - button:
+            - img
+            - generic: Toggle Sidebar
+          - button:
+            - img
+            - generic: Search tenants, modules, templates…
+            - generic: ⌘ K
+          - generic:
+            - heading [level=2]: Search
+            - paragraph: Search across pages and tenants
+          - generic:
+            - button:
+              - img
+              - generic: Toggle theme
+            - button:
+              - img
+              - generic: Notifications
+        - main:
+          - generic:
+            - generic:
+              - generic:
+                - navigation:
+                  - generic: Access & security
+                  - generic: /
+                  - generic: Users
+                - heading [level=1]: Users
+                - paragraph: Invite internal Ginja staff, assign them roles, and manage their access lifecycle.
+              - generic:
+                - button:
+                  - img
+                  - text: Invite user
+            - tablist:
+              - tab [selected]:
+                - img
+                - text: Users
+              - tab:
+                - img
+                - text: Roles & permissions
+            - generic:
+              - group:
+                - group:
+                  - img
+                - textbox:
+                  - /placeholder: Search by name or email…
+              - generic:
+                - button:
+                  - text: All
+                  - generic: "4"
+                - button:
+                  - text: Active
+                  - generic: "3"
+                - button:
+                  - text: Invited
+                  - generic: "0"
+                - button:
+                  - text: Suspended
+                  - generic: "1"
+            - generic:
+              - generic:
+                - table:
+                  - rowgroup:
+                    - row:
+                      - columnheader: User
+                      - columnheader: Roles
+                      - columnheader: Status
+                      - columnheader: Last active
+                      - columnheader: Added by
+                      - columnheader
+                  - rowgroup:
+                    - row:
+                      - cell:
+                        - generic:
+                          - generic: SU
+                          - generic:
+                            - generic: Susp User
+                            - generic: susp@ginja.ai
+                      - cell:
+                        - generic:
+                          - generic: No roles
+                      - cell:
+                        - generic: Suspended
+                      - cell: Never
+                      - cell: alice
+                      - cell:
+                        - button:
+                          - img
+                    - row:
+                      - cell:
+                        - generic:
+                          - generic: CO
+                          - generic:
+                            - generic: Claims Officer
+                            - generic: officer@ginja.ai
+                      - cell:
+                        - generic:
+                          - generic:
+                            - generic: CLAIMS_OFFICER
+                      - cell:
+                        - generic: Active
+                      - cell: 6 days ago
+                      - cell: alice
+                      - cell:
+                        - button:
+                          - img
+                    - row:
+                      - cell:
+                        - generic:
+                          - generic: SC
+                          - generic:
+                            - generic: Snake Case
+                            - generic: snake@ginja.ai
+                      - cell:
+                        - generic:
+                          - generic: No roles
+                      - cell:
+                        - generic: Active
+                      - cell: Never
+                      - cell: alice
+                      - cell:
+                        - button:
+                          - img
+                    - row:
+                      - cell:
+                        - generic:
+                          - generic: PA
+                          - generic:
+                            - generic: Platform Administrator
+                            - generic: admin@ginja.ai
+                      - cell:
+                        - generic:
+                          - generic:
+                            - generic: PLATFORM_ADMIN
+                      - cell:
+                        - generic: Active
+                      - cell: less than a minute ago
+                      - cell: bootstrap
+                      - cell:
+                        - button:
+                          - img
+    - region "Notifications alt+T"
+  - dialog "Claims Officer" [ref=e336]:
+    - generic [ref=e337]:
+      - generic [ref=e338]:
+        - generic [ref=e339]:
+          - generic [ref=e340]: CO
+          - generic [ref=e341]:
+            - heading "Claims Officer" [level=2] [ref=e342]
+            - paragraph [ref=e343]: officer@ginja.ai
+            - generic [ref=e344]:
+              - generic [ref=e345]: Active
+              - generic [ref=e347]: MBR000004
+        - button [active] [ref=e348]:
+          - img
+      - generic [ref=e349]:
+        - button "Overview" [ref=e350]
+        - button "Access" [ref=e351]
+    - generic [ref=e352]:
+      - generic [ref=e353]:
+        - generic [ref=e354]:
+          - img [ref=e356]
+          - generic [ref=e359]: Last active
+          - generic [ref=e360]: 6 days ago
+        - generic [ref=e361]:
+          - img [ref=e363]
+          - generic [ref=e365]: Member since
+          - generic [ref=e366]: 10 Jun 2026
+        - generic [ref=e367]:
+          - img [ref=e369]
+          - generic [ref=e371]: Active sessions
+          - generic [ref=e372]: "2"
+      - generic [ref=e373]:
+        - generic [ref=e374]: Account details
+        - generic [ref=e375]:
+          - generic [ref=e376]:
+            - img [ref=e377]
+            - generic [ref=e379]: Account status
+            - generic [ref=e381]: Active
+          - generic [ref=e383]:
+            - img [ref=e384]
+            - generic [ref=e387]: Email
+            - generic [ref=e388]: officer@ginja.ai
+          - generic [ref=e389]:
+            - img [ref=e390]
+            - generic [ref=e393]: User ID
+            - generic [ref=e394]: MBR000004
+          - generic [ref=e395]:
+            - img [ref=e396]
+            - generic [ref=e399]: Invited / added by
+            - generic [ref=e400]: alice
+      - generic [ref=e401]:
+        - generic [ref=e402]:
+          - generic [ref=e403]: Roles & access
+          - generic [ref=e404]: 1 role · 3 modules
+        - button "CLAIMS_OFFICER 3 modules" [ref=e407]:
+          - img [ref=e409]
+          - generic [ref=e412]:
+            - generic [ref=e413]: CLAIMS_OFFICER
+            - generic [ref=e414]: 3 modules
+          - img [ref=e415]
+    - generic [ref=e417]:
+      - button "Suspend" [ref=e418]:
+        - img
+        - text: Suspend
+      - button "Delete user" [ref=e419]:
+        - img
+        - text: Delete user
