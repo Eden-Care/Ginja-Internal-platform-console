@@ -94,7 +94,6 @@ export function PricingPage() {
   return (
     <div className="flex flex-col gap-5">
       <ConsolePageHeader
-        crumbs={["Configuration library", "Pricing & plans"]}
         title="Pricing & plans"
         sub="Subscription models, tiered volume-discount schedules and billing frequencies available during onboarding."
         actions={

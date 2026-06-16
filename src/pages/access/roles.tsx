@@ -460,7 +460,6 @@ export function AccessRolesPage() {
   return (
     <div className="flex flex-col gap-5">
       <ConsolePageHeader
-        crumbs={["Access & security", "Roles & permissions"]}
         title="Roles & permissions"
         sub="Build roles from the platform modules, then assign them to users from the Users tab. Modules can be changed anytime."
         actions={

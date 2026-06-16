@@ -926,7 +926,6 @@ export function AccessUsersPage() {
   return (
     <div className="flex flex-col gap-5">
       <ConsolePageHeader
-        crumbs={["Access & security", "Users"]}
         title="Users"
         sub="Invite internal Ginja staff, assign them roles, and manage their access lifecycle."
         actions={

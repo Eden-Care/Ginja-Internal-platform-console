@@ -137,7 +137,6 @@ export function PlatformSettingsPage() {
   return (
     <div className="flex flex-col gap-5">
       <ConsolePageHeader
-        crumbs={["Platform", "Platform settings"]}
         title="Platform settings"
         sub="Global policies inherited by every tenant. Per-tenant overrides are a future release."
       />

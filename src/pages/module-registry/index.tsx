@@ -76,7 +76,6 @@ export function ModuleRegistryPage() {
   return (
     <div className="flex flex-col gap-5">
       <ConsolePageHeader
-        crumbs={["Configuration library", "Module registry"]}
         title="Module registry"
         sub="The platform catalogue of modules and sub-modules. Everything here is selectable during tenant onboarding — nothing is hard-coded."
         actions={
