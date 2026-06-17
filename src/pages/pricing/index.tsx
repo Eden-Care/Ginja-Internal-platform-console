@@ -35,6 +35,7 @@ import { MiniBadge, Tagpill } from "@/components/console/tagpill"
 import { Note } from "@/components/console/note"
 import { TabBar, type TabItem } from "@/components/console/tab-bar"
 import { hifiTableHead } from "@/components/console/table"
+import { usePricingStructures } from "@/features/pricing/use-pricing-structures"
 
 const RATE_TABS: TabItem[] = [
   { k: "pmpm", label: "PMPM", icon: <UsersIcon /> },
@@ -90,6 +91,9 @@ export function PricingPage() {
     Object.fromEntries(PRICING_MODELS.map((m) => [m.id, m.on]))
   )
   const [tier, setTier] = React.useState("pmpm")
+  // Fires only to log the API response to the console (see fetchPricingStructures);
+  // the page UI stays static.
+  usePricingStructures()
 
   return (
     <div className="flex flex-col gap-5">

@@ -13,6 +13,9 @@ dist
 dist-ssr
 *.local
 
+# Local API tooling artifacts (not tracked)
+Ginja-Console.postman_collection.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -11,6 +11,7 @@ import {
   PlusIcon,
   ServerIcon,
   ShieldIcon,
+  TriangleAlertIcon,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -33,45 +34,15 @@ import { Note } from "@/components/console/note"
 import { MiniBadge, Tagpill } from "@/components/console/tagpill"
 import { TabBar, type TabItem } from "@/components/console/tab-bar"
 import { hifiTableHead } from "@/components/console/table"
+import { LoadingSpinner } from "@/components/common/loading"
+import { useRoles } from "@/features/access/use-roles"
+import { useProvisioning } from "@/features/provisioning/use-provisioning"
 
 const TABS: TabItem[] = [
   { k: "security", label: "Security policies", icon: <ShieldIcon /> },
   { k: "roles", label: "Roles & permissions", icon: <KeyRoundIcon /> },
   { k: "regions", label: "Data residency", icon: <GlobeIcon /> },
   { k: "provisioning", label: "Provisioning", icon: <ServerIcon /> },
-]
-
-const ROLES = [
-  {
-    n: "Primary Tenant Admin",
-    scope: "Tenant",
-    d: "Full administrative privileges within a tenant. Can create Secondary Admins & manage roles.",
-    perms: [
-      "Org settings",
-      "Users & roles",
-      "Module config",
-      "Billing view",
-      "Create secondary admins",
-    ],
-  },
-  {
-    n: "Secondary Tenant Admin",
-    scope: "Tenant",
-    d: "Configurable subset of Primary Admin capabilities, defined via template.",
-    perms: ["Org settings", "Users (limited)", "Module config"],
-  },
-  {
-    n: "Platform Admin",
-    scope: "Platform",
-    d: "Onboards & manages tenants, entitlements and feature access. Maker in maker-checker.",
-    perms: ["All tenant management", "Entitlements", "Libraries", "Settings"],
-  },
-  {
-    n: "Platform Approver",
-    scope: "Platform",
-    d: "Reviews & approves submissions. Checker — cannot approve own changes.",
-    perms: ["Review queue", "Approve / reject", "Read all"],
-  },
 ]
 
 const ISOLATION = [
@@ -133,6 +104,18 @@ export function PlatformSettingsPage() {
   })
   const set = <K extends keyof typeof s>(k: K, v: (typeof s)[K]) =>
     setS((x) => ({ ...x, [k]: v }))
+
+  // Roles & permissions tab — live platform roles (shared with the /access-roles
+  // page). The provisioning query fires only to log its response to the console
+  // (see fetchProvisioning); the Provisioning tab UI stays static.
+  const rolesQuery = useRoles()
+  useProvisioning()
+
+  React.useEffect(() => {
+    if (rolesQuery.data) {
+      console.log("[GET /platform/organization/roles]", rolesQuery.data)
+    }
+  }, [rolesQuery.data])
 
   return (
     <div className="flex flex-col gap-5">
@@ -300,44 +283,72 @@ export function PlatformSettingsPage() {
       {tab === "roles" && (
         <div className="flex flex-col gap-3">
           <Note tone="info" icon={<InfoIcon />}>
-            Default permission boundaries for each tier. The Primary Tenant
-            Admin can further refine Secondary Admin permissions within these
-            boundaries.
+            Platform roles and the modules each one grants. System roles are
+            built-in and immutable; custom roles are authored by your team.
           </Note>
-          {ROLES.map((r) => (
-            <Panel key={r.n} className="p-4">
-              <div className="mb-2.5 flex items-start justify-between gap-3">
-                <div className="flex items-start gap-3">
-                  <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/12 text-primary [&>svg]:size-4">
-                    <KeyRoundIcon />
-                  </span>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 text-[13.5px] font-semibold">
-                      {r.n}
-                      <Tagpill className="text-[10px]">{r.scope}</Tagpill>
+          {rolesQuery.isLoading ? (
+            <div className="flex items-center justify-center py-20 text-muted-foreground">
+              <LoadingSpinner />
+            </div>
+          ) : rolesQuery.isError ? (
+            <Note tone="err" icon={<TriangleAlertIcon />}>
+              Couldn’t load roles.{" "}
+              <button
+                className="font-semibold underline underline-offset-2"
+                onClick={() => rolesQuery.refetch()}
+              >
+                Try again
+              </button>
+              .
+            </Note>
+          ) : (rolesQuery.data ?? []).length === 0 ? (
+            <Note tone="info">No roles found.</Note>
+          ) : (
+            (rolesQuery.data ?? []).map((r) => (
+              <Panel key={r.id} className="p-4">
+                <div className="mb-2.5 flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/12 text-primary [&>svg]:size-4">
+                      <KeyRoundIcon />
+                    </span>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 text-[13.5px] font-semibold">
+                        {r.name}
+                        <Tagpill className="text-[10px]">
+                          {r.system ? "System" : "Custom"}
+                        </Tagpill>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {r.description || "—"}
+                      </div>
                     </div>
-                    <div className="text-xs text-muted-foreground">{r.d}</div>
                   </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => toast(`Editing ${r.name}.`)}
+                  >
+                    <PencilIcon data-icon="inline-start" />
+                    Edit template
+                  </Button>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => toast(`Editing ${r.n} template.`)}
-                >
-                  <PencilIcon data-icon="inline-start" />
-                  Edit template
-                </Button>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {r.perms.map((p) => (
-                  <Tagpill key={p} className="text-[11px]">
-                    <CheckIcon className="size-2.5" />
-                    {p}
-                  </Tagpill>
-                ))}
-              </div>
-            </Panel>
-          ))}
+                {r.functionalities.length ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {r.functionalities.map((f) => (
+                      <Tagpill key={f.code} className="text-[11px]">
+                        <CheckIcon className="size-2.5" />
+                        {f.name}
+                      </Tagpill>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-[11.5px] text-muted-foreground">
+                    No modules assigned.
+                  </div>
+                )}
+              </Panel>
+            ))
+          )}
         </div>
       )}
 
