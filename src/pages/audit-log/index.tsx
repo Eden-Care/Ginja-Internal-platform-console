@@ -53,7 +53,6 @@ export function AuditLogPage() {
   return (
     <div className="flex flex-col gap-5">
       <ConsolePageHeader
-        crumbs={["Platform", "Audit log"]}
         title="Audit log"
         sub="Append-only, attributed record of every platform action — required for compliance."
         actions={

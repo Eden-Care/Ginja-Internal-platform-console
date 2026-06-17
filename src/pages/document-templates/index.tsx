@@ -53,7 +53,6 @@ export function DocumentTemplatesPage() {
   return (
     <div className="flex flex-col gap-5">
       <ConsolePageHeader
-        crumbs={["Configuration library", "Document templates"]}
         title="Document templates"
         sub="Reusable PDF & document templates available to every tenant."
         actions={

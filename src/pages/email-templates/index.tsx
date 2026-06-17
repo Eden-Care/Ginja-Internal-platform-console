@@ -58,7 +58,6 @@ export function EmailTemplatesPage() {
   return (
     <div className="flex flex-col gap-5">
       <ConsolePageHeader
-        crumbs={["Configuration library", "Email & SMS templates"]}
         title="Email & SMS templates"
         sub="Transactional message templates triggered by platform events."
         actions={
