@@ -6,6 +6,7 @@ import {
   LayersIcon,
   PlusIcon,
   SearchIcon,
+  TriangleAlertIcon,
   ZapIcon,
 } from "lucide-react"
 import { toast } from "sonner"
@@ -24,12 +25,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { REGISTRY } from "@/lib/console-data"
 import { ConsolePageHeader } from "@/components/console/page-header"
 import { Panel } from "@/components/console/panel"
 import { MiniBadge } from "@/components/console/tagpill"
+import { Note } from "@/components/console/note"
 import { Glyph } from "@/components/console/glyph"
 import { hifiTableHead } from "@/components/console/table"
+import { LoadingSpinner } from "@/components/common/loading"
+import { useModuleRegistry } from "@/features/registry/use-module-registry"
+import { useModuleSearch } from "@/features/registry/use-module-search"
+import { useModule } from "@/features/registry/use-module"
 import { MODULE_TONE, ModuleDrawer } from "./components/module-drawer"
 
 /** Compact KPI tile: icon left, big mono value over an uppercase label. */
@@ -58,20 +63,36 @@ function StatTile({
 }
 
 export function ModuleRegistryPage() {
-  const [query, setQuery] = React.useState("")
-  const [open, setOpen] = React.useState<string | null>(null)
+  const listQuery = useModuleRegistry()
+  const all = listQuery.data ?? []
 
-  const rows = React.useMemo(() => {
-    const q = query.toLowerCase()
-    return REGISTRY.filter((m) => m.name.toLowerCase().includes(q))
+  // Search box → debounced → server-side /modules/search.
+  const [query, setQuery] = React.useState("")
+  const [dq, setDq] = React.useState("")
+  React.useEffect(() => {
+    const t = setTimeout(() => setDq(query.trim()), 300)
+    return () => clearTimeout(t)
   }, [query])
 
-  const total = REGISTRY.length
-  const published = REGISTRY.filter((m) => m.status === "Published").length
-  const beta = REGISTRY.filter((m) => m.status === "Beta").length
-  const subs = REGISTRY.reduce((n, m) => n + m.subs.length, 0)
+  const searching = dq.length > 0
+  const searchQuery = useModuleSearch(dq)
+  const rows = searching ? (searchQuery.data ?? []) : all
 
-  const selected = REGISTRY.find((m) => m.id === open) ?? null
+  // Click a row → fetch that module's full detail (/modules/{moduleId}); the
+  // clicked list row is shown immediately and upgraded when detail arrives.
+  const [openId, setOpenId] = React.useState<string | null>(null)
+  const detailQuery = useModule(openId)
+  const drawerModule =
+    detailQuery.data ??
+    rows.find((m) => m.id === openId) ??
+    all.find((m) => m.id === openId) ??
+    null
+
+  // KPI tiles reflect the full catalogue, not the filtered search.
+  const total = all.length
+  const published = all.filter((m) => m.status === "Published").length
+  const beta = all.filter((m) => m.status === "Beta").length
+  const subs = all.reduce((n, m) => n + m.subs.length, 0)
 
   return (
     <div className="flex flex-col gap-5">
@@ -86,96 +107,149 @@ export function ModuleRegistryPage() {
         }
       />
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatTile
-          icon={<LayersIcon />}
-          value={String(total)}
-          label="Total modules"
-        />
-        <StatTile
-          icon={<CheckCircle2Icon />}
-          value={String(published)}
-          label="Published"
-        />
-        <StatTile icon={<ZapIcon />} value={String(beta)} label="In beta" />
-        <StatTile
-          icon={<GitBranchIcon />}
-          value={String(subs)}
-          label="Sub-modules"
-        />
-      </div>
+      {listQuery.isLoading ? (
+        <div className="flex items-center justify-center py-20 text-muted-foreground">
+          <LoadingSpinner />
+        </div>
+      ) : listQuery.isError ? (
+        <Note tone="err" icon={<TriangleAlertIcon />}>
+          Couldn’t load the module registry.{" "}
+          <button
+            className="font-semibold underline underline-offset-2"
+            onClick={() => listQuery.refetch()}
+          >
+            Try again
+          </button>
+          .
+        </Note>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <StatTile
+              icon={<LayersIcon />}
+              value={String(total)}
+              label="Total modules"
+            />
+            <StatTile
+              icon={<CheckCircle2Icon />}
+              value={String(published)}
+              label="Published"
+            />
+            <StatTile icon={<ZapIcon />} value={String(beta)} label="In beta" />
+            <StatTile
+              icon={<GitBranchIcon />}
+              value={String(subs)}
+              label="Sub-modules"
+            />
+          </div>
 
-      <div className="flex flex-wrap items-center gap-2.5">
-        <InputGroup className="max-w-xs min-w-[200px] flex-1">
-          <InputGroupAddon>
-            <SearchIcon />
-          </InputGroupAddon>
-          <InputGroupInput
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search modules…"
-          />
-        </InputGroup>
-      </div>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <InputGroup className="max-w-xs min-w-[200px] flex-1">
+              <InputGroupAddon>
+                <SearchIcon />
+              </InputGroupAddon>
+              <InputGroupInput
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search modules…"
+              />
+            </InputGroup>
+            {searching && searchQuery.isFetching ? <LoadingSpinner /> : null}
+          </div>
 
-      <Panel className="overflow-hidden">
-        <Table>
-          <TableHeader className={hifiTableHead}>
-            <TableRow className="hover:bg-transparent">
-              <TableHead>Module</TableHead>
-              <TableHead>Version</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Owner team</TableHead>
-              <TableHead>Sub-modules</TableHead>
-              <TableHead className="text-right">Tenants</TableHead>
-              <TableHead className="w-11" />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.map((m) => (
-              <TableRow
-                key={m.id}
-                className="cursor-pointer"
-                onClick={() => setOpen(m.id)}
+          {searching && searchQuery.isLoading ? (
+            <div className="flex items-center justify-center py-20 text-muted-foreground">
+              <LoadingSpinner />
+            </div>
+          ) : searching && searchQuery.isError ? (
+            <Note tone="err" icon={<TriangleAlertIcon />}>
+              Couldn’t search modules.{" "}
+              <button
+                className="font-semibold underline underline-offset-2"
+                onClick={() => searchQuery.refetch()}
               >
-                <TableCell>
-                  <div className="flex items-center gap-[11px]">
-                    <span className="grid size-[30px] shrink-0 place-items-center rounded-lg bg-primary/10 text-primary [&>svg]:size-[15px]">
-                      <Glyph name={m.icon} />
-                    </span>
-                    <div className="min-w-0">
-                      <div className="text-[13px] font-medium">{m.name}</div>
-                      <div className="text-[11.5px] text-muted-foreground">
-                        {m.desc}
-                      </div>
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell className="mono text-[12.5px]">
-                  {m.version}
-                </TableCell>
-                <TableCell>
-                  <MiniBadge tone={MODULE_TONE[m.status]}>{m.status}</MiniBadge>
-                </TableCell>
-                <TableCell className="text-[12.5px] text-muted-foreground">
-                  {m.owner}
-                </TableCell>
-                <TableCell className="text-[12.5px] text-muted-foreground">
-                  {m.subs.length}
-                </TableCell>
-                <TableCell className="mono text-right">{m.tenants}</TableCell>
-                <TableCell>
-                  <span className="grid size-[30px] place-items-center rounded-lg border bg-card text-muted-foreground [&>svg]:size-[15px]">
-                    <ChevronRightIcon />
-                  </span>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Panel>
+                Try again
+              </button>
+              .
+            </Note>
+          ) : (
+            <Panel className="overflow-hidden">
+              <Table>
+                <TableHeader className={hifiTableHead}>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead>Module</TableHead>
+                    <TableHead>Version</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Owner team</TableHead>
+                    <TableHead>Sub-modules</TableHead>
+                    <TableHead className="text-right">Tenants</TableHead>
+                    <TableHead className="w-11" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {rows.map((m) => (
+                    <TableRow
+                      key={m.id}
+                      className="cursor-pointer"
+                      onClick={() => setOpenId(m.id)}
+                    >
+                      <TableCell>
+                        <div className="flex items-center gap-[11px]">
+                          <span className="grid size-[30px] shrink-0 place-items-center rounded-lg bg-primary/10 text-primary [&>svg]:size-[15px]">
+                            <Glyph name={m.icon} />
+                          </span>
+                          <div className="min-w-0">
+                            <div className="text-[13px] font-medium">
+                              {m.name}
+                            </div>
+                            <div className="text-[11.5px] text-muted-foreground">
+                              {m.desc}
+                            </div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="mono text-[12.5px]">
+                        {m.version}
+                      </TableCell>
+                      <TableCell>
+                        <MiniBadge tone={MODULE_TONE[m.status]}>
+                          {m.status}
+                        </MiniBadge>
+                      </TableCell>
+                      <TableCell className="text-[12.5px] text-muted-foreground">
+                        {m.owner}
+                      </TableCell>
+                      <TableCell className="text-[12.5px] text-muted-foreground">
+                        {m.subs.length}
+                      </TableCell>
+                      <TableCell className="mono text-right">
+                        {m.tenants}
+                      </TableCell>
+                      <TableCell>
+                        <span className="grid size-[30px] place-items-center rounded-lg border bg-card text-muted-foreground [&>svg]:size-[15px]">
+                          <ChevronRightIcon />
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              {rows.length === 0 && (
+                <div className="px-6 py-14 text-center text-sm text-muted-foreground">
+                  {searching
+                    ? `No modules match “${dq}”.`
+                    : "No modules in the registry yet."}
+                </div>
+              )}
+            </Panel>
+          )}
 
-      <ModuleDrawer module={selected} onClose={() => setOpen(null)} />
+          <ModuleDrawer
+            module={openId ? drawerModule : null}
+            onClose={() => setOpenId(null)}
+          />
+        </>
+      )}
     </div>
   )
 }

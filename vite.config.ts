@@ -3,8 +3,9 @@ import tailwindcss from "@tailwindcss/vite"
 import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
 
-// The deployed API host. In dev the app calls a relative "/api" path which this
-// proxy forwards here, so the browser stays same-origin and never hits CORS.
+// The deployed API host. In dev the app calls a relative "/internal-platform"
+// path which this proxy forwards here, so the browser stays same-origin and
+// never hits CORS.
 const API_TARGET = "https://dev-api.ginja.ai"
 
 // https://vite.dev/config/
@@ -12,7 +13,7 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     proxy: {
-      "/api": {
+      "/internal-platform": {
         target: API_TARGET,
         changeOrigin: true,
         secure: true,

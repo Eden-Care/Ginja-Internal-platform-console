@@ -34,7 +34,10 @@ export function ModuleDrawer({
   const [published, setPublished] = React.useState(
     module ? module.status === "Published" : true
   )
-  if (module && module.id !== shown?.id) {
+  // Reseed whenever a different module object arrives — covers both opening a
+  // new row and upgrading the list-row placeholder to the fetched detail (same
+  // id, richer object). `shown` is kept while closing (module === null).
+  if (module && module !== shown) {
     setShown(module)
     setPublished(module.status === "Published")
   }

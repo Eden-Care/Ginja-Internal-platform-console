@@ -1,15 +1,15 @@
 {
   "info": {
-    "name": "Ginja Console \u2014 Platform API",
+    "name": "Ginja Console — Platform API",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Generated from controller classes (verified). 75 endpoints across 15 controllers."
+    "description": "Generated from controller classes (verified). 80 endpoints across 15 controllers."
   },
   "item": [
     {
       "name": "Dev (token helper)",
       "item": [
         {
-          "name": "POST /dev/token  \u00b7 handler",
+          "name": "POST /dev/token  · handler",
           "request": {
             "method": "POST",
             "header": [],
@@ -51,7 +51,7 @@
       "name": "Auth",
       "item": [
         {
-          "name": "POST /platform/organization/auth/accept-invite  \u00b7 acceptInvite",
+          "name": "POST /platform/organization/auth/accept-invite  · acceptInvite",
           "request": {
             "method": "POST",
             "header": [
@@ -87,7 +87,7 @@
           }
         },
         {
-          "name": "POST /platform/organization/auth/login  \u00b7 login",
+          "name": "POST /platform/organization/auth/login  · login",
           "request": {
             "method": "POST",
             "header": [
@@ -123,7 +123,7 @@
           }
         },
         {
-          "name": "POST /platform/organization/auth/logout  \u00b7 logout",
+          "name": "POST /platform/organization/auth/logout  · logout",
           "request": {
             "method": "POST",
             "header": [],
@@ -152,7 +152,7 @@
           }
         },
         {
-          "name": "GET /platform/organization/auth/me/sessions  \u00b7 mySessions",
+          "name": "GET /platform/organization/auth/me/sessions  · mySessions",
           "request": {
             "method": "GET",
             "header": [],
@@ -180,6 +180,322 @@
               ]
             }
           }
+        },
+        {
+          "name": "POST /platform/organization/auth/mfa/login-verify  · loginVerify (public)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/auth/mfa/login-verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "auth",
+                "mfa",
+                "login-verify"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"challenge_token\": \"{{challengeToken}}\",\n  \"code\": \"123456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /platform/organization/auth/mfa/totp/enroll  · enrollTotp (bearer)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/auth/mfa/totp/enroll",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "auth",
+                "mfa",
+                "totp",
+                "enroll"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /platform/organization/auth/mfa/totp/verify  · verifyTotp (bearer)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/auth/mfa/totp/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "auth",
+                "mfa",
+                "totp",
+                "verify"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"123456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /platform/organization/auth/mfa/sms/enroll  · enrollSms (bearer)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/auth/mfa/sms/enroll",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "auth",
+                "mfa",
+                "sms",
+                "enroll"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"+254712345678\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /platform/organization/auth/mfa/sms/verify  · verifySms (bearer)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/auth/mfa/sms/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "auth",
+                "mfa",
+                "sms",
+                "verify"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"123456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /platform/organization/auth/mfa/webauthn/register-start  · webauthnRegisterStart (bearer)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/auth/mfa/webauthn/register-start",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "auth",
+                "mfa",
+                "webauthn",
+                "register-start"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /platform/organization/auth/mfa/webauthn/register-finish  · webauthnRegisterFinish (bearer)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/auth/mfa/webauthn/register-finish",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "auth",
+                "mfa",
+                "webauthn",
+                "register-finish"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"response_json\": \"<navigator.credentials.create() result JSON>\",\n  \"label\": \"YubiKey 5C\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /platform/organization/auth/mfa/webauthn/login-finish  · webauthnLoginFinish (public)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/auth/mfa/webauthn/login-finish",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "auth",
+                "mfa",
+                "webauthn",
+                "login-finish"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"challenge_token\": \"{{challengeToken}}\",\n  \"response_json\": \"<navigator.credentials.get() result JSON>\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
         }
       ]
     },
@@ -187,7 +503,7 @@
       "name": "Tenant Auth",
       "item": [
         {
-          "name": "POST /tenant/auth/login  \u00b7 login",
+          "name": "POST /tenant/auth/login  · login",
           "request": {
             "method": "POST",
             "header": [
@@ -227,7 +543,7 @@
       "name": "Members",
       "item": [
         {
-          "name": "POST /platform/organization/members  \u00b7 onboardMember",
+          "name": "POST /platform/organization/members  · inviteUser",
           "request": {
             "method": "POST",
             "header": [
@@ -259,7 +575,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"ops@ginja.ai\",\n  \"full_name\": \"Ops User\",\n  \"password\": \"Ops@12345\",\n  \"role_ids\": [\n    2\n  ]\n}",
+              "raw": "{\n  \"email\": \"ops@ginja.ai\",\n  \"full_name\": \"Ops User\",\n  \"role_ids\": [\n    2,\n    3\n  ],\n  \"expiry_days\": 7\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -269,7 +585,7 @@
           }
         },
         {
-          "name": "GET /platform/organization/members  \u00b7 listMembers",
+          "name": "GET /platform/organization/members  · listMembers",
           "request": {
             "method": "GET",
             "header": [],
@@ -324,7 +640,7 @@
           }
         },
         {
-          "name": "GET /platform/organization/members/{memberId}  \u00b7 getMember",
+          "name": "GET /platform/organization/members/{memberId}  · getMember",
           "request": {
             "method": "GET",
             "header": [],
@@ -353,7 +669,7 @@
           }
         },
         {
-          "name": "PUT /platform/organization/members/{memberId}/status  \u00b7 setStatus",
+          "name": "PUT /platform/organization/members/{memberId}/status  · setStatus",
           "request": {
             "method": "PUT",
             "header": [
@@ -397,7 +713,7 @@
           }
         },
         {
-          "name": "PUT /platform/organization/members/{memberId}/password  \u00b7 setPassword",
+          "name": "PUT /platform/organization/members/{memberId}/password  · setPassword",
           "request": {
             "method": "PUT",
             "header": [
@@ -441,7 +757,7 @@
           }
         },
         {
-          "name": "POST /platform/organization/members/{memberId}/roles  \u00b7 assignRoles",
+          "name": "POST /platform/organization/members/{memberId}/roles  · assignRoles",
           "request": {
             "method": "POST",
             "header": [
@@ -485,37 +801,7 @@
           }
         },
         {
-          "name": "POST /platform/organization/members/{memberId}/invite  \u00b7 invite",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/platform/organization/members/{{memberId}}/invite",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "members",
-                "{{memberId}}",
-                "invite"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "POST /platform/organization/members/{memberId}/resend-invite  \u00b7 resendInvite",
+          "name": "POST /platform/organization/members/{memberId}/resend-invite  · resendInvite",
           "request": {
             "method": "POST",
             "header": [],
@@ -545,7 +831,7 @@
           }
         },
         {
-          "name": "POST /platform/organization/members/{memberId}/revoke-invite  \u00b7 revokeInvite",
+          "name": "POST /platform/organization/members/{memberId}/revoke-invite  · revokeInvite",
           "request": {
             "method": "POST",
             "header": [],
@@ -575,7 +861,7 @@
           }
         },
         {
-          "name": "GET /platform/organization/members/{memberId}/sessions  \u00b7 listSessions",
+          "name": "GET /platform/organization/members/{memberId}/sessions  · listSessions",
           "request": {
             "method": "GET",
             "header": [],
@@ -605,7 +891,7 @@
           }
         },
         {
-          "name": "POST /platform/organization/members/{memberId}/sessions/revoke  \u00b7 revokeSessions",
+          "name": "POST /platform/organization/members/{memberId}/sessions/revoke  · revokeSessions",
           "request": {
             "method": "POST",
             "header": [],
@@ -636,7 +922,7 @@
           }
         },
         {
-          "name": "DELETE /platform/organization/members/{memberId}  \u00b7 deleteMember",
+          "name": "DELETE /platform/organization/members/{memberId}  · deleteMember",
           "request": {
             "method": "DELETE",
             "header": [],
@@ -665,7 +951,7 @@
           }
         },
         {
-          "name": "DELETE /platform/organization/members/{memberId}/roles/{roleId}  \u00b7 unassignRole",
+          "name": "DELETE /platform/organization/members/{memberId}/roles/{roleId}  · unassignRole",
           "request": {
             "method": "DELETE",
             "header": [],
@@ -694,6 +980,36 @@
               ]
             }
           }
+        },
+        {
+          "name": "GET /platform/organization/members/{memberId}/activity  · activity",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/members/{{memberId}}/activity",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "members",
+                "{{memberId}}",
+                "activity"
+              ]
+            }
+          }
         }
       ]
     },
@@ -701,7 +1017,7 @@
       "name": "Roles",
       "item": [
         {
-          "name": "POST /platform/organization/roles  \u00b7 createRole",
+          "name": "POST /platform/organization/roles  · createRole",
           "request": {
             "method": "POST",
             "header": [
@@ -733,7 +1049,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Finance Operator\",\n  \"description\": \"Finance + claims\",\n  \"functionality_codes\": [\n    \"FINANCE\",\n    \"CLAIMS\"\n  ]\n}",
+              "raw": "{\n  \"name\": \"Onboarding Specialist\",\n  \"description\": \"Owns tenant onboarding end-to-end\",\n  \"hex_color\": \"#6741D9\",\n  \"permission_codes\": [\n    \"TENANT_VIEW\",\n    \"TENANT_ONBOARD\",\n    \"TENANT_EDIT\",\n    \"CONFIG_TEMPLATES\"\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -743,7 +1059,7 @@
           }
         },
         {
-          "name": "GET /platform/organization/roles  \u00b7 listRoles",
+          "name": "GET /platform/organization/roles  · listRoles",
           "request": {
             "method": "GET",
             "header": [],
@@ -771,7 +1087,7 @@
           }
         },
         {
-          "name": "GET /platform/organization/roles/{roleId}  \u00b7 getRole",
+          "name": "GET /platform/organization/roles/{roleId}  · getRole",
           "request": {
             "method": "GET",
             "header": [],
@@ -800,7 +1116,7 @@
           }
         },
         {
-          "name": "PATCH /platform/organization/roles/{roleId}  \u00b7 updateRole",
+          "name": "PATCH /platform/organization/roles/{roleId}  · updateRole",
           "request": {
             "method": "PATCH",
             "header": [
@@ -833,7 +1149,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Claims Reviewer\",\n  \"description\": \"Reviews claims\"\n}",
+              "raw": "{\n  \"name\": \"Claims Reviewer\",\n  \"description\": \"Reviews submitted claims\",\n  \"hex_color\": \"#E03131\",\n  \"permission_codes\": [\n    \"APPROVAL_VIEW\",\n    \"APPROVAL_DECIDE\"\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -843,7 +1159,7 @@
           }
         },
         {
-          "name": "DELETE /platform/organization/roles/{roleId}  \u00b7 deleteRole",
+          "name": "DELETE /platform/organization/roles/{roleId}  · deleteRole",
           "request": {
             "method": "DELETE",
             "header": [],
@@ -872,51 +1188,7 @@
           }
         },
         {
-          "name": "POST /platform/organization/roles/{roleId}/functionalities  \u00b7 assignFunctionalities",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/platform/organization/roles/{{roleId}}/functionalities",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "roles",
-                "{{roleId}}",
-                "functionalities"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"functionality_codes\": [\n    \"BILLING\",\n    \"FINANCE\"\n  ]\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          }
-        },
-        {
-          "name": "POST /platform/organization/roles/{roleId}/permissions  \u00b7 assignPermissions",
+          "name": "POST /platform/organization/roles/{roleId}/permissions  · assignPermissions",
           "request": {
             "method": "POST",
             "header": [
@@ -960,7 +1232,7 @@
           }
         },
         {
-          "name": "DELETE /platform/organization/roles/{roleId}/permissions/{permissionCode}  \u00b7 unassignPermission",
+          "name": "DELETE /platform/organization/roles/{roleId}/permissions/{permissionCode}  · unassignPermission",
           "request": {
             "method": "DELETE",
             "header": [],
@@ -989,37 +1261,6 @@
               ]
             }
           }
-        },
-        {
-          "name": "DELETE /platform/organization/roles/{roleId}/functionalities/{functionalityCode}  \u00b7 unassignFunctionality",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/platform/organization/roles/{{roleId}}/functionalities/{{functionalityCode}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "roles",
-                "{{roleId}}",
-                "functionalities",
-                "{{functionalityCode}}"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
         }
       ]
     },
@@ -1027,7 +1268,7 @@
       "name": "Permissions",
       "item": [
         {
-          "name": "POST /platform/organization/permissions  \u00b7 create",
+          "name": "POST /platform/organization/permissions  · create",
           "request": {
             "method": "POST",
             "header": [
@@ -1059,7 +1300,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"code\": \"REPORTS_EXPORT\",\n  \"name\": \"Export Reports\",\n  \"description\": \"Export reports\"\n}",
+              "raw": "{\n  \"code\": \"REPORTS_EXPORT\",\n  \"name\": \"Export Reports\",\n  \"description\": \"Allows exporting directories, logs and reports\",\n  \"group_code\": \"OBSERVABILITY\",\n  \"group_label\": \"Observability\",\n  \"sensitive\": false\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1069,7 +1310,7 @@
           }
         },
         {
-          "name": "GET /platform/organization/permissions  \u00b7 list",
+          "name": "GET /platform/organization/permissions  · list (filter)",
           "request": {
             "method": "GET",
             "header": [],
@@ -1082,6 +1323,23 @@
                 "platform",
                 "organization",
                 "permissions"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "ACTIVE",
+                  "disabled": true
+                },
+                {
+                  "key": "groupCode",
+                  "value": "TENANT_MANAGEMENT",
+                  "disabled": true
+                },
+                {
+                  "key": "sensitive",
+                  "value": "true",
+                  "disabled": true
+                }
               ]
             },
             "auth": {
@@ -1097,7 +1355,43 @@
           }
         },
         {
-          "name": "GET /platform/organization/permissions/{id}  \u00b7 get",
+          "name": "GET /platform/organization/permissions/search  · search",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/permissions/search?q=pricing",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "permissions",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "pricing",
+                  "disabled": false
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /platform/organization/permissions/{id}  · get",
           "request": {
             "method": "GET",
             "header": [],
@@ -1126,7 +1420,67 @@
           }
         },
         {
-          "name": "DELETE /platform/organization/permissions/{id}  \u00b7 delete",
+          "name": "POST /platform/organization/permissions/{id}/activate  · activate",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/permissions/{{id}}/activate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "permissions",
+                "{{id}}",
+                "activate"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /platform/organization/permissions/{id}/suspend  · suspend",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/permissions/{{id}}/suspend",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "permissions",
+                "{{id}}",
+                "suspend"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /platform/organization/permissions/{id}  · delete",
           "request": {
             "method": "DELETE",
             "header": [],
@@ -1157,12 +1511,40 @@
       ]
     },
     {
-      "name": "Functionalities",
+      "name": "Platform Settings",
       "item": [
         {
-          "name": "POST /platform/organization/functionalities  \u00b7 createFunctionality",
+          "name": "GET /platform/settings/security-policy  · getSecurityPolicy",
           "request": {
-            "method": "POST",
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/security-policy",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "security-policy"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH /platform/settings/security-policy  · updateSecurityPolicy",
+          "request": {
+            "method": "PATCH",
             "header": [
               {
                 "key": "Content-Type",
@@ -1170,14 +1552,14 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/platform/organization/functionalities",
+              "raw": "{{baseUrl}}/platform/settings/security-policy",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "platform",
-                "organization",
-                "functionalities"
+                "settings",
+                "security-policy"
               ]
             },
             "auth": {
@@ -1192,7 +1574,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"code\": \"BILLING\",\n  \"name\": \"Billing\",\n  \"description\": \"Invoicing operations\"\n}",
+              "raw": "{\n  \"Multi-factor authentication\": {\n    \"mfa_required\": true,\n    \"mfa_totp_enabled\": true,\n    \"mfa_sms_enabled\": false,\n    \"mfa_webauthn_enabled\": true\n  },\n  \"Password policy\": {\n    \"password_min_length\": 12,\n    \"password_require_upper\": true,\n    \"password_require_lower\": true,\n    \"password_require_number\": true,\n    \"password_require_special\": true,\n    \"password_expiry_days\": 90,\n    \"password_history_count\": 5\n  },\n  \"Lockout\": {\n    \"lockout_max_attempts\": 5,\n    \"lockout_duration_minutes\": 30\n  },\n  \"Sessions\": {\n    \"session_timeout_minutes\": 480,\n    \"idle_timeout_minutes\": 30\n  }\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1202,19 +1584,605 @@
           }
         },
         {
-          "name": "GET /platform/organization/functionalities  \u00b7 listFunctionalities",
+          "name": "GET /platform/settings/data-residency  · listRegions",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/platform/organization/functionalities",
+              "raw": "{{baseUrl}}/platform/settings/data-residency",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "data-residency"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /platform/settings/data-residency  · createRegion",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/data-residency",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "data-residency"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"af-west-2\",\n  \"city\": \"Accra\",\n  \"country\": \"Ghana\",\n  \"status\": \"ACTIVE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /platform/settings/data-residency/{code}  · getRegion",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/data-residency/af-east-1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "data-residency",
+                "af-east-1"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH /platform/settings/data-residency/{code}  · updateRegion",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/data-residency/af-west-1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "data-residency",
+                "af-west-1"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ACTIVE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "DELETE /platform/settings/data-residency/{code}  · deleteRegion",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/data-residency/af-west-2",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "data-residency",
+                "af-west-2"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /platform/settings/provisioning-tiers  · listTiers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/provisioning-tiers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "provisioning-tiers"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /platform/settings/provisioning-tiers  · createTier",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/provisioning-tiers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "provisioning-tiers"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"DEDICATED\",\n  \"name\": \"Dedicated database\",\n  \"description\": \"Tenant gets its own database.\",\n  \"enabled\": true,\n  \"sort_order\": 4\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /platform/settings/provisioning-tiers/{code}  · getTier",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/provisioning-tiers/ISOLATED",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "provisioning-tiers",
+                "ISOLATED"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH /platform/settings/provisioning-tiers/{code}  · updateTier",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/provisioning-tiers/ISOLATED",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "provisioning-tiers",
+                "ISOLATED"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"enabled\": true,\n  \"description\": \"Every tenant in its own isolated schema.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "DELETE /platform/settings/provisioning-tiers/{code}  · deleteTier",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/provisioning-tiers/DEDICATED",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "provisioning-tiers",
+                "DEDICATED"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Module Registry",
+      "item": [
+        {
+          "name": "POST /platform/organization/modules  · registerModule",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/modules",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "platform",
                 "organization",
-                "functionalities"
+                "modules"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"REINSURANCE\",\n  \"name\": \"Reinsurance\",\n  \"description\": \"Treaties, cessions and recoveries.\",\n  \"icon\": \"reinsurance\",\n  \"url\": \"/reinsurance\",\n  \"version\": \"1.6.0\",\n  \"owner_team\": \"Risk Platform\",\n  \"status\": \"BETA\",\n  \"sub_modules\": [\n    {\n      \"code\": \"TREATIES\",\n      \"name\": \"Treaties\",\n      \"description\": \"Treaty configuration\"\n    },\n    {\n      \"code\": \"CESSIONS\",\n      \"name\": \"Cessions\",\n      \"description\": \"Risk cession ledger\",\n      \"requires\": \"TREATIES\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /platform/organization/modules  · listModules",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/modules?page=0&size=20&sort=code,asc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "modules"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "PUBLISHED",
+                  "disabled": true
+                },
+                {
+                  "key": "owner_team",
+                  "value": "Claims Platform",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "0",
+                  "disabled": false
+                },
+                {
+                  "key": "size",
+                  "value": "20",
+                  "disabled": false
+                },
+                {
+                  "key": "sort",
+                  "value": "code,asc",
+                  "disabled": false
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /platform/organization/modules/search  · searchModules",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/modules/search?q=claim",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "modules",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "claim",
+                  "disabled": false
+                },
+                {
+                  "key": "page",
+                  "value": "0",
+                  "disabled": true
+                },
+                {
+                  "key": "size",
+                  "value": "20",
+                  "disabled": true
+                },
+                {
+                  "key": "sort",
+                  "value": "code,asc",
+                  "disabled": true
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /platform/organization/modules/{moduleId}  · getModule",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/modules/{{moduleId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "modules",
+                "{{moduleId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH /platform/organization/modules/{moduleId}  · updateModule (publish/unpublish)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/modules/{{moduleId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "modules",
+                "{{moduleId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"PUBLISHED\",\n  \"version\": \"1.7.0\",\n  \"owner_team\": \"Risk Platform\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /platform/organization/modules/{moduleId}/activity  · moduleActivity",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/modules/{{moduleId}}/activity?page=0&size=20&sort=createdAt,desc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "modules",
+                "{{moduleId}}",
+                "activity"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0",
+                  "disabled": false
+                },
+                {
+                  "key": "size",
+                  "value": "20",
+                  "disabled": false
+                },
+                {
+                  "key": "sort",
+                  "value": "createdAt,desc",
+                  "disabled": false
+                }
               ]
             },
             "auth": {
@@ -1235,7 +2203,7 @@
       "name": "Audit Log",
       "item": [
         {
-          "name": "GET /platform/organization/audit-logs  \u00b7 listAuditLogs",
+          "name": "GET /platform/organization/audit-logs  · listAuditLogs",
           "request": {
             "method": "GET",
             "header": [],
@@ -1305,7 +2273,7 @@
           }
         },
         {
-          "name": "GET /platform/organization/audit-logs/modules  \u00b7 listModules",
+          "name": "GET /platform/organization/audit-logs/modules  · listModules",
           "request": {
             "method": "GET",
             "header": [],
@@ -1339,7 +2307,7 @@
       "name": "Pricing Structures",
       "item": [
         {
-          "name": "POST /platform/pricing-structures  \u00b7 create",
+          "name": "POST /platform/pricing-structures  · create",
           "request": {
             "method": "POST",
             "header": [
@@ -1380,7 +2348,7 @@
           }
         },
         {
-          "name": "GET /platform/pricing-structures  \u00b7 list",
+          "name": "GET /platform/pricing-structures  · list",
           "request": {
             "method": "GET",
             "header": [],
@@ -1414,7 +2382,7 @@
           }
         },
         {
-          "name": "GET /platform/pricing-structures/{id}  \u00b7 get",
+          "name": "GET /platform/pricing-structures/{id}  · get",
           "request": {
             "method": "GET",
             "header": [],
@@ -1442,7 +2410,7 @@
           }
         },
         {
-          "name": "PATCH /platform/pricing-structures/{id}  \u00b7 update",
+          "name": "PATCH /platform/pricing-structures/{id}  · update",
           "request": {
             "method": "PATCH",
             "header": [
@@ -1484,7 +2452,7 @@
           }
         },
         {
-          "name": "POST /platform/pricing-structures/{id}/activate  \u00b7 activate",
+          "name": "POST /platform/pricing-structures/{id}/activate  · activate",
           "request": {
             "method": "POST",
             "header": [],
@@ -1513,7 +2481,7 @@
           }
         },
         {
-          "name": "POST /platform/pricing-structures/{id}/archive  \u00b7 archive",
+          "name": "POST /platform/pricing-structures/{id}/archive  · archive",
           "request": {
             "method": "POST",
             "header": [],
@@ -1540,6 +2508,35 @@
               ]
             }
           }
+        },
+        {
+          "name": "GET /platform/pricing-structures/{id}/activity  · activity",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/platform/pricing-structures/{{id}}/activity",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "pricing-structures",
+                "{{id}}",
+                "activity"
+              ]
+            }
+          }
         }
       ]
     },
@@ -1547,7 +2544,7 @@
       "name": "Payers (onboarding)",
       "item": [
         {
-          "name": "POST /platform/payers  \u00b7 createPayer",
+          "name": "POST /platform/payers  · createPayer",
           "request": {
             "method": "POST",
             "header": [
@@ -1588,7 +2585,7 @@
           }
         },
         {
-          "name": "GET /platform/payers  \u00b7 listPayers",
+          "name": "GET /platform/payers  · listPayers",
           "request": {
             "method": "GET",
             "header": [],
@@ -1615,7 +2612,7 @@
           }
         },
         {
-          "name": "GET /platform/payers/tenant-lookup  \u00b7 tenantLookup",
+          "name": "GET /platform/payers/tenant-lookup  · tenantLookup",
           "request": {
             "method": "GET",
             "header": [],
@@ -1655,7 +2652,7 @@
           }
         },
         {
-          "name": "GET /platform/payers/subdomain-check  \u00b7 checkSubdomain",
+          "name": "GET /platform/payers/subdomain-check  · checkSubdomain",
           "request": {
             "method": "GET",
             "header": [],
@@ -1690,7 +2687,7 @@
           }
         },
         {
-          "name": "GET /platform/payers/{payerId}  \u00b7 getPayer",
+          "name": "GET /platform/payers/{payerId}  · getPayer",
           "request": {
             "method": "GET",
             "header": [],
@@ -1718,7 +2715,7 @@
           }
         },
         {
-          "name": "POST /platform/payers/{payerId}/tenants  \u00b7 addSecondaryTenant",
+          "name": "POST /platform/payers/{payerId}/tenants  · addSecondaryTenant",
           "request": {
             "method": "POST",
             "header": [
@@ -1761,7 +2758,7 @@
           }
         },
         {
-          "name": "PUT /platform/payers/{payerId}/entitlements  \u00b7 setEntitlements",
+          "name": "PUT /platform/payers/{payerId}/entitlements  · setEntitlements",
           "request": {
             "method": "PUT",
             "header": [
@@ -1804,7 +2801,7 @@
           }
         },
         {
-          "name": "PUT /platform/payers/{payerId}/subscription  \u00b7 setSubscription",
+          "name": "PUT /platform/payers/{payerId}/subscription  · setSubscription",
           "request": {
             "method": "PUT",
             "header": [
@@ -1847,7 +2844,7 @@
           }
         },
         {
-          "name": "POST /platform/payers/{payerId}/tenants/{tenantId}/documents  \u00b7 addDocument",
+          "name": "POST /platform/payers/{payerId}/tenants/{tenantId}/documents  · addDocument",
           "request": {
             "method": "POST",
             "header": [
@@ -1892,7 +2889,7 @@
           }
         },
         {
-          "name": "PATCH /platform/payers/{payerId}/tenants/{tenantId}/technical  \u00b7 setTechnicalConfig",
+          "name": "PATCH /platform/payers/{payerId}/tenants/{tenantId}/technical  · setTechnicalConfig",
           "request": {
             "method": "PATCH",
             "header": [
@@ -1937,7 +2934,7 @@
           }
         },
         {
-          "name": "POST /platform/payers/{payerId}/tenants/{tenantId}/activate  \u00b7 activateTenant",
+          "name": "POST /platform/payers/{payerId}/tenants/{tenantId}/activate  · activateTenant",
           "request": {
             "method": "POST",
             "header": [],
@@ -1968,7 +2965,7 @@
           }
         },
         {
-          "name": "POST /platform/payers/{payerId}/submit  \u00b7 submit",
+          "name": "POST /platform/payers/{payerId}/submit  · submit",
           "request": {
             "method": "POST",
             "header": [],
@@ -1995,6 +2992,66 @@
               ]
             }
           }
+        },
+        {
+          "name": "GET /platform/payers/{payerId}/activity  · activity",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers/{{payerId}}/activity",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "payers",
+                "{{payerId}}",
+                "activity"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /platform/payers/{payerId}/tenants/{tenantId}/activity  · activity",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers/{{payerId}}/tenants/{{tenantId}}/activity",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "payers",
+                "{{payerId}}",
+                "tenants",
+                "{{tenantId}}",
+                "activity"
+              ]
+            }
+          }
         }
       ]
     },
@@ -2002,7 +3059,7 @@
       "name": "Onboarding Steps",
       "item": [
         {
-          "name": "GET /platform/payers/{payerId}/steps  \u00b7 listSteps",
+          "name": "GET /platform/payers/{payerId}/steps  · listSteps",
           "request": {
             "method": "GET",
             "header": [],
@@ -2031,7 +3088,7 @@
           }
         },
         {
-          "name": "POST /platform/payers/{payerId}/steps/{stepKey}/assign  \u00b7 assign",
+          "name": "POST /platform/payers/{payerId}/steps/{stepKey}/assign  · assign",
           "request": {
             "method": "POST",
             "header": [
@@ -2076,7 +3133,7 @@
           }
         },
         {
-          "name": "POST /platform/payers/{payerId}/steps/{stepKey}/complete  \u00b7 complete",
+          "name": "POST /platform/payers/{payerId}/steps/{stepKey}/complete  · complete",
           "request": {
             "method": "POST",
             "header": [],
@@ -2112,7 +3169,7 @@
       "name": "Payer Approval",
       "item": [
         {
-          "name": "POST /platform/payers/{payerId}/approve  \u00b7 approve",
+          "name": "POST /platform/payers/{payerId}/approve  · approve",
           "request": {
             "method": "POST",
             "header": [
@@ -2155,7 +3212,7 @@
           }
         },
         {
-          "name": "POST /platform/payers/{payerId}/reject  \u00b7 reject",
+          "name": "POST /platform/payers/{payerId}/reject  · reject",
           "request": {
             "method": "POST",
             "header": [
@@ -2198,7 +3255,7 @@
           }
         },
         {
-          "name": "POST /platform/payers/{payerId}/request-info  \u00b7 requestInfo",
+          "name": "POST /platform/payers/{payerId}/request-info  · requestInfo",
           "request": {
             "method": "POST",
             "header": [
@@ -2239,6 +3296,35 @@
               }
             }
           }
+        },
+        {
+          "name": "GET /platform/payers/{payerId}/approval-activity  · activity",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{approverToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers/{{payerId}}/approval-activity",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "payers",
+                "{{payerId}}",
+                "approval-activity"
+              ]
+            }
+          }
         }
       ]
     },
@@ -2246,7 +3332,7 @@
       "name": "Approval Queue",
       "item": [
         {
-          "name": "GET /platform/approvals  \u00b7 listAwaitingApproval",
+          "name": "GET /platform/approvals  · listAwaitingApproval",
           "request": {
             "method": "GET",
             "header": [],
@@ -2278,7 +3364,7 @@
       "name": "Payer Lifecycle",
       "item": [
         {
-          "name": "POST /platform/payers/{payerId}/suspend  \u00b7 suspend",
+          "name": "POST /platform/payers/{payerId}/suspend  · suspend",
           "request": {
             "method": "POST",
             "header": [
@@ -2321,7 +3407,7 @@
           }
         },
         {
-          "name": "POST /platform/payers/{payerId}/reactivate  \u00b7 reactivate",
+          "name": "POST /platform/payers/{payerId}/reactivate  · reactivate",
           "request": {
             "method": "POST",
             "header": [],
@@ -2350,7 +3436,7 @@
           }
         },
         {
-          "name": "POST /platform/payers/{payerId}/retire  \u00b7 retire",
+          "name": "POST /platform/payers/{payerId}/retire  · retire",
           "request": {
             "method": "POST",
             "header": [
@@ -2398,7 +3484,7 @@
       "name": "Provisioning",
       "item": [
         {
-          "name": "GET /platform/provisioning  \u00b7 queue",
+          "name": "GET /platform/provisioning  · queue",
           "request": {
             "method": "GET",
             "header": [],
@@ -2437,7 +3523,7 @@
           }
         },
         {
-          "name": "GET /platform/provisioning/mine  \u00b7 mine",
+          "name": "GET /platform/provisioning/mine  · mine",
           "request": {
             "method": "GET",
             "header": [],
@@ -2465,7 +3551,7 @@
           }
         },
         {
-          "name": "GET /platform/provisioning/{tenantId}  \u00b7 get",
+          "name": "GET /platform/provisioning/{tenantId}  · get",
           "request": {
             "method": "GET",
             "header": [],
@@ -2493,7 +3579,7 @@
           }
         },
         {
-          "name": "POST /platform/provisioning/{tenantId}/assign  \u00b7 assign",
+          "name": "POST /platform/provisioning/{tenantId}/assign  · assign",
           "request": {
             "method": "POST",
             "header": [
@@ -2536,7 +3622,7 @@
           }
         },
         {
-          "name": "PUT /platform/provisioning/{tenantId}/sections/{section}  \u00b7 saveSection",
+          "name": "PUT /platform/provisioning/{tenantId}/sections/{section}  · saveSection",
           "request": {
             "method": "PUT",
             "header": [
@@ -2580,7 +3666,7 @@
           }
         },
         {
-          "name": "POST /platform/provisioning/{tenantId}/sections/{section}/test  \u00b7 testSection",
+          "name": "POST /platform/provisioning/{tenantId}/sections/{section}/test  · testSection",
           "request": {
             "method": "POST",
             "header": [],
@@ -2611,7 +3697,7 @@
           }
         },
         {
-          "name": "POST /platform/provisioning/{tenantId}/stage  \u00b7 setStage",
+          "name": "POST /platform/provisioning/{tenantId}/stage  · setStage",
           "request": {
             "method": "POST",
             "header": [
@@ -2654,7 +3740,7 @@
           }
         },
         {
-          "name": "POST /platform/provisioning/{tenantId}/sections/{section}/remarks  \u00b7 addRemark",
+          "name": "POST /platform/provisioning/{tenantId}/sections/{section}/remarks  · addRemark",
           "request": {
             "method": "POST",
             "header": [],
@@ -2685,7 +3771,7 @@
           }
         },
         {
-          "name": "GET /platform/provisioning/{tenantId}/remarks  \u00b7 listRemarks",
+          "name": "GET /platform/provisioning/{tenantId}/remarks  · listRemarks",
           "request": {
             "method": "GET",
             "header": [],
@@ -2714,7 +3800,7 @@
           }
         },
         {
-          "name": "POST /platform/provisioning/remarks/{remarkId}/resolve  \u00b7 resolveRemark",
+          "name": "POST /platform/provisioning/remarks/{remarkId}/resolve  · resolveRemark",
           "request": {
             "method": "POST",
             "header": [],
@@ -2744,7 +3830,7 @@
           }
         },
         {
-          "name": "POST /platform/provisioning/{tenantId}/sections/{section}/approve  \u00b7 approveSection",
+          "name": "POST /platform/provisioning/{tenantId}/sections/{section}/approve  · approveSection",
           "request": {
             "method": "POST",
             "header": [],
@@ -2845,6 +3931,14 @@
     {
       "key": "remarkId",
       "value": "RMK000001"
+    },
+    {
+      "key": "moduleId",
+      "value": "MRC000001"
+    },
+    {
+      "key": "challengeToken",
+      "value": ""
     }
   ]
 }
