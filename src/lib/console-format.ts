@@ -1,10 +1,12 @@
 /** Formatting + small pure helpers for the Platform Console. */
 import {
   PAYERS,
+  PWD_POLICY_DAYS,
   RESERVED,
   SAMPLE,
   SUBDOMAIN_TAKEN,
   WIZ_STEPS,
+  pwdOf,
   type OnboardingForm,
   type Payer,
   type WizStepKey,
@@ -82,3 +84,29 @@ export const renderTpl = (t: string) =>
   (t || "").replace(/\{\{\s*([\w.]+)\s*\}\}/g, (m, k) =>
     k in SAMPLE ? SAMPLE[k] : m
   )
+
+export type PwdState = "ok" | "soon" | "expired" | "pending"
+
+/** Password health bucket from a user's rotation record. */
+export function pwdState(id: string): PwdState {
+  const p = pwdOf(id)
+  if (p.pending) return "pending"
+  if (p.daysLeft < 0) return "expired"
+  if (p.daysLeft <= 14) return "soon"
+  return "ok"
+}
+
+/** The date a user's password expires under the rotation policy (null if pending). */
+export function pwdExpiryDate(id: string): string | null {
+  const p = pwdOf(id)
+  if (p.pending) return null
+  const d = new Date("2026-06-18")
+  d.setDate(d.getDate() + p.daysLeft)
+  return d.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  })
+}
+
+export { PWD_POLICY_DAYS }

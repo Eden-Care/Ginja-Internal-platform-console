@@ -10,14 +10,14 @@ import type { AxiosError, AxiosRequestConfig } from "axios"
 
 import { readToken } from "@/lib/auth-storage"
 
-// In dev, default to the relative "/api/v1" path so requests go through the Vite
-// proxy (see vite.config.ts) and avoid CORS. In prod, hit the Azure host directly.
-// Override either with VITE_API_BASE_URL.
+// In dev, default to the relative "/internal-platform/api/v1" path so requests
+// go through the Vite proxy (see vite.config.ts) and avoid CORS. In prod, hit
+// the API host directly. Override either with VITE_API_BASE_URL.
 const BASE_URL =
   import.meta.env.VITE_API_BASE_URL ??
   (import.meta.env.DEV
-    ? "/api/v1"
-    : "https://ginja-platform-app.nicecoast-3687b9b2.northeurope.azurecontainerapps.io/api/v1")
+    ? "/internal-platform/api/v1"
+    : "https://dev-api.ginja.ai/internal-platform/api/v1")
 
 export type ApiEnvelope<T> = {
   status: number
