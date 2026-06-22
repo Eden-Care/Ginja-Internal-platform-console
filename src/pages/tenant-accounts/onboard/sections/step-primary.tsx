@@ -1,8 +1,10 @@
+import * as React from "react"
 import {
   AlertTriangleIcon,
   Building2Icon,
   BriefcaseIcon,
-  ExternalLinkIcon,
+  CheckCircle2Icon,
+  Loader2Icon,
   MailIcon,
   PlusIcon,
   ShieldIcon,
@@ -12,9 +14,13 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
-import type { OnboardingForm } from "@/lib/console-data"
-import { emailOk, findDuplicates } from "@/lib/console-format"
+import { REGIONS, type OnboardingForm } from "@/lib/console-data"
+import { emailOk } from "@/lib/console-format"
 import type { SetField } from "../use-onboarding-form"
+import {
+  useSubdomainCheck,
+  useTenantLookup,
+} from "@/features/payers/use-onboarding"
 import {
   ConsoleSelect,
   Field,
@@ -23,7 +29,6 @@ import {
   RadioCards,
 } from "@/components/console/form-atoms"
 import { Note } from "@/components/console/note"
-import { StatusPill } from "@/components/console/status-pill"
 
 const COUNTRIES = [
   "Kenya",
@@ -34,6 +39,11 @@ const COUNTRIES = [
   "Nigeria",
   "South Africa",
 ]
+
+const REGION_OPTS = REGIONS.filter((r) => r.status === "Active").map((r) => ({
+  value: r.id,
+  label: `${r.id} · ${r.city}`,
+}))
 
 const TYPES = [
   {
@@ -80,6 +90,15 @@ export function StepPrimary({
       c.filter((_, xi) => xi !== i)
     )
 
+  // Live API checks — deferred so we don't fetch on every keystroke.
+  const deferredLegal = React.useDeferredValue(form.legal)
+  const deferredSub = React.useDeferredValue(form.subdomain)
+  const lookup = useTenantLookup(deferredLegal)
+  const subCheck = useSubdomainCheck(deferredSub)
+  const dupe = lookup.data?.found ? lookup.data.tenant : null
+  const subResult = form.subdomain.trim() ? subCheck.data : undefined
+  const subTaken = subResult && (!subResult.available || !subResult.valid)
+
   const err = {
     legal: !form.legal.trim(),
     trading: !form.trading.trim(),
@@ -87,9 +106,9 @@ export function StepPrimary({
     c0name: !(c0.name || "").trim(),
     c0email: !emailOk(c0.email),
     address: !(form.address || "").trim(),
+    subdomain: !form.subdomain.trim(),
   }
   const errCount = Object.values(err).filter(Boolean).length
-  const matches = findDuplicates(form.legal, form.country)
 
   return (
     <div className="flex flex-col gap-7">
@@ -139,9 +158,7 @@ export function StepPrimary({
             label="Tax / VAT number"
             required
             hint={
-              err.tax
-                ? "Tax / VAT number is required for invoicing."
-                : undefined
+              err.tax ? "Tax / VAT number is required for invoicing." : undefined
             }
             hintTone="error"
           >
@@ -154,39 +171,71 @@ export function StepPrimary({
           </Field>
         </FormGrid>
 
-        {matches.length > 0 ? (
+        {dupe ? (
           <div className="mt-3">
             <Note tone="warn" icon={<AlertTriangleIcon />}>
-              {matches.length} existing Tenant{matches.length > 1 ? "s" : ""}{" "}
-              with a similar legal name in <b>{form.country}</b>{" "}
-              {matches.length > 1 ? "were" : "was"} found. Confirm this is a
-              distinct entity before continuing.
+              An existing tenant <b>{dupe.legalEntityName}</b> ({dupe.tenantCode}
+              {dupe.country ? ` · ${dupe.country}` : ""}
+              {dupe.payerStatus ? ` · ${dupe.payerStatus}` : ""}) matches this
+              name. Confirm this is a distinct entity before continuing.
             </Note>
-            <div className="mt-2 overflow-hidden rounded-xl border border-warning/40">
-              {matches.map((m) => (
-                <div
-                  key={m.id}
-                  className="flex items-center gap-3 border-b px-3 py-2.5 last:border-b-0"
-                >
-                  <span className="grid size-[30px] shrink-0 place-items-center rounded-lg bg-warning-subtle text-xs font-bold text-warning-subtle-foreground">
-                    {m.name.slice(0, 2).toUpperCase()}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-[13px] font-semibold">{m.name}</div>
-                    <div className="mono text-[11.5px] text-muted-foreground">
-                      {m.id} · {m.type} · {m.country}
-                    </div>
-                  </div>
-                  <StatusPill status={m.status} />
-                  <span className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-primary">
-                    View details
-                    <ExternalLinkIcon className="size-3" />
-                  </span>
-                </div>
-              ))}
-            </div>
           </div>
         ) : null}
+      </FormSection>
+
+      <FormSection
+        title="Environment"
+        desc="The subdomain and data-residency region for this tenant. Required to submit."
+      >
+        <FormGrid>
+          <Field
+            label="Subdomain"
+            required
+            hint={
+              err.subdomain
+                ? "Subdomain is required."
+                : subResult && subResult.reserved
+                  ? "This subdomain is reserved."
+                  : subTaken
+                    ? subResult?.suggestions?.length
+                      ? `Taken — try: ${subResult.suggestions.slice(0, 3).join(", ")}`
+                      : "This subdomain isn’t available."
+                    : undefined
+            }
+            hintTone="error"
+          >
+            <div
+              className={cn(
+                "flex items-center rounded-lg border focus-within:ring-2 focus-within:ring-ring/50",
+                (err.subdomain || subTaken) && "border-destructive"
+              )}
+            >
+              <input
+                value={form.subdomain}
+                placeholder="acme-health"
+                onChange={(e) =>
+                  set("subdomain", e.target.value.toLowerCase().trim())
+                }
+                className="h-8 min-w-0 flex-1 rounded-l-lg bg-transparent px-3 text-sm outline-none"
+              />
+              <span className="flex shrink-0 items-center gap-1 px-2.5 text-[13px] text-muted-foreground">
+                {form.subdomain.trim() && subCheck.isFetching ? (
+                  <Loader2Icon className="size-3.5 animate-spin" />
+                ) : subResult && !subTaken && !subResult.reserved ? (
+                  <CheckCircle2Icon className="size-3.5 text-success" />
+                ) : null}
+                .ginja.ai
+              </span>
+            </div>
+          </Field>
+          <Field label="Data-residency region" required>
+            <ConsoleSelect
+              value={form.region}
+              onChange={(v) => set("region", v)}
+              options={REGION_OPTS}
+            />
+          </Field>
+        </FormGrid>
       </FormSection>
 
       <FormSection

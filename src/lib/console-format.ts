@@ -1,6 +1,7 @@
 /** Formatting + small pure helpers for the Platform Console. */
 import {
   PAYERS,
+  REQUIRED_DOC_CATEGORIES,
   RESERVED,
   SAMPLE,
   SUBDOMAIN_TAKEN,
@@ -47,7 +48,8 @@ export function sectionStatuses(
     !!form.tax.trim() &&
     !!(c0.name || "").trim() &&
     emailOk(c0.email) &&
-    !!(form.address || "").trim()
+    !!(form.address || "").trim() &&
+    !!form.subdomain.trim()
   const primaryAny =
     !!form.legal.trim() ||
     !!form.trading.trim() ||
@@ -62,8 +64,15 @@ export function sectionStatuses(
       ? "complete"
       : "progress",
     modules: Object.keys(form.modules).length ? "complete" : "todo",
-    billing: form.model && form.freq ? "complete" : "todo",
-    documents: "progress", // demo: 3 of 4 required docs uploaded
+    billing:
+      form.pricingStructureId && form.model && form.freq ? "complete" : "todo",
+    documents: REQUIRED_DOC_CATEGORIES.every((cat) =>
+      form.documents.some((d) => d.category === cat)
+    )
+      ? "complete"
+      : form.documents.length
+        ? "progress"
+        : "todo",
     review: "todo",
   }
   s.review = WIZ_STEPS.filter((step) => step.k !== "review").every(

@@ -1,149 +1,112 @@
-import * as React from "react"
 import {
-  AlertTriangleIcon,
   CheckIcon,
-  FileCheckIcon,
   FileTextIcon,
-  PlusIcon,
-  ShieldCheckIcon,
+  InfoIcon,
   UploadIcon,
 } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import {
-  ONB_TEAM,
-  type OnbTeamKey,
+  DOC_CATEGORY_LABEL,
+  REQUIRED_DOC_CATEGORIES,
   type OnboardingForm,
-  type WizStepKey,
 } from "@/lib/console-data"
-import { Seg } from "@/components/console/form-atoms"
+import type { SetField } from "../use-onboarding-form"
+import { Field } from "@/components/console/form-atoms"
 import { Note } from "@/components/console/note"
-import { MiniBadge, Tagpill } from "@/components/console/tagpill"
-
-const REQUIRED = [
-  "Signed Contract",
-  "Company Registration Certificate",
-  "Proof of Address",
-  "Director / Shareholder IDs",
-]
-const OPTIONAL = [
-  "Tax Clearance Certificate",
-  "BBBEE Certificate",
-  "Insurance License",
-  "Power of Attorney",
-]
-const UPLOADED = [
-  "Signed Contract",
-  "Company Registration Certificate",
-  "Proof of Address",
-]
+import { MiniBadge } from "@/components/console/tagpill"
 
 export function StepDocuments({
   form,
-  assignees,
+  set,
 }: {
   form: OnboardingForm
-  assignees: Record<WizStepKey, OnbTeamKey>
+  set: SetField
 }) {
-  const owner = ONB_TEAM[assignees.documents]
-  const [tenant, setTenant] = React.useState("primary")
-  const tenantOpts = [
-    { v: "primary", l: form.legal },
-    ...form.secondaries.map((s, i) => ({
-      v: "s" + i,
-      l: s.name || `Secondary ${i + 1}`,
-    })),
-  ]
+  const docFor = (cat: string) => form.documents.find((d) => d.category === cat)
+  const setDoc = (cat: string, fileName: string) => {
+    const others = form.documents.filter((d) => d.category !== cat)
+    set(
+      "documents",
+      fileName.trim()
+        ? [...others, { category: cat, fileName: fileName.trim() }]
+        : others
+    )
+  }
+  const provided = REQUIRED_DOC_CATEGORIES.filter((c) => docFor(c)).length
 
   return (
     <div className="flex flex-col gap-5">
-      <Note tone="info" icon={<ShieldCheckIcon />}>
-        KYC review is owned by <b>{owner.name}</b> ({owner.role}). Uploaded
-        files are stored as <b>Pending Review</b> and routed to the Platform
-        Approver on submission.
+      <Note tone="warn" icon={<UploadIcon />}>
+        <b>File upload isn’t available yet.</b> The API stores document{" "}
+        <b>metadata only</b> (category + file name) — actual file bytes can’t be
+        uploaded until the backend exposes a document store. Enter the file name
+        for each required document to record it; swap in real upload once
+        supported. (Flagged for the backend: see API_UI_FIT.md.)
       </Note>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Seg value={tenant} options={tenantOpts} onChange={setTenant} />
-        <span className="text-xs text-muted-foreground">
-          PDF, JPG, PNG · max 25 MB each
+      <div className="flex items-center justify-between">
+        <span className="eyebrow text-[10.5px]">
+          Required documents · primary tenant
         </span>
+        <MiniBadge tone={provided === REQUIRED_DOC_CATEGORIES.length ? "success" : "warning"}>
+          {provided}/{REQUIRED_DOC_CATEGORIES.length} provided
+        </MiniBadge>
       </div>
 
-      <div className="flex flex-col items-center gap-1 rounded-xl border border-dashed py-8 text-center">
-        <UploadIcon className="size-6 text-muted-foreground" />
-        <b className="text-[13px]">
-          Drag &amp; drop documents, or click to browse
-        </b>
-        <span className="text-[11.5px] text-muted-foreground">
-          Select a category for each file before uploading
-        </span>
-      </div>
-
-      <div>
-        <div className="eyebrow mb-2.5 text-[10.5px]">Required documents</div>
-        <div className="flex flex-col gap-2">
-          {REQUIRED.map((d) => {
-            const up = UPLOADED.includes(d)
-            return (
-              <div
-                key={d}
-                className="flex items-center gap-3 rounded-lg border p-3"
+      <div className="flex flex-col gap-2.5">
+        {REQUIRED_DOC_CATEGORIES.map((cat) => {
+          const doc = docFor(cat)
+          return (
+            <div
+              key={cat}
+              className="flex flex-col gap-2 rounded-xl border p-3.5 sm:flex-row sm:items-end"
+            >
+              <span
+                className={
+                  doc
+                    ? "mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg bg-success-subtle text-success-subtle-foreground"
+                    : "mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground"
+                }
               >
-                <span
-                  className={
-                    up
-                      ? "grid size-8 place-items-center rounded-lg bg-success-subtle text-success-subtle-foreground"
-                      : "grid size-8 place-items-center rounded-lg bg-muted text-muted-foreground"
-                  }
-                >
-                  {up ? (
-                    <FileCheckIcon className="size-4" />
-                  ) : (
-                    <FileTextIcon className="size-4" />
-                  )}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="text-[13px] font-medium">{d}</div>
-                  <div className="mono text-[11.5px] text-muted-foreground">
-                    {up
-                      ? `${d.toLowerCase().replace(/[^a-z]/g, "_")}.pdf · 1.4 MB`
-                      : "Not uploaded"}
-                  </div>
-                </div>
-                {up ? (
-                  <MiniBadge tone="success">
-                    <CheckIcon className="size-3" />
-                    Attached
-                  </MiniBadge>
+                {doc ? (
+                  <CheckIcon className="size-4" />
                 ) : (
-                  <Button variant="outline" size="sm">
-                    <UploadIcon data-icon="inline-start" />
-                    Upload
-                  </Button>
+                  <FileTextIcon className="size-4" />
                 )}
+              </span>
+              <div className="min-w-0 flex-1">
+                <Field
+                  label={DOC_CATEGORY_LABEL[cat] ?? cat}
+                  required
+                  hint={`Category sent as ${cat}`}
+                >
+                  <Input
+                    value={doc?.fileName ?? ""}
+                    placeholder="e.g. signed-contract.pdf"
+                    onChange={(e) => setDoc(cat, e.target.value)}
+                  />
+                </Field>
               </div>
-            )
-          })}
-        </div>
+              {doc ? (
+                <MiniBadge tone="success">
+                  <CheckIcon className="size-3" />
+                  Recorded
+                </MiniBadge>
+              ) : (
+                <MiniBadge tone="neutral">Missing</MiniBadge>
+              )}
+            </div>
+          )
+        })}
       </div>
 
-      <Note tone="warn" icon={<AlertTriangleIcon />}>
-        1 required document still missing for <b>{form.legal}</b>. Upload all
-        required items to submit.
+      <Note tone="info" icon={<InfoIcon />}>
+        Optional KYB documents (Tax Clearance, Insurance License, …) and{" "}
+        <b>per-secondary-tenant</b> documents aren’t captured yet — their category
+        codes need backend confirmation. Only the four required primary-tenant
+        categories are wired.
       </Note>
-
-      <div>
-        <div className="eyebrow mb-2.5 text-[10.5px]">Optional documents</div>
-        <div className="flex flex-wrap gap-2">
-          {OPTIONAL.map((d) => (
-            <Tagpill key={d}>
-              <PlusIcon className="size-[11px]" />
-              {d}
-            </Tagpill>
-          ))}
-        </div>
-      </div>
     </div>
   )
 }

@@ -5,8 +5,7 @@ import { defineConfig } from "vite"
 
 // The deployed API host. In dev the app calls a relative "/api" path which this
 // proxy forwards here, so the browser stays same-origin and never hits CORS.
-const API_TARGET =
-  "https://ginja-platform-app.nicecoast-3687b9b2.northeurope.azurecontainerapps.io"
+const API_TARGET = "https://dev-api.ginja.ai"
 
 // https://vite.dev/config/
 export default defineConfig({

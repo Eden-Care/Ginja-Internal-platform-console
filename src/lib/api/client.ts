@@ -15,9 +15,7 @@ import { readToken } from "@/lib/auth-storage"
 // Override either with VITE_API_BASE_URL.
 const BASE_URL =
   import.meta.env.VITE_API_BASE_URL ??
-  (import.meta.env.DEV
-    ? "/api/v1"
-    : "https://ginja-platform-app.nicecoast-3687b9b2.northeurope.azurecontainerapps.io/api/v1")
+  (import.meta.env.DEV ? "/api/v1" : "https://dev-api.ginja.ai/api/v1")
 
 export type ApiEnvelope<T> = {
   status: number
@@ -89,7 +87,10 @@ api.interceptors.response.use(
 
 /* Typed helpers. The response interceptor resolves to `result`, so these cast
    away axios's AxiosResponse wrapper and hand callers the payload directly. */
-export function apiGet<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
+export function apiGet<T>(
+  url: string,
+  config?: AxiosRequestConfig
+): Promise<T> {
   return api.get(url, config) as unknown as Promise<T>
 }
 export function apiPost<T>(

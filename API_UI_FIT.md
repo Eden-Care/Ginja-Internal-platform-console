@@ -97,48 +97,146 @@ and the Approved/All tabs.
 
 ---
 
-## 🟡 Tenant accounts (Payers) — `src/pages/tenant-accounts/index.tsx`  — PARTIAL
+## 🟡 Tenant accounts (Payers) — `src/pages/tenant-accounts/index.tsx`  — WIRED, blocked by backend 500
 
-The list table mostly maps; a couple of columns and the drafts strip don't.
+The list page is **fully wired** to `GET /platform/payers` (feature folder `src/features/payers/`:
+`types`/`api`/`queries`/`use-payers`). Search, status filter, sort, and pagination run client-side
+over the returned array; loading + error states are in place. **No frontend change is needed once
+the backend is fixed.**
 
-| Maps cleanly (from `GET /platform/payers` → `PayerResponse[]`) |
-| :------------------------------------------------------------- |
-| Name (primary tenant legal entity), payer code/id, type, status, region (data residency), sub-tenant count (`tenants.length − 1`), subscription model |
+| Column / element | API source | Status |
+| :--------------- | :--------- | :----- |
+| Tenant name | primary tenant `legal_entity_name` | ✅ wired |
+| ID · type | `payer_id` · `payer_type` (mapped to display strings) | ✅ wired |
+| Status | `status` (mapped DRAFT/ACTIVE/… → display) | ✅ wired |
+| Region | primary tenant `data_residency_region` | ✅ wired |
+| Sub-tenants | `tenants.length` | ✅ wired |
+| Subscription | `subscription` (structure name / model, defensive) | ✅ wired |
+| Updated | `activated_at ?? submitted_at ?? created_at` | ✅ wired |
+| **Members** count | — no field on `PayerResponse` | 🚧 column kept, renders "—" + flagged |
+| **MRR** | — no field on `PayerResponse` | 🚧 column kept, renders "—" + flagged |
 
-**Roadblocks (no API source):**
-- **Members** count and **MRR** columns — no such fields on `PayerResponse`.
-- **Onboarding-drafts strip + team-assignment drawer** — a curated concept; loosely relates to
-  DRAFT payers + `…/{id}/steps`, but the per-section staff-assignment UI doesn't match the
-  steps API 1:1.
-- Hardcoded "Showing X of 24" / "Page 1 of 2" footer (no server pagination wired).
+### 🔴 BLOCKER — backend 500 (verified live 2026-06-16, as `admin@ginja.ai` / PLATFORM_ADMIN)
+- `GET /platform/payers` → **500** `{"message":"Internal server error","error_details":null}`
+- `GET /platform/payers/{id}` → **500** (same) — and `/payers/1` 500s rather than 404, so a payer
+  row likely exists but **fails to serialize** server-side.
+- Control check: `GET /platform/approvals` → **403 Access denied** (expected — that's the
+  PLATFORM_APPROVER role), which proves the token is attached and the server is authorising
+  requests. Members/roles/sessions reads all work with the same token. **So the 500 is specific to
+  the payer read endpoints — a backend bug, not a client issue.**
 
-**To wire:** the table from `GET /payers` (drop Members + MRR columns); detail view via
-`GET /payers/{id}`; leave the drafts strip for a dedicated pass.
+> **→ Point for the backend dev:** `GET /platform/payers` and `GET /platform/payers/{id}` return a
+> generic 500 (no `error_details`) for a valid PLATFORM_ADMIN. Needs server logs — likely a
+> serialization/mapping error on the `PayerResponse` (e.g. a null `subscription`/`entitlements`,
+> the encrypted bank fields, or an empty-tenants edge). Until fixed, the Tenant accounts table shows
+> its error state.
+
+**Still on mock (deferred to the onboarding pass):**
+- **Onboarding-drafts strip + team-assignment drawer** — depends on DRAFT payers + the `…/{id}/steps`
+  API (step list + per-step assign). Left on `ONB_DRAFTS` mock for now; will wire with onboarding.
+- Row **"More"** menu is a no-op placeholder; lifecycle actions (`POST …/suspend|reactivate|retire`)
+  exist in the API and can populate it later (not in the current list design's scope).
+
+---
+
+## ✅ Tenant onboarding wizard — `src/pages/tenant-accounts/onboard/`
+
+The 6-step wizard is **fully wired** (was pure local state before). Feature layer:
+`src/features/payers/` (`api`, `onboarding` orchestration, `use-onboarding`) + `src/features/pricing/`.
+The whole create→submit spine was **verified live end-to-end** as `admin@ginja.ai` (created
+`PAY000019`, submitted OK). Step 3 (real module catalogue) and Step 4 (real ACTIVE pricing structure)
+**render live data in the UI**.
+
+| Wizard step | Endpoint(s) | Status |
+| :---------- | :---------- | :----- |
+| 1 · Basic profile (incl. subdomain/region) | `GET …/subdomain-check`, `GET …/tenant-lookup` → `POST /payers` → `PATCH …/tenants/{id}/technical` | ✅ |
+| 2 · Secondary tenants | `POST …/{id}/tenants` | ✅ (see gap) |
+| 3 · Module access | `GET …/functionalities` → `PUT …/entitlements` | ✅ (modules-only) |
+| 4 · Billing | `GET /pricing-structures?status=ACTIVE` → `PUT …/subscription` | ✅ |
+| 5 · KYC & documents | `POST …/tenants/{tid}/documents` (metadata) | 🟡 metadata-only |
+| 6 · Review & submit | `POST …/submit` | ✅ |
+
+**Persistence model:** the wizard stays local and runs the full sequence on **Submit** (resumable
+from the failed step on retry). Chosen over create-a-draft-per-step because the API has **no endpoint
+to edit a primary tenant's org details after creation** (only `technical`), which would strand
+back-navigation.
+
+### → UX/UI changed from the hi-fi design (for the backend/design conversation)
+
+These are deliberate deviations driven by the API. **In-UI notes flag each one** so nothing is lost:
+- **Step 3 sub-modules removed** → modules-only. The API has a module catalogue (`/functionalities`)
+  but **no sub-module catalogue**, so the rich submodule tree (claims→intake/adjudication/…) is gone.
+  In-UI note: "Sub-module selection is pending backend." *Backend ask: expose a submodule catalogue.*
+- **Step 3 shows test-junk modules** (`BILLING_X`, `BILLING_6267155`, `FUNC_8737063`) because they're
+  ACTIVE in `/functionalities`. *Backend ask: clean up test functionalities.*
+- **Step 4 billing reshaped** — was abstract model cards (incl. **`flat`/`hybrid`**, which aren't in
+  the API enum) + **free-trial** + **contract-start/end** fields. Now: pick a real **pricing
+  structure** + `subscription_model` (PMPM/PER_CLAIM/PCT_GWP) + frequency. Removed fields flagged
+  in-UI. *Backend ask: confirm whether free-trial/contract dates belong on the subscription.*
+- **Step 5 documents = metadata only** — the upload dropzone + mock "uploaded" rows were replaced
+  with a **filename-per-category** capture and a banner: "File upload isn't available yet… metadata
+  only." Optional + per-secondary documents aren't wired (category codes unconfirmed).
+  *Backend ask: expose a document-bytes upload + the optional category codes.*
+- **Step 1 gained Subdomain + Data-residency inputs** (the design had no control for them, but the
+  API requires both to submit). *Confirm placement with design.*
+- **Step 2 secondary contact/admin details** aren't collected (design only has name/country/region/
+  subdomain) but the API needs the full `TenantDetailsRequest`. They **default to the primary's**
+  contact so the request validates. *Backend/design ask: add secondary contact fields, or confirm
+  the default.*
+- **Server-side drafts deferred** — "Save draft / Save & exit" keep progress in the browser tab only;
+  the live `/steps` tracker + per-step server assignment + the drafts strip are not wired yet (the
+  API supports them — this is a frontend follow-up, not a backend gap).
+
+**Value mapping applied (no UI change):** country names → ISO-2 (Kenya→KE…), frequency → UPPERCASE,
+tenant_admin_* ← the "Primary Tenant Admin" contact (contact 0).
 
 ---
 
 ## ✅ Users (Members) — `src/pages/access/users.tsx`
 
-Fully wired and **verified live** (directory render, invite → edit-roles → delete, each confirmed
-on the backend; test member cleaned up).
+Wired to match the hi-fi design (`Ginja Console-v2.html`) and **verified live** (directory render,
+invite → edit-roles → delete confirmed on the backend with a cleaned-up test member). Opening a row
+fetches that member's detail via `GET …/members/{id}` (`200` confirmed). The drawer keeps the
+design's three tabs — **Overview · Access · Activity timeline** — and a Suspend / Delete footer.
 
 | Action | Endpoint | Status |
 | :----- | :------- | :----- |
 | Directory (paged, search + status filter client-side) | `GET /platform/organization/members` | ✅ |
+| Member detail (on row open) | `GET …/members/{id}` | ✅ |
 | Invite (onboard, then send link) | `POST /members` + `POST …/{id}/invite` | ✅ |
 | Edit roles | diff `POST …/{id}/roles` + `DELETE …/{id}/roles/{roleId}` | ✅ |
 | Suspend / reactivate | `PUT …/{id}/status` (reason required to suspend) | ✅ |
 | Resend / revoke invite | `POST …/{id}/resend-invite\|revoke-invite` | ✅ |
 | Delete | `DELETE …/members/{id}` | ✅ |
 
-**Dropped (no API source — not fabricated):** the **activity timeline** tab (no per-member history
-endpoint — the system-wide Audit log covers this), the **MFA / two-factor** status (replaced the
-stat with the real `active_sessions` count), and the invite **expiry countdown / "Expired" badge**.
-The per-role breakdown now shows the role's real **modules** (functionalities), not the old
-fictional permission catalogue.
+The per-role breakdown shows each role's real **modules** (functionalities), not the old fictional
+permission catalogue.
 
-**Deferred (clean, unbuilt):** sessions admin (`GET …/{id}/sessions`, `POST …/{id}/sessions/revoke`),
-set-password (`PUT …/{id}/password`) — no UI surface yet.
+**Kept as visible "pending backend" placeholders (NOT removed, NOT fabricated)** — these are
+elements the **design** shows but the API can't back yet, so they render in a clear placeholder
+state rather than disappearing (see the "don't silently drop" rule):
+- **Two-factor** — the third Overview stat card (design shows "Enabled") renders a "Pending backend"
+  badge instead, since `MemberResponse` has no MFA field.
+- **Activity timeline** — the third tab shows an empty state ("per-member history isn't available
+  from the API yet") that deep-links to the platform Audit log.
+- **Invite expiry countdown** — the Invited banner notes expiry tracking isn't shown because the API
+  doesn't return invite expiry.
+
+**Out of design scope (endpoints exist, intentionally NOT built):** sessions admin
+(`GET …/{id}/sessions`, `POST …/sessions/revoke`) and set/reset password (`PUT …/{id}/password`)
+are not part of the Users design, so no UI was added for them.
+
+### → Points to pass to the backend dev (Users)
+
+1. **Per-member activity feed** — no per-member history endpoint. `GET /members/{id}` returns the
+   same `MemberResponse` as the list (no events). Either add `GET /members/{id}/activity` (paged
+   events: action, actor, timestamp, target) or confirm the system-wide audit log is the intended
+   source and we drop the per-member tab.
+2. **Two-factor status** — `MemberResponse` has no MFA field. Add `mfa_enabled` (and ideally method)
+   if platform members can enrol in 2FA; otherwise confirm 2FA isn't in scope for members.
+3. **Invite expiry** — invite mint accepts `expiry_days`, but neither `MemberResponse` nor any
+   read endpoint returns the resulting expiry timestamp. Add `invite_expires_at` so the UI can show
+   a countdown / "Expired" state for INVITED members.
 
 ---
 
