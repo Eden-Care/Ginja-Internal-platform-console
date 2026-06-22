@@ -89,7 +89,10 @@ api.interceptors.response.use(
 
 /* Typed helpers. The response interceptor resolves to `result`, so these cast
    away axios's AxiosResponse wrapper and hand callers the payload directly. */
-export function apiGet<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
+export function apiGet<T>(
+  url: string,
+  config?: AxiosRequestConfig
+): Promise<T> {
   return api.get(url, config) as unknown as Promise<T>
 }
 export function apiPost<T>(

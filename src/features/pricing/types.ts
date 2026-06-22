@@ -1,5 +1,6 @@
-/* Pricing structures — versioned commercial proposals (API_GUIDE.md §7 and the
-   "Pricing Structures" folder of Ginja-Console.postman_collection.json).
+/* Pricing structures — versioned commercial proposals a payer subscription
+   points at (onboarding's billing step picks an ACTIVE one). API_GUIDE.md §7
+   and the "Pricing Structures" folder of Ginja-Console.postman_collection.json.
 
    DTOs are snake_case exactly as the API returns them; client types are
    camelCase with a toX() mapper at the boundary so snake_case never leaks into
@@ -34,10 +35,10 @@ export type PricingStructureDTO = {
   description: string | null
   model: PricingModel
   status: PricingStatus
-  currency: string
-  implementation_fee: number
-  platform_fee_annual: number
-  savings_capture_pct: number
+  currency: string | null
+  implementation_fee?: number | null
+  platform_fee_annual?: number | null
+  savings_capture_pct?: number | null
   components?: PricingComponentDTO[] | null
 }
 
@@ -62,6 +63,7 @@ export type PricingStructure = {
   code: string
   name: string
   description: string
+  /** Structure methodology, e.g. PCT_GWP / TRANSACTION_BASED. */
   model: PricingModel
   status: PricingStatus
   currency: string
@@ -100,7 +102,7 @@ export function toPricingStructure(d: PricingStructureDTO): PricingStructure {
     description: d.description ?? "",
     model: d.model,
     status: d.status,
-    currency: d.currency,
+    currency: d.currency ?? "USD",
     implementationFee: d.implementation_fee ?? 0,
     platformFeeAnnual: d.platform_fee_annual ?? 0,
     savingsCapturePct: d.savings_capture_pct ?? 0,

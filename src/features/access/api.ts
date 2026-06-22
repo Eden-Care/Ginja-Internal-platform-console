@@ -106,6 +106,12 @@ export async function fetchMembers(
   return toPaged(dto, toMember)
 }
 
+/** GET /platform/organization/members/{id} → one member (full detail). */
+export async function fetchMember(id: number): Promise<Member> {
+  const row = await apiGet<MemberDTO>(`${MEMBERS}/${id}`)
+  return toMember(row)
+}
+
 /** POST /platform/organization/members → onboard (no password ⇒ INVITED). */
 export async function onboardMember(
   body: OnboardMemberRequest

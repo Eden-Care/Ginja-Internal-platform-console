@@ -9,19 +9,14 @@ import {
   type PricingStructureDTO,
 } from "./types"
 
-export type PricingQuery = { status?: string }
-
-/** GET /platform/pricing-structures → all pricing structures (optional ?status filter). */
+/** GET /platform/pricing-structures (optional `?status=ACTIVE`). */
 export async function fetchPricingStructures(
-  q: PricingQuery = {}
+  status?: string
 ): Promise<PricingStructure[]> {
-  const params: Record<string, string> = {}
-  if (q.status) params.status = q.status
-
   const rows = await apiGet<PricingStructureDTO[]>(
     "/platform/pricing-structures",
-    { params }
+    status ? { params: { status } } : undefined
   )
   console.log("[GET /platform/pricing-structures]", rows)
-  return rows.map(toPricingStructure)
+  return (rows ?? []).map(toPricingStructure)
 }

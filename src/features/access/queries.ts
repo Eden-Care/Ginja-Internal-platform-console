@@ -15,4 +15,5 @@ export const functionalityKeys = {
 export const memberKeys = {
   all: ["members"] as const,
   list: (query: unknown) => [...memberKeys.all, "list", query] as const,
+  detail: (id: number) => [...memberKeys.all, "detail", id] as const,
 }

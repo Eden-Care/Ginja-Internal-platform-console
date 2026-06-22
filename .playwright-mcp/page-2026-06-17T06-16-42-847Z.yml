@@ -1,0 +1,249 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - generic [ref=e6]:
+      - list [ref=e8]:
+        - listitem [ref=e9]:
+          - button "Ginja AI Ginja AI Platform Console" [ref=e10]:
+            - img "Ginja AI" [ref=e12]
+            - generic [ref=e13]:
+              - generic [ref=e14]: Ginja AI
+              - generic [ref=e15]: Platform Console
+            - img [ref=e16]
+      - generic [ref=e19]:
+        - generic [ref=e20]:
+          - generic [ref=e21]: Overview
+          - list [ref=e22]:
+            - listitem [ref=e23]:
+              - link "Dashboard" [ref=e24] [cursor=pointer]:
+                - /url: /
+                - img [ref=e25]
+                - generic [ref=e30]: Dashboard
+        - generic [ref=e31]:
+          - generic [ref=e32]: Tenant management
+          - list [ref=e33]:
+            - listitem [ref=e34]:
+              - link "Tenant accounts" [ref=e35] [cursor=pointer]:
+                - /url: /tenant-accounts
+                - img [ref=e36]
+                - generic [ref=e40]: Tenant accounts
+              - generic: "24"
+            - listitem [ref=e41]:
+              - link "Approvals" [ref=e42] [cursor=pointer]:
+                - /url: /approvals
+                - img [ref=e43]
+                - generic [ref=e46]: Approvals
+              - generic: "5"
+            - listitem [ref=e47]:
+              - link "Tenant provisioning" [ref=e48] [cursor=pointer]:
+                - /url: /tenant-provisioning
+                - img [ref=e49]
+                - generic [ref=e52]: Tenant provisioning
+              - generic: "4"
+        - generic [ref=e53]:
+          - generic [ref=e54]: Configuration library
+          - list [ref=e55]:
+            - listitem [ref=e56]:
+              - link "Module registry" [ref=e57] [cursor=pointer]:
+                - /url: /module-registry
+                - img [ref=e58]
+                - generic [ref=e62]: Module registry
+            - listitem [ref=e63]:
+              - link "Document templates" [ref=e64] [cursor=pointer]:
+                - /url: /document-templates
+                - img [ref=e65]
+                - generic [ref=e68]: Document templates
+            - listitem [ref=e69]:
+              - link "Email & SMS templates" [ref=e70] [cursor=pointer]:
+                - /url: /email-templates
+                - img [ref=e71]
+                - generic [ref=e74]: Email & SMS templates
+            - listitem [ref=e75]:
+              - link "Pricing & plans" [ref=e76] [cursor=pointer]:
+                - /url: /pricing
+                - img [ref=e77]
+                - generic [ref=e79]: Pricing & plans
+        - generic [ref=e80]:
+          - generic [ref=e81]: Access & security
+          - list [ref=e82]:
+            - listitem [ref=e83]:
+              - link "Users" [ref=e84] [cursor=pointer]:
+                - /url: /access-users
+                - img [ref=e85]
+                - generic [ref=e90]: Users
+              - generic: "13"
+            - listitem [ref=e91]:
+              - link "Roles & permissions" [ref=e92] [cursor=pointer]:
+                - /url: /access-roles
+                - img [ref=e93]
+                - generic [ref=e97]: Roles & permissions
+        - generic [ref=e98]:
+          - generic [ref=e99]: Platform
+          - list [ref=e100]:
+            - listitem [ref=e101]:
+              - link "Platform settings" [ref=e102] [cursor=pointer]:
+                - /url: /platform-settings
+                - img [ref=e103]
+                - generic [ref=e106]: Platform settings
+            - listitem [ref=e107]:
+              - link "Audit log" [ref=e108] [cursor=pointer]:
+                - /url: /audit-log
+                - img [ref=e109]
+                - generic [ref=e113]: Audit log
+      - list [ref=e115]:
+        - listitem [ref=e116]:
+          - button "A Admin admin@ginja.ai" [ref=e117]:
+            - generic [ref=e119]: A
+            - generic [ref=e120]:
+              - generic [ref=e121]: Admin
+              - generic [ref=e122]: admin@ginja.ai
+            - img [ref=e123]
+      - button "Toggle Sidebar" [ref=e126]
+    - main [ref=e127]:
+      - generic [ref=e128]:
+        - button "Toggle Sidebar" [ref=e129]:
+          - img
+          - generic [ref=e130]: Toggle Sidebar
+        - button "Search tenants, modules, templates… ⌘ K" [ref=e131]:
+          - img [ref=e132]
+          - generic [ref=e135]: Search tenants, modules, templates…
+          - generic: ⌘ K
+        - generic [ref=e136]:
+          - heading "Search" [level=2] [ref=e137]
+          - paragraph [ref=e138]: Search across pages and tenants
+        - generic [ref=e139]:
+          - button "Toggle theme" [ref=e140]:
+            - img
+            - generic [ref=e141]: Toggle theme
+          - button "Notifications" [ref=e142]:
+            - img
+            - generic [ref=e143]: Notifications
+      - main [ref=e144]:
+        - generic [ref=e145]:
+          - navigation "Breadcrumb" [ref=e146]:
+            - link "Tenant accounts" [ref=e147] [cursor=pointer]:
+              - /url: /tenant-accounts
+            - generic [ref=e148]: /
+            - generic [ref=e149]: Onboard tenant
+          - generic [ref=e151]:
+            - complementary [ref=e152]:
+              - generic [ref=e153]: CIC Insurance Group
+              - generic [ref=e154]: Insurer onboarding · 6 sections
+              - generic [ref=e155]:
+                - button "Basic profile Legal entity & contacts AO Onboarding Specialist" [ref=e156]:
+                  - img [ref=e159]
+                  - generic [ref=e161]:
+                    - generic [ref=e162]: Basic profile
+                    - generic [ref=e163]: Legal entity & contacts
+                    - generic [ref=e164]:
+                      - generic [ref=e165]: AO
+                      - text: Onboarding Specialist
+                - button "Secondary tenants Branches & subsidiaries AO Onboarding Specialist" [ref=e166]:
+                  - img [ref=e169]
+                  - generic [ref=e171]:
+                    - generic [ref=e172]: Secondary tenants
+                    - generic [ref=e173]: Branches & subsidiaries
+                    - generic [ref=e174]:
+                      - generic [ref=e175]: AO
+                      - text: Onboarding Specialist
+                - button "3 Module access Features for all tenants AO Onboarding Specialist" [ref=e176]:
+                  - generic [ref=e178]: "3"
+                  - generic [ref=e179]:
+                    - generic [ref=e180]: Module access
+                    - generic [ref=e181]: Features for all tenants
+                    - generic [ref=e182]:
+                      - generic [ref=e183]: AO
+                      - text: Onboarding Specialist
+                - button "4 Billing & terms Subscription model AO Onboarding Specialist" [ref=e184]:
+                  - generic [ref=e186]: "4"
+                  - generic [ref=e187]:
+                    - generic [ref=e188]: Billing & terms
+                    - generic [ref=e189]: Subscription model
+                    - generic [ref=e190]:
+                      - generic [ref=e191]: AO
+                      - text: Onboarding Specialist
+                - button "5 KYC & documents Contract & KYB review DK Compliance Officer" [ref=e192]:
+                  - generic [ref=e194]: "5"
+                  - generic [ref=e195]:
+                    - generic [ref=e196]: KYC & documents
+                    - generic [ref=e197]: Contract & KYB review
+                    - generic [ref=e198]:
+                      - generic [ref=e199]: DK
+                      - text: Compliance Officer
+                - button "6 Review & submit Create in Draft AO Onboarding Specialist" [ref=e200]:
+                  - generic [ref=e201]: "6"
+                  - generic [ref=e202]:
+                    - generic [ref=e203]: Review & submit
+                    - generic [ref=e204]: Create in Draft
+                    - generic [ref=e205]:
+                      - generic [ref=e206]: AO
+                      - text: Onboarding Specialist
+              - generic [ref=e208]:
+                - img [ref=e209]
+                - generic [ref=e211]: Complete sections in any order. On submit, the tenant is created in Draft and routed to the approver.
+            - generic [ref=e212]:
+              - generic [ref=e213]:
+                - img [ref=e214]
+                - generic [ref=e217]: Unsaved draft
+                - generic [ref=e218]: Kept in this browser — server drafts coming soon
+                - generic [ref=e219]:
+                  - generic [ref=e220]: 2/6 sections complete
+                  - button "Save & exit" [ref=e223]:
+                    - img
+                    - text: Save & exit
+              - generic [ref=e224]:
+                - generic [ref=e225]:
+                  - generic [ref=e226]: SECTION 4 OF 6
+                  - heading "Billing & terms" [level=2] [ref=e513]
+                  - paragraph [ref=e228]: Set the subscription model and billing frequency. These are tied to the primary tenant only.
+                - generic [ref=e229]:
+                  - generic [ref=e230]: Section owner
+                  - button "AO Amara Okeke Onboarding Specialist" [ref=e231]:
+                    - generic [ref=e232]: AO
+                    - generic [ref=e233]:
+                      - generic [ref=e234]: Amara Okeke
+                      - generic [ref=e235]: Onboarding Specialist
+                    - img [ref=e236]
+              - generic [ref=e514]:
+                - generic [ref=e515]:
+                  - generic [ref=e517]:
+                    - heading "Pricing structure" [level=4] [ref=e518]
+                    - paragraph [ref=e519]: Pick an active commercial structure. The chosen structure's price is frozen onto the subscription.
+                  - button "% of Gross Premium PRC000002 · PCT_GWP · USD % of GWP + $500K annual platform fee + 15% savings capture" [ref=e521]:
+                    - generic [ref=e523]:
+                      - heading "% of Gross Premium" [level=4] [ref=e524]
+                      - generic [ref=e525]: PRC000002 · PCT_GWP · USD
+                    - paragraph [ref=e526]: "% of GWP + $500K annual platform fee + 15% savings capture"
+                - generic [ref=e527]:
+                  - heading "Subscription model" [level=4] [ref=e530]
+                  - generic [ref=e531]:
+                    - button "Per Member / Month Billed on covered members" [ref=e532]:
+                      - heading "Per Member / Month" [level=4] [ref=e534]
+                      - generic [ref=e535]: Billed on covered members
+                    - button "Per Claim Billed per processed claim" [ref=e536]:
+                      - heading "Per Claim" [level=4] [ref=e538]
+                      - generic [ref=e539]: Billed per processed claim
+                    - button "% of Gross Written Premium Billed as a % of GWP" [ref=e540]:
+                      - heading "% of Gross Written Premium" [level=4] [ref=e542]
+                      - generic [ref=e543]: Billed as a % of GWP
+                - generic [ref=e545]:
+                  - generic [ref=e546]:
+                    - text: Billing frequency
+                    - generic [ref=e547]: "*"
+                  - generic [ref=e549]:
+                    - button "Monthly" [ref=e550]
+                    - button "Quarterly" [ref=e551]
+                    - button "Annually" [ref=e552]
+                - generic [ref=e553]:
+                  - img [ref=e554]
+                  - generic [ref=e556]: "Free-trial and contract-date fields were removed — the subscription API only accepts a pricing structure, model and frequency. Billing is tied to the primary tenant. (Flagged for the backend: see API_UI_FIT.md.)"
+              - generic [ref=e363]:
+                - button "Back" [ref=e512]:
+                  - img
+                  - text: Back
+                - button "Save draft" [ref=e364]:
+                  - img
+                  - text: Save draft
+                - button "Continue" [active] [ref=e365]:
+                  - text: Continue
+                  - img
+  - region "Notifications alt+T"

@@ -1,3 +1,4 @@
+import * as React from "react"
 import { useNavigate } from "react-router-dom"
 import {
   ArrowRightIcon,
@@ -5,7 +6,9 @@ import {
   ChevronLeftIcon,
   ClockIcon,
   InfoIcon,
+  Loader2Icon,
   SendIcon,
+  TriangleAlertIcon,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -15,13 +18,21 @@ import {
   ONB_TEAM,
   STEP_INTRO,
   WIZ_STEPS,
+  type OnboardingForm,
   type OnbTeamKey,
   type WizStepKey,
 } from "@/lib/console-data"
 import { AssigneePicker } from "@/components/console/assignee-picker"
 import { MiniAvatar } from "@/components/console/avatar-initials"
 import { Panel } from "@/components/console/panel"
+import { Note } from "@/components/console/note"
 import { Breadcrumbs } from "@/components/console/breadcrumbs"
+import { useSubmitOnboarding } from "@/features/payers/use-onboarding"
+import {
+  OnboardingError,
+  type OnboardInput,
+  type OnboardStep,
+} from "@/features/payers/onboarding"
 import { useOnboardingForm } from "./use-onboarding-form"
 import { StepPrimary } from "./sections/step-primary"
 import { StepSecondary } from "./sections/step-secondary"
@@ -30,7 +41,68 @@ import { StepBilling } from "./sections/step-billing"
 import { StepDocuments } from "./sections/step-documents"
 import { StepReview } from "./sections/step-review"
 
-const DRAFT_ID = "ONB-2041"
+const STEP_LABEL: Record<OnboardStep, string> = {
+  create: "Creating tenant…",
+  technical: "Saving technical config…",
+  secondary: "Adding secondary tenants…",
+  entitlements: "Saving module access…",
+  subscription: "Saving billing…",
+  documents: "Recording documents…",
+  submit: "Submitting for approval…",
+}
+
+/** Map the local wizard form to the onboarding API input. */
+function buildInput(form: OnboardingForm): OnboardInput {
+  const c0 = form.contacts[0] ?? { name: "", email: "", role: "", phone: "" }
+  return {
+    payerType: form.type,
+    primary: {
+      legalEntityName: form.legal,
+      tradingName: form.trading,
+      primaryContactName: c0.name,
+      primaryContactEmail: c0.email,
+      country: form.country,
+      region: form.region,
+      subdomain: form.subdomain,
+      taxVatNumber: form.tax,
+      phone: c0.phone,
+      address: form.address,
+      website: form.website,
+      extraContacts: form.contacts
+        .slice(1)
+        .map((c) => ({ name: c.name, email: c.email, role: c.role })),
+    },
+    technical: {
+      subdomain: form.subdomain,
+      customDomain: form.customDomain,
+      isolation: form.isolation,
+      region: form.region,
+    },
+    // Secondary contact/admin details aren't collected in the design — they
+    // default to the primary's so the request validates (flagged for backend).
+    secondaries: form.secondaries.map((s) => ({
+      legalEntityName: s.name,
+      primaryContactName: c0.name,
+      primaryContactEmail: c0.email,
+      country: s.country,
+      region: s.region,
+      subdomain: s.subdomain,
+    })),
+    moduleCodes: Object.keys(form.modules),
+    subscription: form.pricingStructureId
+      ? {
+          pricingStructureId: form.pricingStructureId,
+          model: form.model,
+          frequency: form.freq,
+        }
+      : null,
+    documents: form.documents.map((d) => ({
+      category: d.category,
+      fileName: d.fileName,
+      expiryDate: d.expiryDate,
+    })),
+  }
+}
 
 export function OnboardTenantPage() {
   const navigate = useNavigate()
@@ -42,15 +114,32 @@ export function OnboardTenantPage() {
     setStep,
     assignees,
     setAssignees,
-    lastSaved,
-    setLastSaved,
-    modCount,
     status,
     doneCount,
   } = wiz
 
+  const submitMut = useSubmitOnboarding()
+  const [runStep, setRunStep] = React.useState<OnboardStep | null>(null)
+  const [err, setErr] = React.useState<{ step: OnboardStep; message: string } | null>(
+    null
+  )
+  // Ids of a partial run, so a retry resumes from the failed step.
+  const [partial, setPartial] = React.useState<{
+    payerId?: number
+    tenantId?: number
+    from?: OnboardStep
+  }>({})
+
   const cur = WIZ_STEPS[step]
   const total = WIZ_STEPS.length
+  const busy = submitMut.isPending
+
+  // Submit is allowed once every required (non-secondary) section is complete.
+  const canSubmit =
+    status.primary === "complete" &&
+    status.modules === "complete" &&
+    status.billing === "complete" &&
+    status.documents === "complete"
 
   const onAssign = (s: WizStepKey, k: OnbTeamKey) => {
     setAssignees((a) => ({ ...a, [s]: k }))
@@ -59,18 +148,51 @@ export function OnboardTenantPage() {
     )
   }
   const saveDraft = (exit: boolean) => {
-    setLastSaved("just now")
     if (exit) {
-      toast(`Draft ${DRAFT_ID} saved — resume anytime from Tenant accounts.`)
+      toast("Exited. Note: onboarding drafts aren’t saved to the server yet.")
       navigate("/tenant-accounts")
     } else {
-      toast(`Progress saved to draft ${DRAFT_ID}.`)
+      toast("Progress kept in this browser tab.")
     }
   }
+
   const submit = () => {
-    toast("Tenant created in Draft — sent to the approval queue.")
-    navigate("/approvals")
+    setErr(null)
+    submitMut.mutate(
+      {
+        input: buildInput(form),
+        opts: {
+          existingPayerId: partial.payerId,
+          existingTenantId: partial.tenantId,
+          startFrom: partial.from,
+          onStep: setRunStep,
+        },
+      },
+      {
+        onSuccess: (res) => {
+          setRunStep(null)
+          setPartial({})
+          toast.success(
+            `${form.legal || "Tenant"} submitted for approval — ${res.payerCode}.`
+          )
+          navigate("/tenant-accounts")
+        },
+        onError: (e) => {
+          setRunStep(null)
+          if (e instanceof OnboardingError) {
+            setPartial({ payerId: e.payerId, tenantId: e.tenantId, from: e.step })
+            setErr({ step: e.step, message: e.message })
+          } else {
+            setErr({
+              step: "create",
+              message: e instanceof Error ? e.message : "Submission failed.",
+            })
+          }
+        },
+      }
+    )
   }
+
   const next = () => step < total - 1 && setStep(step + 1)
   const back = () => step > 0 && setStep(step - 1)
 
@@ -79,7 +201,7 @@ export function OnboardTenantPage() {
       <Breadcrumbs
         items={[
           { label: "Tenant accounts", href: "/tenant-accounts" },
-          { label: `Onboard tenant · ${DRAFT_ID}` },
+          { label: "Onboard tenant" },
         ]}
       />
 
@@ -116,7 +238,6 @@ export function OnboardTenantPage() {
                       active ? "bg-primary/[0.07]" : "hover:bg-muted/60"
                     )}
                   >
-                    {/* Vertical connector line linking the step dots */}
                     {i < total - 1 ? (
                       <span
                         aria-hidden
@@ -163,8 +284,8 @@ export function OnboardTenantPage() {
               <div className="flex items-start gap-2.5 rounded-[9px] bg-info-subtle px-3 py-2.5 text-[11.5px] leading-normal text-info-subtle-foreground">
                 <InfoIcon className="mt-px size-[15px] shrink-0" />
                 <span>
-                  Complete sections in any order and hand off to a teammate.
-                  Progress is saved as a draft you can resume anytime.
+                  Complete sections in any order. On submit, the tenant is
+                  created in Draft and routed to the approver.
                 </span>
               </div>
             </div>
@@ -175,11 +296,9 @@ export function OnboardTenantPage() {
             {/* Status strip */}
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b px-5 py-3.5">
               <ClockIcon className="size-[15px] text-muted-foreground" />
-              <span className="mono text-[13px] font-semibold">
-                Draft {DRAFT_ID}
-              </span>
+              <span className="text-[13px] font-semibold">Unsaved draft</span>
               <span className="text-xs text-muted-foreground">
-                Saved {lastSaved}
+                Kept in this browser — server drafts coming soon
               </span>
               <div className="ml-auto flex items-center gap-3">
                 <span className="hidden text-xs text-muted-foreground sm:block">
@@ -195,6 +314,7 @@ export function OnboardTenantPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => saveDraft(true)}
+                  disabled={busy}
                 >
                   <ClockIcon data-icon="inline-start" />
                   Save &amp; exit
@@ -228,12 +348,8 @@ export function OnboardTenantPage() {
               {cur.k === "primary" && <StepPrimary form={form} set={set} />}
               {cur.k === "secondary" && <StepSecondary form={form} set={set} />}
               {cur.k === "modules" && <StepModules form={form} set={set} />}
-              {cur.k === "billing" && (
-                <StepBilling form={form} set={set} modCount={modCount} />
-              )}
-              {cur.k === "documents" && (
-                <StepDocuments form={form} assignees={assignees} />
-              )}
+              {cur.k === "billing" && <StepBilling form={form} set={set} />}
+              {cur.k === "documents" && <StepDocuments form={form} set={set} />}
               {cur.k === "review" && (
                 <StepReview
                   form={form}
@@ -244,31 +360,63 @@ export function OnboardTenantPage() {
               )}
             </div>
 
+            {/* Submit error (resumable) */}
+            {cur.k === "review" && err ? (
+              <div className="px-5 pb-1">
+                <Note tone="err" icon={<TriangleAlertIcon />}>
+                  <b>Submission stopped at “{STEP_LABEL[err.step]}”.</b>{" "}
+                  {err.message}{" "}
+                  {partial.payerId ? (
+                    <>The draft was created — press Submit again to resume.</>
+                  ) : null}
+                </Note>
+              </div>
+            ) : null}
+
             {/* Footer nav */}
             <div className="flex items-center gap-2 border-t px-5 py-3.5">
               {step > 0 ? (
-                <Button variant="outline" onClick={back}>
+                <Button variant="outline" onClick={back} disabled={busy}>
                   <ChevronLeftIcon data-icon="inline-start" />
                   Back
                 </Button>
               ) : null}
               <span className="flex-1" />
-              <Button variant="ghost" onClick={() => saveDraft(false)}>
-                <ClockIcon data-icon="inline-start" />
-                Save draft
-              </Button>
               {step < total - 1 ? (
-                <Button onClick={next}>
-                  Continue
-                  <ArrowRightIcon data-icon="inline-end" />
-                </Button>
+                <>
+                  <Button
+                    variant="ghost"
+                    onClick={() => saveDraft(false)}
+                    disabled={busy}
+                  >
+                    <ClockIcon data-icon="inline-start" />
+                    Save draft
+                  </Button>
+                  <Button onClick={next}>
+                    Continue
+                    <ArrowRightIcon data-icon="inline-end" />
+                  </Button>
+                </>
               ) : (
                 <Button
                   className="bg-brand text-brand-foreground hover:bg-brand/90"
                   onClick={submit}
+                  disabled={busy || !canSubmit}
+                  title={
+                    canSubmit ? undefined : "Complete all required sections first"
+                  }
                 >
-                  <SendIcon data-icon="inline-start" />
-                  Submit for review
+                  {busy ? (
+                    <>
+                      <Loader2Icon data-icon="inline-start" className="animate-spin" />
+                      {runStep ? STEP_LABEL[runStep] : "Submitting…"}
+                    </>
+                  ) : (
+                    <>
+                      <SendIcon data-icon="inline-start" />
+                      {err ? "Retry submit" : "Submit for review"}
+                    </>
+                  )}
                 </Button>
               )}
             </div>

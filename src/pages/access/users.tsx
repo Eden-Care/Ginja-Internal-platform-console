@@ -9,16 +9,17 @@ import {
   ChevronRightIcon,
   ClockIcon,
   ExternalLinkIcon,
+  HistoryIcon,
   InfoIcon,
   KeyRoundIcon,
   LayersIcon,
   MailIcon,
-  MonitorIcon,
   PauseIcon,
   PencilIcon,
   PlayIcon,
   RotateCcwIcon,
   SearchIcon,
+  ShieldCheckIcon,
   Trash2Icon,
   TriangleAlertIcon,
   UserPlusIcon,
@@ -58,7 +59,7 @@ import { ConsoleSelect, Field } from "@/components/console/form-atoms"
 import { hifiTableHead } from "@/components/console/table"
 import { LoadingSpinner } from "@/components/common/loading"
 import { useAccess } from "@/contexts/access-context"
-import { useMembers } from "@/features/access/use-members"
+import { useMember, useMembers } from "@/features/access/use-members"
 import { useRoles } from "@/features/access/use-roles"
 import {
   useDeleteMember,
@@ -118,6 +119,16 @@ const fmtLastActive = (iso: string | null) =>
   iso ? formatDistanceToNow(new Date(iso), { addSuffix: true }) : "Never"
 const fmtSince = (iso: string | null) =>
   iso ? format(new Date(iso), "dd MMM yyyy") : "—"
+
+/** Muted, dashed pill marking a UI element the backend doesn't power yet. */
+function PendingBadge({ children = "Not available yet" }: { children?: React.ReactNode }) {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full border border-dashed bg-muted/50 px-2 py-[2px] text-[10.5px] font-medium text-muted-foreground [&>svg]:size-2.5">
+      <ClockIcon />
+      {children}
+    </span>
+  )
+}
 
 /* ------------------------------------------------------------- atoms ----- */
 
@@ -357,6 +368,7 @@ function InviteDrawer({
 const SUB_TABS: [string, string][] = [
   ["overview", "Overview"],
   ["access", "Access"],
+  ["activity", "Activity timeline"],
 ]
 
 function UserDrawer({
@@ -464,6 +476,11 @@ function UserDrawer({
           {isInvited && (
             <Note tone="info" icon={<MailIcon />}>
               <b>Invitation pending.</b> Awaiting acceptance of the setup link.
+              <span className="mt-1.5 flex items-center gap-1.5 text-[11.5px] text-muted-foreground">
+                <ClockIcon className="size-3 shrink-0" />
+                Expiry countdown isn’t shown — the API doesn’t return invite
+                expiry yet.
+              </span>
             </Note>
           )}
 
@@ -481,9 +498,9 @@ function UserDrawer({
                   v={fmtSince(m.memberSince)}
                 />
                 <StatCard
-                  icon={<MonitorIcon />}
-                  k="Active sessions"
-                  v={String(m.activeSessions)}
+                  icon={<ShieldCheckIcon />}
+                  k="Two-factor"
+                  v={<PendingBadge>Pending backend</PendingBadge>}
                 />
               </div>
 
@@ -707,6 +724,35 @@ function UserDrawer({
               )}
             </>
           )}
+
+          {tab === "activity" && (
+            <div className="flex flex-col items-center gap-3 rounded-[14px] border border-dashed bg-muted/30 px-6 py-12 text-center">
+              <span className="grid size-[42px] place-items-center rounded-full bg-muted text-muted-foreground [&>svg]:size-5">
+                <HistoryIcon />
+              </span>
+              <div>
+                <p className="text-[13.5px] font-semibold">
+                  Per-member activity timeline
+                </p>
+                <p className="mx-auto mt-1 max-w-[340px] text-[12.5px] text-muted-foreground">
+                  A per-member history feed isn’t available from the API yet. In the
+                  meantime, the platform-wide <b>Audit log</b> records every action
+                  with its actor and target.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  onClose()
+                  navigate("/audit-log")
+                }}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-input bg-card px-3 py-[7px] text-[12.5px] font-semibold text-primary transition-colors hover:border-primary hover:bg-primary/5 [&>svg]:size-[13px]"
+              >
+                Open audit log
+                <ExternalLinkIcon />
+              </button>
+              <PendingBadge>Pending backend — per-member activity endpoint</PendingBadge>
+            </div>
+          )}
         </div>
 
         {canManage && (
@@ -774,7 +820,15 @@ function Eyebrow({
   )
 }
 
-function StatCard({ icon, k, v }: { icon: React.ReactNode; k: string; v: string }) {
+function StatCard({
+  icon,
+  k,
+  v,
+}: {
+  icon: React.ReactNode
+  k: string
+  v: React.ReactNode
+}) {
   return (
     <div className="rounded-xl border bg-card p-3.5">
       <span className="mb-3 grid size-[30px] place-items-center rounded-lg bg-primary/10 text-primary [&>svg]:size-[15px]">
@@ -783,7 +837,7 @@ function StatCard({ icon, k, v }: { icon: React.ReactNode; k: string; v: string 
       <div className="text-[10px] font-semibold tracking-[0.06em] text-muted-foreground uppercase">
         {k}
       </div>
-      <div className="mt-px text-[15px] font-bold">{v}</div>
+      <div className="mt-1 text-[15px] font-bold">{v}</div>
     </div>
   )
 }
@@ -834,14 +888,17 @@ export function AccessUsersPage() {
   const resendMut = useResendInvite()
   const revokeMut = useRevokeInvite()
   const deleteMut = useDeleteMember()
-  const busy =
-    statusMut.isPending || rolesMut.isPending || resendMut.isPending
+  const busy = statusMut.isPending || rolesMut.isPending || resendMut.isPending
 
   const [q, setQ] = React.useState("")
   const [filter, setFilter] = React.useState<MemberStatus | "All">("All")
   const [openId, setOpenId] = React.useState<number | null>(null)
   const [invite, setInvite] = React.useState(false)
   const [modal, setModal] = React.useState<{ type: ModalType; member: Member } | null>(null)
+
+  // Opening a row fetches that member's full detail from GET /members/{id};
+  // the already-loaded list row seeds the drawer while the request is in flight.
+  const detailQuery = useMember(openId)
 
   const counts: Record<string, number> = { All: members.length }
   ;(["ACTIVE", "INVITED", "SUSPENDED"] as MemberStatus[]).forEach(
@@ -853,7 +910,10 @@ export function AccessUsersPage() {
       (m.name.toLowerCase().includes(q.toLowerCase()) ||
         m.email.toLowerCase().includes(q.toLowerCase()))
   )
-  const open = openId != null ? members.find((m) => m.id === openId) ?? null : null
+  const open =
+    openId == null
+      ? null
+      : detailQuery.data ?? members.find((m) => m.id === openId) ?? null
 
   const errToast = (e: unknown, fallback: string) =>
     toast.error(e instanceof Error ? e.message : fallback)

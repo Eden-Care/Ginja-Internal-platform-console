@@ -205,6 +205,29 @@ export type Secondary = {
   subdomain: string
 }
 
+/** A KYB/contract document captured in onboarding. Metadata only — the API
+   stores filename + category; actual file bytes aren't accepted yet. */
+export type OnbDocument = {
+  category: string
+  fileName: string
+  expiryDate?: string
+}
+
+/** KYB categories the submit gate requires on the primary tenant (API §8.6). */
+export const REQUIRED_DOC_CATEGORIES = [
+  "SIGNED_CONTRACT",
+  "COMPANY_REGISTRATION",
+  "PROOF_OF_ADDRESS",
+  "DIRECTOR_SHAREHOLDER_ID",
+] as const
+
+export const DOC_CATEGORY_LABEL: Record<string, string> = {
+  SIGNED_CONTRACT: "Signed Contract",
+  COMPANY_REGISTRATION: "Company Registration Certificate",
+  PROOF_OF_ADDRESS: "Proof of Address",
+  DIRECTOR_SHAREHOLDER_ID: "Director / Shareholder IDs",
+}
+
 export type OnboardingForm = {
   legal: string
   trading: string
@@ -222,9 +245,15 @@ export type OnboardingForm = {
   address: string
   website: string
   secondaries: Secondary[]
+  /** Selected module codes → submodule codes. Modules-only for now (no
+     submodule catalogue API), so the arrays are empty. */
   modules: Record<string, string[]>
+  /** Chosen ACTIVE pricing structure id (null until picked). */
+  pricingStructureId: number | null
+  /** subscription_model: PMPM | PER_CLAIM | PCT_GWP. */
   model: string
   freq: string
+  documents: OnbDocument[]
 }
 
 /* ------------------------------------------------------------------- nav -- */
@@ -2748,15 +2777,12 @@ export const BASE_FORM: OnboardingForm = {
   address: "CIC Plaza, Mara Road, Upper Hill, Nairobi, Kenya",
   website: "www.cic.co.ke",
   secondaries: [],
-  modules: {
-    claims: ["intake", "adjud", "preauth"],
-    members: ["enroll", "elig"],
-    products: ["builder", "rules"],
-    finance: ["invoicing", "payments"],
-    reporting: ["core"],
-  },
-  model: "pmpm",
+  // Start empty — Step 3 selects from the live module catalogue (real codes).
+  modules: {},
+  pricingStructureId: null,
+  model: "",
   freq: "Monthly",
+  documents: [],
 }
 
 /* ===================================================================== staff */
