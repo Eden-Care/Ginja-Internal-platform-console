@@ -7,13 +7,14 @@ export const roleKeys = {
   lists: () => [...roleKeys.all, "list"] as const,
 }
 
-export const functionalityKeys = {
-  all: ["functionalities"] as const,
-  lists: () => [...functionalityKeys.all, "list"] as const,
+export const permissionKeys = {
+  all: ["permissions"] as const,
+  lists: () => [...permissionKeys.all, "list"] as const,
 }
 
 export const memberKeys = {
   all: ["members"] as const,
   list: (query: unknown) => [...memberKeys.all, "list", query] as const,
   detail: (id: number) => [...memberKeys.all, "detail", id] as const,
+  activity: (id: number) => [...memberKeys.all, "activity", id] as const,
 }

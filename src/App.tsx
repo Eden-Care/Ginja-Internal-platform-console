@@ -20,9 +20,12 @@ import { useAuth } from "@/contexts/auth-context"
 import { LoginPage } from "@/pages/login"
 import { ConsoleDashboardPage } from "@/pages/platform-dashboard"
 import { ApprovalsPage } from "@/pages/approvals"
+import { ApprovalReviewPage } from "@/pages/approvals/review"
 import { TenantAccountsPage } from "@/pages/tenant-accounts"
 import { OnboardTenantPage } from "@/pages/tenant-accounts/onboard"
+import { PayerRecordPage } from "@/pages/tenant-accounts/record"
 import { TenantProvisioningPage } from "@/pages/tenant-provisioning"
+import { ProvisioningDetailPage } from "@/pages/tenant-provisioning/detail"
 import { ModuleRegistryPage } from "@/pages/module-registry"
 import { DocumentTemplatesPage } from "@/pages/document-templates"
 import { EmailTemplatesPage } from "@/pages/email-templates"
@@ -73,10 +76,22 @@ function AppShell() {
               path="tenant-accounts/onboard"
               element={<OnboardTenantPage />}
             />
+            <Route
+              path="tenant-accounts/:payerId"
+              element={<PayerRecordPage />}
+            />
             <Route path="approvals" element={<ApprovalsPage />} />
+            <Route
+              path="approvals/:payerId"
+              element={<ApprovalReviewPage />}
+            />
             <Route
               path="tenant-provisioning"
               element={<TenantProvisioningPage />}
+            />
+            <Route
+              path="tenant-provisioning/:tenantId"
+              element={<ProvisioningDetailPage />}
             />
             <Route path="module-registry" element={<ModuleRegistryPage />} />
             <Route

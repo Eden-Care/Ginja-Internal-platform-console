@@ -173,28 +173,39 @@ export function ProviderGrid({
 
 /* ----------------------------------------------------------- test button -- */
 
-/** Button that fakes an async test (idle → testing → ok), firing `onResult`. */
+/** Test button (idle → testing → ok). When `onTest` is supplied it runs the real
+   async action (the section test endpoint) and reflects its result; otherwise it
+   falls back to a simulated pass. Fires `onResult(true)` on success. */
 export function TestButton({
   label,
   okLabel,
   onResult,
+  onTest,
   ro,
   kind,
 }: {
   label: string
   okLabel?: string
   onResult?: (ok: boolean) => void
+  /** Real async test; resolves true on success. Omit for a simulated pass. */
+  onTest?: () => Promise<boolean>
   ro?: Ro
   kind?: "send"
 }) {
   const [state, setState] = React.useState<"idle" | "testing" | "ok">("idle")
-  const run = () => {
-    if (ro) return
+  const run = async () => {
+    if (ro || state === "testing") return
     setState("testing")
-    setTimeout(() => {
-      setState("ok")
-      onResult?.(true)
-    }, 1100)
+    if (onTest) {
+      const ok = await onTest()
+      setState(ok ? "ok" : "idle")
+      if (ok) onResult?.(true)
+    } else {
+      setTimeout(() => {
+        setState("ok")
+        onResult?.(true)
+      }, 1100)
+    }
   }
   return (
     <button

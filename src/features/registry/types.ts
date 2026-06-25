@@ -78,6 +78,40 @@ function toSubModule(d: SubModuleDTO): SubModule {
   }
 }
 
+/* A module as the onboarding entitlement step needs it: the functional `code`
+   (the value PUT /entitlements expects as `module_code`) plus display fields and
+   sub-modules. RegistryModule folds `code` into `id` for the registry table, so
+   this is a distinct, code-preserving view over the same endpoint. */
+export type ModuleCatalogueSub = {
+  code: string
+  name: string
+  description: string
+  /** Code of the sub-module this one depends on (if any). */
+  requires?: string
+}
+
+export type ModuleCatalogueItem = {
+  /** Functional code, e.g. "CLAIMS" — the value PUT /entitlements expects. */
+  code: string
+  name: string
+  description: string
+  subs: ModuleCatalogueSub[]
+}
+
+export function toModuleCatalogueItem(d: ModuleDTO): ModuleCatalogueItem {
+  return {
+    code: (d.code ?? "").toUpperCase(),
+    name: d.name,
+    description: d.description ?? "",
+    subs: (d.sub_modules ?? []).map((s) => ({
+      code: s.code,
+      name: s.name,
+      description: s.description ?? "",
+      requires: s.requires ?? undefined,
+    })),
+  }
+}
+
 export function toRegistryModule(d: ModuleDTO): RegistryModule {
   const code = (d.code ?? "").toUpperCase()
   return {

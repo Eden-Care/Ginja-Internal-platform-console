@@ -1,6 +1,7 @@
 import {
   AlertTriangleIcon,
   CheckCircle2Icon,
+  CircleDollarSignIcon,
   InfoIcon,
   TriangleAlertIcon,
 } from "lucide-react"
@@ -9,16 +10,15 @@ import { cn } from "@/lib/utils"
 import { BILLING_FREQ, type OnboardingForm } from "@/lib/console-data"
 import type { SetField } from "../use-onboarding-form"
 import { Field, FormGrid, FormSection, Seg } from "@/components/console/form-atoms"
+import { Input } from "@/components/ui/input"
 import { Note } from "@/components/console/note"
 import { LoadingSpinner } from "@/components/common/loading"
-import { usePricingStructures } from "@/features/pricing/use-pricing-structures"
-
-/** subscription_model — the only values the API accepts (§8.4). */
-const MODELS: { v: string; name: string; sub: string }[] = [
-  { v: "PMPM", name: "Per Member / Month", sub: "Billed on covered members" },
-  { v: "PER_CLAIM", name: "Per Claim", sub: "Billed per processed claim" },
-  { v: "PCT_GWP", name: "% of Gross Written Premium", sub: "Billed as a % of GWP" },
-]
+import { useTenantPricingOptions } from "@/features/pricing/use-pricing-structures"
+import {
+  PRICING_MODEL_SHORT,
+  pricingHeadline,
+  subscriptionModelFor,
+} from "@/features/pricing/types"
 
 export function StepBilling({
   form,
@@ -27,15 +27,15 @@ export function StepBilling({
   form: OnboardingForm
   set: SetField
 }) {
-  const { data, isLoading, isError, refetch } = usePricingStructures("ACTIVE")
+  const { data, isLoading, isError, refetch } = useTenantPricingOptions()
   const structures = data ?? []
   const hasClaims = !!form.modules["CLAIMS"]
 
   return (
     <div className="flex flex-col gap-6">
       <FormSection
-        title="Pricing structure"
-        desc="Pick an active commercial structure. The chosen structure's price is frozen onto the subscription."
+        title="Subscription model"
+        desc="Pick an active commercial structure — its price is frozen onto the subscription. The billing model is set from your choice."
       >
         {isLoading ? (
           <div className="flex items-center justify-center py-10 text-muted-foreground">
@@ -59,36 +59,53 @@ export function StepBilling({
             complete billing until one exists.
           </Note>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {structures.map((s) => {
               const on = form.pricingStructureId === s.id
+              const head = pricingHeadline(s)
               return (
                 <button
                   type="button"
                   key={s.id}
-                  onClick={() => set("pricingStructureId", s.id)}
+                  onClick={() => {
+                    set("pricingStructureId", s.id)
+                    set("model", subscriptionModelFor(s))
+                  }}
                   className={cn(
-                    "flex flex-col gap-1.5 rounded-xl border p-3.5 text-left transition-all",
+                    "flex flex-col gap-2.5 rounded-xl border p-4 text-left transition-all",
                     on
                       ? "border-primary ring-1 ring-primary"
                       : "hover:border-primary/40 hover:bg-muted/40"
                   )}
                 >
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-start gap-2.5">
+                    {/* Placeholder icon for every structure — per-model icons TBD. */}
+                    <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary [&>svg]:size-[18px]">
+                      <CircleDollarSignIcon />
+                    </span>
                     <div className="min-w-0 flex-1">
-                      <h4 className="truncate text-[13px] font-semibold">{s.name}</h4>
-                      <div className="mono text-[11px] text-muted-foreground">
-                        {s.code} · {s.model} · {s.currency}
+                      <h4 className="truncate text-[13.5px] font-semibold">
+                        {s.name}
+                      </h4>
+                      <div className="text-[11.5px] text-muted-foreground">
+                        {PRICING_MODEL_SHORT[s.model] ?? s.model}
                       </div>
                     </div>
                     {on ? (
                       <CheckCircle2Icon className="size-[17px] shrink-0 text-primary" />
                     ) : null}
                   </div>
-                  {s.description ? (
-                    <p className="line-clamp-2 text-[11.5px] text-muted-foreground">
-                      {s.description}
-                    </p>
+                  {head ? (
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-xl font-bold tracking-tight">
+                        {head.amount}
+                      </span>
+                      {head.suffix ? (
+                        <span className="text-[11.5px] text-muted-foreground">
+                          {head.suffix}
+                        </span>
+                      ) : null}
+                    </div>
                   ) : null}
                 </button>
               )
@@ -97,32 +114,12 @@ export function StepBilling({
         )}
       </FormSection>
 
-      <FormSection title="Subscription model">
-        <div className="grid gap-3 sm:grid-cols-3">
-          {MODELS.map((m) => {
-            const on = form.model === m.v
-            return (
-              <button
-                type="button"
-                key={m.v}
-                onClick={() => set("model", m.v)}
-                className={cn(
-                  "flex flex-col gap-1 rounded-xl border p-3.5 text-left transition-all",
-                  on
-                    ? "border-primary ring-1 ring-primary"
-                    : "hover:border-primary/40 hover:bg-muted/40"
-                )}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <h4 className="text-[13px] font-semibold">{m.name}</h4>
-                  {on ? <CheckCircle2Icon className="size-[17px] text-primary" /> : null}
-                </div>
-                <div className="text-[11.5px] text-muted-foreground">{m.sub}</div>
-              </button>
-            )
-          })}
-        </div>
-      </FormSection>
+      {form.model === "PER_CLAIM" && !hasClaims ? (
+        <Note tone="warn" icon={<AlertTriangleIcon />}>
+          This structure bills <b>per claim</b> but the <b>CLAIMS</b> module isn’t
+          enabled (Step 3).
+        </Note>
+      ) : null}
 
       <FormGrid>
         <Field label="Billing frequency" required>
@@ -134,19 +131,41 @@ export function StepBilling({
             />
           </div>
         </Field>
+        <Field label="Free-trial period" optional>
+          <div className="flex items-center gap-2">
+            <Input
+              type="number"
+              min={0}
+              value={form.freeTrialDays}
+              placeholder="0"
+              onChange={(e) => set("freeTrialDays", e.target.value)}
+            />
+            <span className="text-[13px] text-muted-foreground">days</span>
+          </div>
+        </Field>
       </FormGrid>
 
-      {form.model === "PER_CLAIM" && !hasClaims ? (
-        <Note tone="warn" icon={<AlertTriangleIcon />}>
-          The <b>Per Claim</b> model requires the <b>CLAIMS</b> module to be
-          enabled (Step 3).
-        </Note>
-      ) : null}
+      <FormGrid>
+        <Field label="Contract start" optional>
+          <Input
+            type="date"
+            value={form.contractStart}
+            onChange={(e) => set("contractStart", e.target.value)}
+          />
+        </Field>
+        <Field label="Contract end" optional>
+          <Input
+            type="date"
+            value={form.contractEnd}
+            onChange={(e) => set("contractEnd", e.target.value)}
+          />
+        </Field>
+      </FormGrid>
 
       <Note tone="info" icon={<InfoIcon />}>
-        <b>Free-trial and contract-date fields were removed</b> — the subscription
-        API only accepts a pricing structure, model and frequency. Billing is tied
-        to the primary tenant. (Flagged for the backend: see API_UI_FIT.md.)
+        Contract-specific overrides (custom rates, volume discounts, promotional
+        pricing) can be added after creation from the Pricing library. Billing is
+        tied to the primary tenant only.
       </Note>
     </div>
   )

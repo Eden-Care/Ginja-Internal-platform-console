@@ -8,17 +8,12 @@ import {
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import {
-  ONB_SECTIONS,
-  onbTeamIds,
-  onbUnassigned,
-  type OnbDraft,
-} from "@/lib/console-data"
+import type { DraftAssignee, DraftVM } from "@/features/payers/draft-vm"
 import { Button } from "@/components/ui/button"
 import { Panel } from "@/components/console/panel"
 import { SegLegend } from "@/components/console/seg-track"
 import { Tagpill } from "@/components/console/tagpill"
-import { StaffAvatar } from "@/components/console/avatar-initials"
+import { AssigneeAvatar } from "@/components/console/avatar-initials"
 import { OnboardingDraftCard } from "./onboarding-draft-card"
 
 /** Matches the `xl:grid-cols-3` breakpoint below — the width where the grid is 3 wide. */
@@ -43,6 +38,21 @@ function useIsThreeCol() {
   return threeCol
 }
 
+/** Unique assignees across a set of drafts, in first-seen order. */
+function uniqueTeam(drafts: DraftVM[]): DraftAssignee[] {
+  const seen = new Set<string>()
+  const out: DraftAssignee[] = []
+  for (const d of drafts) {
+    for (const a of d.team) {
+      if (!seen.has(a.email)) {
+        seen.add(a.email)
+        out.push(a)
+      }
+    }
+  }
+  return out
+}
+
 /** "Onboarding drafts in progress" strip: collapsible header + cards (or a snapshot when collapsed). */
 export function OnboardingDraftsStrip({
   drafts,
@@ -50,10 +60,10 @@ export function OnboardingDraftsStrip({
   onViewAll,
   onManageTeam,
 }: {
-  drafts: OnbDraft[]
-  onOpenDraft: (id: string) => void
+  drafts: DraftVM[]
+  onOpenDraft: (payerId: number) => void
   onViewAll: () => void
-  onManageTeam: (id: string) => void
+  onManageTeam: (payerId: number) => void
 }) {
   const threeCol = useIsThreeCol()
   const [collapsed, setCollapsed] = React.useState(false)
@@ -102,10 +112,10 @@ export function OnboardingDraftsStrip({
         <div className="grid gap-3 p-[18px] sm:grid-cols-2 xl:grid-cols-3">
           {drafts.slice(0, visible).map((d) => (
             <OnboardingDraftCard
-              key={d.id}
+              key={d.payerId}
               draft={d}
-              onOpen={() => onOpenDraft(d.id)}
-              onManageTeam={() => onManageTeam(d.id)}
+              onOpen={() => onOpenDraft(d.payerId)}
+              onManageTeam={() => onManageTeam(d.payerId)}
             />
           ))}
           {extra > 0 ? (
@@ -132,29 +142,25 @@ export function OnboardingDraftsStrip({
 
 /** At-a-glance roll-up shown when the strip is collapsed: overall progress, what needs
  *  attention, and everyone on the drafts — no need to expand the full card grid. */
-function DraftsSnapshot({ drafts }: { drafts: OnbDraft[] }) {
+function DraftsSnapshot({ drafts }: { drafts: DraftVM[] }) {
   // Aggregate section status across every draft (mirrors the per-card SegTrack tones).
   const counts = drafts.reduce(
     (acc, d) => {
-      ONB_SECTIONS.forEach((s) => {
-        const st = d.sections[s.k] ?? "empty"
-        if (st === "complete") acc.complete += 1
-        else if (st === "progress") acc.progress += 1
+      d.sections.forEach((s) => {
+        if (s.status === "complete") acc.complete += 1
+        else if (s.status === "progress") acc.progress += 1
         else acc.empty += 1
       })
       return acc
     },
     { complete: 0, progress: 0, empty: 0 }
   )
-  const totalSections = drafts.length * ONB_SECTIONS.length
+  const totalSections = drafts.reduce((n, d) => n + d.sections.length, 0)
   const pct = (n: number) => (totalSections ? (n / totalSections) * 100 : 0)
   const donePct = Math.round(pct(counts.complete))
 
-  const needsAssignment = drafts.filter(
-    (d) => onbUnassigned(d).length > 0
-  ).length
-  // Union of everyone assigned anywhere, deduped, in roster order.
-  const team = Array.from(new Set(drafts.flatMap((d) => onbTeamIds(d))))
+  const needsAssignment = drafts.filter((d) => d.unassigned.length > 0).length
+  const team = uniqueTeam(drafts)
 
   return (
     <div className="flex flex-wrap items-center gap-x-8 gap-y-4 px-[18px] py-4">
@@ -195,10 +201,10 @@ function DraftsSnapshot({ drafts }: { drafts: OnbDraft[] }) {
       {team.length > 0 ? (
         <div className="ml-auto flex items-center gap-2">
           <span className="flex items-center">
-            {team.slice(0, SNAPSHOT_AVATARS).map((id, i) => (
-              <StaffAvatar
-                key={id}
-                id={id}
+            {team.slice(0, SNAPSHOT_AVATARS).map((a, i) => (
+              <AssigneeAvatar
+                key={a.email}
+                name={a.name}
                 size="sm"
                 className={cn("ring-2 ring-card", i > 0 && "-ml-1.5")}
               />

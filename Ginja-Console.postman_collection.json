@@ -496,6 +496,90 @@
               }
             }
           }
+        },
+        {
+          "name": "POST /auth/mfa/backup-codes  · generateBackupCodes",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/auth/mfa/backup-codes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "auth",
+                "mfa",
+                "backup-codes"
+              ]
+            },
+            "description": "Generate 10 single-use MFA recovery codes (bearer). Returns plaintext ONCE; invalidates previous set."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /auth/mfa/backup-codes  · remainingBackupCodes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/auth/mfa/backup-codes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "auth",
+                "mfa",
+                "backup-codes"
+              ]
+            },
+            "description": "Remaining unused backup codes (count only; codes never returned again)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "description": "Console home — one aggregate read (KPIs, tenant status, onboarding funnel, approvals, recent activity, health).",
+      "item": [
+        {
+          "name": "GET /platform/dashboard  · overview",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/dashboard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "dashboard"
+              ]
+            },
+            "description": "Aggregated console overview. Roles: PLATFORM_ADMIN/SUPPORT/PLATFORM_APPROVER/PLATFORM_ENGINEER."
+          },
+          "response": []
         }
       ]
     },
@@ -1261,6 +1345,46 @@
               ]
             }
           }
+        },
+        {
+          "name": "PUT /platform/organization/roles/{roleId}/region-scopes  · setRegionScopes",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"regions\": [\n    \"af-west-1\",\n    \"af-east-1\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/roles/{{roleId}}/region-scopes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "roles",
+                "{{roleId}}",
+                "region-scopes"
+              ]
+            },
+            "description": "Replace a role's data-residency region scopes (empty/omitted = no restriction). Regions come from /platform/settings/data-residency."
+          },
+          "response": []
         }
       ]
     },
@@ -1574,7 +1698,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"Multi-factor authentication\": {\n    \"mfa_required\": true,\n    \"mfa_totp_enabled\": true,\n    \"mfa_sms_enabled\": false,\n    \"mfa_webauthn_enabled\": true\n  },\n  \"Password policy\": {\n    \"password_min_length\": 12,\n    \"password_require_upper\": true,\n    \"password_require_lower\": true,\n    \"password_require_number\": true,\n    \"password_require_special\": true,\n    \"password_expiry_days\": 90,\n    \"password_history_count\": 5\n  },\n  \"Lockout\": {\n    \"lockout_max_attempts\": 5,\n    \"lockout_duration_minutes\": 30\n  },\n  \"Sessions\": {\n    \"session_timeout_minutes\": 480,\n    \"idle_timeout_minutes\": 30\n  }\n}",
+              "raw": "{\n  \"Multi-factor authentication\": {\n    \"mfa_required\": true,\n    \"mfa_totp_enabled\": true,\n    \"mfa_sms_enabled\": false,\n    \"mfa_webauthn_enabled\": true\n  },\n  \"Password policy\": {\n    \"password_min_length\": 12,\n    \"password_require_upper\": true,\n    \"password_require_lower\": true,\n    \"password_require_number\": true,\n    \"password_require_special\": true,\n    \"password_expiry_days\": 90,\n    \"password_history_count\": 5\n  },\n  \"Lockout\": {\n    \"lockout_max_attempts\": 5,\n    \"lockout_duration_minutes\": 30\n  },\n  \"Sessions\": {\n    \"session_timeout_minutes\": 480,\n    \"idle_timeout_minutes\": 30,\n    \"max_concurrent_sessions\": 3\n  }\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1924,6 +2048,546 @@
               ]
             }
           }
+        },
+        {
+          "name": "GET /platform/settings/sessions  · listSessions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/sessions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "sessions"
+              ]
+            },
+            "description": "All active sessions across users (admin/support). Enriched with account/user/browser/os/device + current flag."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /platform/settings/sessions/{sessionId}/revoke  · revokeSession",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/sessions/{{sessionId}}/revoke",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "sessions",
+                "{{sessionId}}",
+                "revoke"
+              ]
+            },
+            "description": "Revoke a single session by id (PLATFORM_ADMIN)."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /platform/settings/sessions/revoke-all  · revokeAllForUser",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/sessions/revoke-all?member_id=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "sessions",
+                "revoke-all"
+              ],
+              "query": [
+                {
+                  "key": "member_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Revoke all active sessions of a member (PLATFORM_ADMIN). Returns {revoked:n}."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /platform/settings/mfa-status  · mfaStatus",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/mfa-status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "mfa-status"
+              ]
+            },
+            "description": "MFA adoption summary + per-user enrolment (admin/support). methods=totp/sms/webauthn; backup_codes/enabled_on null (not modeled)."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /platform/settings/mfa-status/{memberId}  · mfaDetail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/mfa-status/{{memberId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "mfa-status",
+                "{{memberId}}"
+              ]
+            },
+            "description": "One user's MFA detail (admin/support)."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /platform/settings/mfa-status/{memberId}/remind  · sendMfaReminder",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/mfa-status/{{memberId}}/remind",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "mfa-status",
+                "{{memberId}}",
+                "remind"
+              ]
+            },
+            "description": "Send an MFA-enrolment reminder to a user (PLATFORM_ADMIN). Audit-logged."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /platform/settings/password-status  · passwordStatus",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/password-status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "password-status"
+              ]
+            },
+            "description": "Password-expiry summary + per-user status (admin/support). status=ok/soon/expired/pending from passwordChangedAt + policy."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /platform/settings/password-status/{memberId}  · passwordDetail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/password-status/{{memberId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "password-status",
+                "{{memberId}}"
+              ]
+            },
+            "description": "One user's password status (admin/support)."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /platform/settings/password-status/{memberId}/force-reset  · forcePasswordReset",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/password-status/{{memberId}}/force-reset",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "password-status",
+                "{{memberId}}",
+                "force-reset"
+              ]
+            },
+            "description": "Force a password reset (PLATFORM_ADMIN): revokes sessions + reset notification. Audit-logged."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /platform/settings/localization  · getLocalization",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/localization",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "localization"
+              ]
+            },
+            "description": "Platform-default locale/formatting (admin/support)."
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /platform/settings/localization  · updateLocalization",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"date_format\": \"YYYY-MM-DD\",\n  \"default_language\": \"Swahili\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/localization",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "localization"
+              ]
+            },
+            "description": "Partial update of localization settings (admin)."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /platform/settings/validation-rules  · currentRuleset",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/validation-rules",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "validation-rules"
+              ]
+            },
+            "description": "Current published validation ruleset + grouped rules (admin/support)."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /platform/settings/validation-rules/versions  · rulesetVersions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/validation-rules/versions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "validation-rules",
+                "versions"
+              ]
+            },
+            "description": "Ruleset version history (admin/support)."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /platform/settings/validation-rules/draft  · createDraft",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/validation-rules/draft",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "validation-rules",
+                "draft"
+              ]
+            },
+            "description": "Create/return an editable DRAFT cloning current rules (admin)."
+          },
+          "response": []
+        },
+        {
+          "name": "PUT /platform/settings/validation-rules/draft  · saveDraft",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rules\": [\n    {\n      \"group\": \"Contact\",\n      \"icon\": \"mail\",\n      \"rules\": [\n        {\n          \"id\": \"email\",\n          \"field\": \"Email\",\n          \"pattern\": \"^.+@.+$\",\n          \"example\": \"a@b.com\",\n          \"error\": \"Invalid email\",\n          \"normalize\": [\n            \"Lowercase\"\n          ],\n          \"required\": true,\n          \"status\": \"Active\",\n          \"variants\": []\n        }\n      ]\n    }\n  ],\n  \"note\": \"Add email rule\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/validation-rules/draft",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "validation-rules",
+                "draft"
+              ]
+            },
+            "description": "Save the draft's grouped rules (admin)."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /platform/settings/validation-rules/draft/publish  · publishDraft",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/validation-rules/draft/publish",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "validation-rules",
+                "draft",
+                "publish"
+              ]
+            },
+            "description": "Publish the draft (archives prior published) (admin)."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /platform/settings/validation-rules/versions/{version}/rollback  · rollbackRuleset",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/validation-rules/versions/1/rollback",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "validation-rules",
+                "versions",
+                "1",
+                "rollback"
+              ]
+            },
+            "description": "Restore a prior version as a new published version (admin)."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /platform/settings/validation-rules/test  · liveTestRule",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pattern\": \"^\\\\d{8}$\",\n  \"value\": \" 23456789 \",\n  \"normalize\": [\n    \"Trim spaces\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/validation-rules/test",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "validation-rules",
+                "test"
+              ]
+            },
+            "description": "Live-test a value against a rule pattern + normalize steps (admin/support)."
+          },
+          "response": []
         }
       ]
     },
@@ -2300,6 +2964,32 @@
               ]
             }
           }
+        },
+        {
+          "name": "GET /platform/organization/audit-logs/export  · export",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/audit-logs/export?format=csv",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "audit-logs",
+                "export?format=csv"
+              ]
+            },
+            "description": "Stream the filtered audit trail as CSV (default) or JSON (?format=json). Roles: PLATFORM_ADMIN/SUPPORT."
+          },
+          "response": []
         }
       ]
     },
@@ -2537,6 +3227,31 @@
               ]
             }
           }
+        },
+        {
+          "name": "GET /platform/pricing-structures/tenant  · pickerOptions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/pricing-structures/tenant",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "pricing-structures",
+                "tenant"
+              ]
+            },
+            "description": "Minimal ACTIVE pricing structures for the onboarding subscription-model picker (no components/tiers). PLATFORM_ADMIN."
+          },
+          "response": []
         }
       ]
     },
@@ -2590,13 +3305,48 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/platform/payers",
+              "raw": "{{baseUrl}}/platform/payers?status=DRAFT&payer_type=INSURER&from_date=2026-01-01&to_date=2026-12-31&page=0&size=20&sort=createdAt,desc",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "platform",
                 "payers"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "DRAFT",
+                  "description": "DRAFT|ACTIVE|SUSPENDED|RETIRED"
+                },
+                {
+                  "key": "payer_type",
+                  "value": "INSURER",
+                  "description": "INSURER|TPA|SELF_MANAGED_SCHEME"
+                },
+                {
+                  "key": "from_date",
+                  "value": "2026-01-01",
+                  "description": "created on/after (ISO date)"
+                },
+                {
+                  "key": "to_date",
+                  "value": "2026-12-31",
+                  "description": "created on/before (ISO date)"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                },
+                {
+                  "key": "sort",
+                  "value": "createdAt,desc",
+                  "description": "createdAt|payerId|status|payerType"
+                }
               ]
             },
             "auth": {
@@ -2608,7 +3358,8 @@
                   "type": "string"
                 }
               ]
-            }
+            },
+            "description": "List payers with optional filters (status, payer_type, from_date/to_date), sorting and pagination. Returns a paged envelope {content,page,size,total_elements,total_pages}. PLATFORM_ADMIN."
           }
         },
         {
@@ -2847,12 +3598,7 @@
           "name": "POST /platform/payers/{payerId}/tenants/{tenantId}/documents  · addDocument",
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/payers/{{payerId}}/tenants/{{tenantId}}/documents",
               "host": [
@@ -2878,28 +3624,40 @@
               ]
             },
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"category\": \"SIGNED_CONTRACT\",\n  \"file_name\": \"contract.pdf\",\n  \"description\": null,\n  \"expiry_date\": \"2027-01-01\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "category",
+                  "value": "SIGNED_CONTRACT",
+                  "type": "text"
+                },
+                {
+                  "key": "expiry_date",
+                  "value": "2027-01-01",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Signed master agreement",
+                  "type": "text"
+                },
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
                 }
-              }
-            }
+              ]
+            },
+            "description": "Multipart upload. The `file` part carries the bytes (ops proxies them to ginja-ai-document-service); `category` is required, `description` and `expiry_date` are optional. Select a file for the `file` part before sending."
           }
         },
         {
-          "name": "PATCH /platform/payers/{payerId}/tenants/{tenantId}/technical  · setTechnicalConfig",
+          "name": "GET /platform/payers/{payerId}/tenants/{tenantId}/documents/{documentId}  · getDocument",
           "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "method": "GET",
+            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/platform/payers/{{payerId}}/tenants/{{tenantId}}/technical",
+              "raw": "{{baseUrl}}/platform/payers/{{payerId}}/tenants/{{tenantId}}/documents/{{documentId}}",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -2909,7 +3667,8 @@
                 "{{payerId}}",
                 "tenants",
                 "{{tenantId}}",
-                "technical"
+                "documents",
+                "{{documentId}}"
               ]
             },
             "auth": {
@@ -2922,15 +3681,7 @@
                 }
               ]
             },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"subdomain\": \"acme-health\",\n  \"custom_domain\": \"acme.health\",\n  \"isolation_tier\": \"SCHEMA\",\n  \"deployment_cluster\": \"af-1\",\n  \"region_id\": \"af-west-1\",\n  \"owner_team\": \"Platform\",\n  \"priority\": \"HIGH\",\n  \"environment\": \"PRODUCTION\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
+            "description": "Fetches a tenant document's metadata plus a freshly issued, time-limited pre-signed download URL from ginja-ai-document-service. `documentId` is the business id (DOC...) and must belong to the tenant under the payer. Returns 404 if the payer, tenant, or document is unknown."
           }
         },
         {
@@ -3052,12 +3803,112 @@
               ]
             }
           }
+        },
+        {
+          "name": "PATCH /platform/payers/{payerId}/tenants/{tenantId}  · updateTenant",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"trading_name\": \"Globex Health\",\n  \"phone\": \"+254700000000\",\n  \"address\": \"CIC Plaza, Nairobi\",\n  \"website\": \"www.globex.io\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers/{{payerId}}/tenants/{{tenantId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "payers",
+                "{{payerId}}",
+                "tenants",
+                "{{tenantId}}"
+              ]
+            },
+            "description": "Partial update of a tenant on a DRAFT payer (only sent fields applied). 409 if not DRAFT / dup subdomain or (legal,country). Returns PayerResponse."
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /platform/payers/{payerId}/tenants/{tenantId}  · deleteSecondaryTenant",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers/{{payerId}}/tenants/{{tenantId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "payers",
+                "{{payerId}}",
+                "tenants",
+                "{{tenantId}}"
+              ]
+            },
+            "description": "Delete a SECONDARY tenant on a DRAFT payer. 409 if not DRAFT or deleting the primary. Returns refreshed PayerResponse."
+          },
+          "response": []
         }
       ]
     },
     {
       "name": "Onboarding Steps",
       "item": [
+        {
+          "name": "GET /platform/payers/onboarding-drafts  · draftsInProgress",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers/onboarding-drafts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "payers",
+                "onboarding-drafts"
+              ],
+              "query": [
+                {
+                  "key": "assignee",
+                  "value": "",
+                  "description": "optional: filter to a teammate's drafts",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "'Onboarding drafts in progress' directory panel. Returns a LIST where each item is the same OnboardingProgressResponse as GET /platform/payers/{payerId}/steps (completed/total/progress_pct/completed_steps/incomplete_steps/steps[]). Optional ?assignee= for 'By teammate'. PLATFORM_ADMIN."
+          },
+          "response": []
+        },
         {
           "name": "GET /platform/payers/{payerId}/steps  · listSteps",
           "request": {
@@ -3326,24 +4177,32 @@
             }
           }
         }
-      ]
+      ],
+      "description": "Final maker-checker gate. Only payers whose every tenant is READY_TO_ACTIVATE (provisioning complete, §Provisioning) appear in the queue / can be approved; approving earlier returns 409. Approve auto-activates (go-live); submitter != approver is enforced (403)."
     },
     {
       "name": "Approval Queue",
       "item": [
         {
-          "name": "GET /platform/approvals  · listAwaitingApproval",
+          "name": "GET /platform/approvals  · approvalQueue",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/platform/approvals",
+              "raw": "{{baseUrl}}/platform/approvals?status=pending",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "platform",
                 "approvals"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending",
+                  "description": "pending | approved | all (default all)"
+                }
               ]
             },
             "auth": {
@@ -3355,10 +4214,37 @@
                   "type": "string"
                 }
               ]
-            }
+            },
+            "description": "Maker-checker approval queue (lean rows). ?status=pending|approved|all. PLATFORM_APPROVER."
           }
+        },
+        {
+          "name": "GET /platform/approvals/{payerId}  · approvalReview",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/approvals/{{payerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "approvals",
+                "{{payerId}}"
+              ]
+            },
+            "description": "Full review payload for one request: header + review meta (status, can_decide, sections, auto_activate_note) + full payer aggregate. PLATFORM_APPROVER."
+          },
+          "response": []
         }
-      ]
+      ],
+      "description": "Final maker-checker gate. Only payers whose every tenant is READY_TO_ACTIVATE (provisioning complete, §Provisioning) appear in the queue / can be approved; approving earlier returns 409. Approve auto-activates (go-live); submitter != approver is enforced (403)."
     },
     {
       "name": "Payer Lifecycle",
@@ -3656,13 +4542,14 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"config\": {\n    \"provider\": \"postgres\",\n    \"host\": \"db.internal\",\n    \"from\": \"no-reply@ginja.ai\"\n  },\n  \"status\": \"CONFIGURED\"\n}",
+              "raw": "{\n  \"config\": {\n    \"subdomain\": \"cic-health\",\n    \"custom_domain\": \"health.cic.co.ke\",\n    \"cname_verified\": true,\n    \"ssl\": \"verified\"\n  },\n  \"status\": \"CONFIGURED\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
-            }
+            },
+            "description": "Save a config section. For DOMAINS_SSL, include `subdomain` (validated, unique — persisted onto the tenant) and optional `custom_domain`; other sections carry their own keys (provider, host, from_address, …). Set the `section` path var to one of DATABASE|DOMAINS_SSL|EMAIL|SMS|DATA_MIGRATION."
           }
         },
         {
@@ -3860,7 +4747,8 @@
             }
           }
         }
-      ]
+      ],
+      "description": "Tenant Provisioning (PRD step 6). Lifecycle: Onboarding (6 steps) -> Submit -> PROVISIONING (assign engineer; configure DATABASE/DOMAINS_SSL/SMS/EMAIL/DATA_MIGRATION; subdomain is set in DOMAINS_SSL) -> all sections DONE => READY_TO_ACTIVATE -> final maker-checker Approval -> auto-Activate. Approval is blocked (409) until every tenant is READY_TO_ACTIVATE."
     }
   ],
   "variable": [

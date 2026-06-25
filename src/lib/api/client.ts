@@ -102,6 +102,13 @@ export function apiPost<T>(
 ): Promise<T> {
   return api.post(url, body, config) as unknown as Promise<T>
 }
+/** POST multipart/form-data. Content-Type is cleared so the browser sets the
+   boundary itself (the instance default is application/json). */
+export function apiUpload<T>(url: string, form: FormData): Promise<T> {
+  return api.post(url, form, {
+    headers: { "Content-Type": undefined },
+  }) as unknown as Promise<T>
+}
 export function apiPut<T>(
   url: string,
   body?: unknown,

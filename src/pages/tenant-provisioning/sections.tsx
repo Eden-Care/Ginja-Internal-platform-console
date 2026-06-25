@@ -40,13 +40,15 @@ type SectionProps<C> = {
   cfg: C
   set: (patch: Partial<C>) => void
   mark: (st: ProvSectionStatus) => void
+  /** Real section test (the provisioning test endpoint); resolves true on pass. */
+  onTest?: () => Promise<boolean>
   ro?: Ro
 }
 
 const stack = "flex flex-col gap-[22px]"
 
 /* ----------------------------------------------- Section: Database & storage */
-export function SecDatabase({ cfg, set, mark, ro }: SectionProps<DbConfig>) {
+export function SecDatabase({ cfg, set, mark, onTest, ro }: SectionProps<DbConfig>) {
   const prov = DB_PROVIDERS.find((d) => d.id === cfg.provider) ?? DB_PROVIDERS[0]
   const isSelf = cfg.provider === "self"
   return (
@@ -154,6 +156,7 @@ export function SecDatabase({ cfg, set, mark, ro }: SectionProps<DbConfig>) {
             label="Test connection"
             okLabel="Connection OK"
             ro={ro || !cfg.host}
+            onTest={onTest}
             onResult={() => set({ tested: true })}
           />
           {cfg.tested && <OkInline>Reachable · Postgres 15.4</OkInline>}
@@ -200,7 +203,10 @@ export function SecDatabase({ cfg, set, mark, ro }: SectionProps<DbConfig>) {
       <SaveBar
         ro={ro}
         disabled={!cfg.tested}
-        onSave={() => mark(cfg.tables ? "done" : "tested")}
+        // A successful "Test connection" already configured + tested the section
+        // (the test endpoint marks it DONE), so saving persists DONE — not TESTED,
+        // which would downgrade the server status.
+        onSave={() => mark("done")}
         label="Save database config"
       />
     </div>
@@ -208,7 +214,7 @@ export function SecDatabase({ cfg, set, mark, ro }: SectionProps<DbConfig>) {
 }
 
 /* ------------------------------------------------- Section: Domains & SSL */
-export function SecDomains({ cfg, set, mark, ro }: SectionProps<DomainsConfig>) {
+export function SecDomains({ cfg, set, mark, onTest, ro }: SectionProps<DomainsConfig>) {
   const sub = (cfg.subdomain || "").trim()
   const taken = sub.length > 0 && TAKEN_SUBDOMAINS.includes(sub)
   const suggestions = taken
@@ -308,6 +314,7 @@ export function SecDomains({ cfg, set, mark, ro }: SectionProps<DomainsConfig>) 
                 label="Verify CNAME"
                 okLabel="CNAME verified"
                 ro={ro}
+                onTest={onTest}
                 onResult={() => set({ cnameVerified: true, ssl: "active" })}
               />
               {cfg.cnameVerified && <OkInline>Verified · TLS issued</OkInline>}
@@ -356,7 +363,7 @@ function DnsRow({ k, v }: { k: string; v: string }) {
 }
 
 /* --------------------------------------------------- Section: SMS provider */
-export function SecSms({ cfg, set, mark, ro }: SectionProps<SmsConfig>) {
+export function SecSms({ cfg, set, mark, onTest, ro }: SectionProps<SmsConfig>) {
   const pr = SMS_PROVIDERS.find((x) => x.id === cfg.provider)
   return (
     <div className={stack}>
@@ -413,6 +420,7 @@ export function SecSms({ cfg, set, mark, ro }: SectionProps<SmsConfig>) {
             okLabel="Test SMS delivered"
             kind="send"
             ro={ro}
+            onTest={onTest}
             onResult={() => set({ tested: true })}
           />
           {cfg.tested && <OkInline>Delivered to test number</OkInline>}
@@ -421,7 +429,7 @@ export function SecSms({ cfg, set, mark, ro }: SectionProps<SmsConfig>) {
 
       <SaveBar
         ro={ro}
-        onSave={() => mark(cfg.tested ? "tested" : "progress")}
+        onSave={() => mark(cfg.tested ? "done" : "progress")}
         label="Save SMS config"
       />
     </div>
@@ -429,7 +437,7 @@ export function SecSms({ cfg, set, mark, ro }: SectionProps<SmsConfig>) {
 }
 
 /* ------------------------------------------------- Section: Email provider */
-export function SecEmail({ cfg, set, mark, ro }: SectionProps<EmailConfig>) {
+export function SecEmail({ cfg, set, mark, onTest, ro }: SectionProps<EmailConfig>) {
   const pr = EMAIL_PROVIDERS.find((x) => x.id === cfg.provider)
   const domain = cfg.from ? cfg.from.split("@")[1] : "tenant.ginja.ai"
   return (
@@ -483,6 +491,7 @@ export function SecEmail({ cfg, set, mark, ro }: SectionProps<EmailConfig>) {
             okLabel="Test email sent"
             kind="send"
             ro={ro}
+            onTest={onTest}
             onResult={() => set({ tested: true, spf: true, dkim: true })}
           />
           {cfg.tested && <OkInline>Delivered · auth passed</OkInline>}
@@ -491,7 +500,7 @@ export function SecEmail({ cfg, set, mark, ro }: SectionProps<EmailConfig>) {
 
       <SaveBar
         ro={ro}
-        onSave={() => mark(cfg.tested ? "tested" : "progress")}
+        onSave={() => mark(cfg.tested ? "done" : "progress")}
         label="Save email config"
       />
     </div>

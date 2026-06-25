@@ -32,9 +32,19 @@ const REGION_OPTS = REGIONS.filter((r) => r.status === "Active").map((r) => ({
 export function StepSecondary({
   form,
   set,
+  onRemove,
+  onClear,
+  busy = false,
 }: {
   form: OnboardingForm
   set: SetField
+  /** Remove one secondary — the page DELETEs server-backed rows; falls back to a
+     local drop when not provided (e.g. before the draft is saved). */
+  onRemove?: (i: number) => void
+  /** Clear all secondaries — the page DELETEs server-backed rows. */
+  onClear?: () => void
+  /** A save/delete is in flight — disable mutating controls. */
+  busy?: boolean
 }) {
   const list = form.secondaries
   const add = () =>
@@ -43,10 +53,13 @@ export function StepSecondary({
       { name: "", country: form.country, region: form.region, subdomain: "" },
     ])
   const remove = (i: number) =>
-    set(
-      "secondaries",
-      list.filter((_, x) => x !== i)
-    )
+    onRemove
+      ? onRemove(i)
+      : set(
+          "secondaries",
+          list.filter((_, x) => x !== i)
+        )
+  const clear = () => (onClear ? onClear() : set("secondaries", []))
   const edit = (i: number, k: keyof Secondary, v: string) =>
     set(
       "secondaries",
@@ -85,7 +98,7 @@ export function StepSecondary({
             This will be onboarded as a <b>single-tenant account</b>.
             Entitlements and billing will apply to the primary tenant only.
           </p>
-          <Button onClick={add}>
+          <Button onClick={add} disabled={busy}>
             <PlusIcon data-icon="inline-start" />
             Add a secondary tenant
           </Button>
@@ -96,11 +109,7 @@ export function StepSecondary({
             <span className="eyebrow text-[10.5px]">
               {list.length} secondary {list.length === 1 ? "tenant" : "tenants"}
             </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => set("secondaries", [])}
-            >
+            <Button variant="ghost" size="sm" onClick={clear} disabled={busy}>
               <XIcon data-icon="inline-start" />
               Clear all
             </Button>
@@ -114,12 +123,16 @@ export function StepSecondary({
                     <BriefcaseIcon className="size-[15px]" />
                   </span>
                   <b className="text-[13px]">Secondary tenant {i + 1}</b>
+                  {s.tenantId ? (
+                    <Tagpill className="text-[10px]">Saved</Tagpill>
+                  ) : null}
                 </div>
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  title="Remove"
+                  title={s.tenantId ? "Remove (deletes from server)" : "Remove"}
                   onClick={() => remove(i)}
+                  disabled={busy}
                 >
                   <Trash2Icon />
                 </Button>
@@ -167,7 +180,8 @@ export function StepSecondary({
           <button
             type="button"
             onClick={add}
-            className="flex flex-col items-center gap-1 rounded-xl border border-dashed p-4 text-center transition-colors hover:border-primary/40 hover:bg-muted/40"
+            disabled={busy}
+            className="flex flex-col items-center gap-1 rounded-xl border border-dashed p-4 text-center transition-colors hover:border-primary/40 hover:bg-muted/40 disabled:pointer-events-none disabled:opacity-50"
           >
             <PlusIcon className="size-5 text-muted-foreground" />
             <b className="text-[13px]">Add another secondary tenant</b>

@@ -58,6 +58,36 @@ export function AvatarInitials({
   )
 }
 
+/**
+ * Round avatar for an onboarding-step assignee (a real platform member),
+ * iris-tinted with the member's initials. Use where the data source is the
+ * API's step `assignee` (an email/member), not the mock STAFF roster.
+ */
+export function AssigneeAvatar({
+  name,
+  size,
+  className,
+  title,
+}: {
+  name: string
+  size?: "sm"
+  className?: string
+  title?: string
+}) {
+  return (
+    <span
+      title={title ?? name}
+      className={cn(
+        "inline-grid shrink-0 place-items-center rounded-full bg-primary/15 font-semibold text-primary",
+        size === "sm" ? "size-[22px] text-[9px]" : "size-7 text-[10.5px]",
+        className
+      )}
+    >
+      {initials2(name)}
+    </span>
+  )
+}
+
 /** Small round avatar for owners / section assignees. */
 export function MiniAvatar({
   initials,

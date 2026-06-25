@@ -59,7 +59,11 @@ import { ConsoleSelect, Field } from "@/components/console/form-atoms"
 import { hifiTableHead } from "@/components/console/table"
 import { LoadingSpinner } from "@/components/common/loading"
 import { useAccess } from "@/contexts/access-context"
-import { useMember, useMembers } from "@/features/access/use-members"
+import {
+  useMember,
+  useMemberActivity,
+  useMembers,
+} from "@/features/access/use-members"
 import { useRoles } from "@/features/access/use-roles"
 import {
   useDeleteMember,
@@ -69,8 +73,14 @@ import {
   useSetMemberStatus,
   useUpdateMemberRoles,
 } from "@/features/access/use-member-mutations"
-import type { Member, MemberStatus, Role } from "@/features/access/types"
+import type {
+  Member,
+  MemberActivity,
+  MemberStatus,
+  Role,
+} from "@/features/access/types"
 import {
+  AccessGlyph,
   AccessTabs,
   CheckSquare,
   ConfirmDialog,
@@ -79,6 +89,7 @@ import {
   SysChip,
   roleDotStyle,
 } from "./access-shared"
+import { BulkUploadDrawer } from "./bulk-upload-drawer"
 
 type ModalType = "suspend" | "revoke" | "delete"
 
@@ -119,16 +130,9 @@ const fmtLastActive = (iso: string | null) =>
   iso ? formatDistanceToNow(new Date(iso), { addSuffix: true }) : "Never"
 const fmtSince = (iso: string | null) =>
   iso ? format(new Date(iso), "dd MMM yyyy") : "—"
-
-/** Muted, dashed pill marking a UI element the backend doesn't power yet. */
-function PendingBadge({ children = "Not available yet" }: { children?: React.ReactNode }) {
-  return (
-    <span className="inline-flex items-center gap-1 rounded-full border border-dashed bg-muted/50 px-2 py-[2px] text-[10.5px] font-medium text-muted-foreground [&>svg]:size-2.5">
-      <ClockIcon />
-      {children}
-    </span>
-  )
-}
+/** Relative invite expiry, e.g. "in 6 days" / "2 days ago". */
+const fmtExpiry = (iso: string) =>
+  formatDistanceToNow(new Date(iso), { addSuffix: true })
 
 /* ------------------------------------------------------------- atoms ----- */
 
@@ -177,7 +181,7 @@ function RolePick({
   onToggle: () => void
   iconSize?: number
 }) {
-  const count = role.functionalities.length
+  const count = role.permissions.length
   return (
     <label
       className={cn(
@@ -193,7 +197,7 @@ function RolePick({
           {role.system && <SysChip />}
         </div>
         <div className="text-[11.5px] text-muted-foreground">
-          {count} {count === 1 ? "module" : "modules"}
+          {count} {count === 1 ? "permission" : "permissions"}
         </div>
       </div>
       <CheckSquare on={on} />
@@ -235,10 +239,10 @@ function InviteDrawer({
       return n
     })
 
-  const moduleUnion = new Set<string>()
+  const permUnion = new Set<string>()
   roles
     .filter((r) => picked.has(r.id))
-    .forEach((r) => r.functionalityCodes.forEach((c) => moduleUnion.add(c)))
+    .forEach((r) => r.permissionCodes.forEach((c) => permUnion.add(c)))
 
   return (
     <Sheet open onOpenChange={(o) => !o && onClose()}>
@@ -301,7 +305,7 @@ function InviteDrawer({
               Assign roles<span className="text-destructive">*</span>
             </div>
             <p className="mb-2.5 text-xs text-muted-foreground">
-              A user can hold multiple roles — module access is the union of all
+              A user can hold multiple roles — access is the union of all
               assigned roles.
             </p>
             <div className="flex flex-col gap-[7px]">
@@ -320,7 +324,7 @@ function InviteDrawer({
             <Note tone="info" icon={<LayersIcon />}>
               This user will receive{" "}
               <b>
-                {moduleUnion.size} module{moduleUnion.size === 1 ? "" : "s"}
+                {permUnion.size} permission{permUnion.size === 1 ? "" : "s"}
               </b>{" "}
               across {picked.size} role{picked.size === 1 ? "" : "s"}.
             </Note>
@@ -401,6 +405,8 @@ function UserDrawer({
   const [draft, setDraft] = React.useState<Set<number>>(new Set(m.roleIds))
   const isInvited = m.status === "INVITED"
   const isSuspended = m.status === "SUSPENDED"
+  // Activity is fetched lazily — only once the Activity tab is opened.
+  const activityQuery = useMemberActivity(m.id, tab === "activity")
 
   const toggle = (id: number) =>
     setDraft((s) => {
@@ -410,10 +416,12 @@ function UserDrawer({
       return n
     })
 
-  // Effective modules = union of the modules granted by the member's roles.
-  const modules = new Set<string>()
-  m.roleIds.forEach((id) =>
-    rolesById.get(id)?.functionalityCodes.forEach((c) => modules.add(c))
+  // Effective permissions = the member's union across roles — from the API's
+  // accessible_permissions when present, else derived from the assigned roles.
+  const effectivePerms = new Set<string>(
+    m.accessiblePermissions.length
+      ? m.accessiblePermissions
+      : m.roleIds.flatMap((id) => rolesById.get(id)?.permissionCodes ?? [])
   )
 
   return (
@@ -437,6 +445,12 @@ function UserDrawer({
                   <MiniBadge tone={STATUS_TONE[m.status]}>
                     {STATUS_LABEL[m.status]}
                   </MiniBadge>
+                  {m.mfaEnabled && (
+                    <span className="inline-flex items-center gap-1 rounded-full border bg-muted px-2 py-[2px] text-[10.5px] font-semibold text-muted-foreground [&>svg]:size-2.5">
+                      <ShieldCheckIcon />
+                      MFA on
+                    </span>
+                  )}
                   <span className="text-[11.5px] text-muted-foreground">
                     {m.code}
                   </span>
@@ -470,17 +484,29 @@ function UserDrawer({
         <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-[18px]">
           {isSuspended && (
             <Note tone="warn" icon={<PauseIcon />}>
-              <b>Suspended.</b> Sessions are revoked until reactivated.
+              <b>Suspended.</b>{" "}
+              {m.statusReason ? `Reason: ${m.statusReason}. ` : ""}Sessions are
+              revoked until reactivated.
             </Note>
           )}
           {isInvited && (
-            <Note tone="info" icon={<MailIcon />}>
-              <b>Invitation pending.</b> Awaiting acceptance of the setup link.
-              <span className="mt-1.5 flex items-center gap-1.5 text-[11.5px] text-muted-foreground">
-                <ClockIcon className="size-3 shrink-0" />
-                Expiry countdown isn’t shown — the API doesn’t return invite
-                expiry yet.
-              </span>
+            <Note tone={m.inviteExpired ? "warn" : "info"} icon={<MailIcon />}>
+              {m.inviteExpired ? (
+                <>
+                  <b>Invitation expired.</b> The setup link is no longer valid —
+                  resend it to invite this user again.
+                </>
+              ) : (
+                <>
+                  <b>Invitation pending.</b> Awaiting acceptance of the setup link.
+                  {m.inviteExpiresAt && (
+                    <span className="mt-1.5 flex items-center gap-1.5 text-[11.5px] text-muted-foreground">
+                      <ClockIcon className="size-3 shrink-0" />
+                      Expires {fmtExpiry(m.inviteExpiresAt)}.
+                    </span>
+                  )}
+                </>
+              )}
             </Note>
           )}
 
@@ -500,7 +526,7 @@ function UserDrawer({
                 <StatCard
                   icon={<ShieldCheckIcon />}
                   k="Two-factor"
-                  v={<PendingBadge>Pending backend</PendingBadge>}
+                  v={m.mfaEnabled ? "Enabled" : "Not set up"}
                 />
               </div>
 
@@ -529,7 +555,8 @@ function UserDrawer({
                   <Eyebrow>Roles &amp; access</Eyebrow>
                   <span className="text-[11.5px] text-muted-foreground">
                     {m.roles.length} {m.roles.length === 1 ? "role" : "roles"} ·{" "}
-                    {modules.size} {modules.size === 1 ? "module" : "modules"}
+                    {effectivePerms.size}{" "}
+                    {effectivePerms.size === 1 ? "permission" : "permissions"}
                   </span>
                 </div>
                 {m.roles.length === 0 ? (
@@ -541,7 +568,7 @@ function UserDrawer({
                     {m.roles.map((ref) => {
                       const r = rolesById.get(ref.id)
                       const open = expandedRole === ref.id
-                      const mods = r?.functionalities ?? []
+                      const perms = r?.permissions ?? []
                       return (
                         <div
                           key={ref.id}
@@ -561,7 +588,8 @@ function UserDrawer({
                             <div className="min-w-0 flex-1">
                               <div className="text-sm font-semibold">{ref.name}</div>
                               <div className="text-[11.5px] text-muted-foreground">
-                                {mods.length} {mods.length === 1 ? "module" : "modules"}
+                                {perms.length}{" "}
+                                {perms.length === 1 ? "permission" : "permissions"}
                               </div>
                             </div>
                             <ChevronDownIcon
@@ -574,18 +602,18 @@ function UserDrawer({
                           {open && (
                             <div className="border-t p-[12px_14px_14px]">
                               <div className="flex flex-wrap gap-1.5 pt-3">
-                                {mods.length === 0 ? (
+                                {perms.length === 0 ? (
                                   <span className="text-[12px] text-muted-foreground">
-                                    No modules granted.
+                                    No permissions granted.
                                   </span>
                                 ) : (
-                                  mods.map((f) => (
+                                  perms.map((p) => (
                                     <span
-                                      key={f.code}
+                                      key={p.code}
                                       className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-2.5 py-[3px] text-[11.5px] font-medium text-success [&>svg]:size-[11px]"
                                     >
                                       <CheckIcon />
-                                      {f.name}
+                                      {p.name}
                                     </span>
                                   ))
                                 )}
@@ -636,7 +664,7 @@ function UserDrawer({
                   <div className="flex flex-col gap-[7px]">
                     {m.roles.map((ref) => {
                       const r = rolesById.get(ref.id)
-                      const count = r?.functionalities.length ?? 0
+                      const count = r?.permissions.length ?? 0
                       return (
                         <div
                           key={ref.id}
@@ -650,7 +678,7 @@ function UserDrawer({
                           <div className="flex-1">
                             <div className="text-[13px] font-semibold">{ref.name}</div>
                             <div className="text-[11px] text-muted-foreground">
-                              {count} {count === 1 ? "module" : "modules"}
+                              {count} {count === 1 ? "permission" : "permissions"}
                             </div>
                           </div>
                         </div>
@@ -704,19 +732,19 @@ function UserDrawer({
               {!editRoles && (
                 <div>
                   <Eyebrow className="mb-2">
-                    Effective modules{" "}
+                    Effective permissions{" "}
                     <span className="font-normal tracking-normal normal-case">
                       · union of all roles
                     </span>
                   </Eyebrow>
                   <div className="flex flex-wrap gap-1.5">
-                    {[...modules].map((c) => (
+                    {[...effectivePerms].map((c) => (
                       <Tagpill key={c} className="text-[11px]">
                         <CheckIcon className="size-2.5" />
                         {c}
                       </Tagpill>
                     ))}
-                    {modules.size === 0 && (
+                    {effectivePerms.size === 0 && (
                       <span className="text-[12.5px] text-muted-foreground">None</span>
                     )}
                   </div>
@@ -725,34 +753,30 @@ function UserDrawer({
             </>
           )}
 
-          {tab === "activity" && (
-            <div className="flex flex-col items-center gap-3 rounded-[14px] border border-dashed bg-muted/30 px-6 py-12 text-center">
-              <span className="grid size-[42px] place-items-center rounded-full bg-muted text-muted-foreground [&>svg]:size-5">
-                <HistoryIcon />
-              </span>
-              <div>
-                <p className="text-[13.5px] font-semibold">
-                  Per-member activity timeline
-                </p>
-                <p className="mx-auto mt-1 max-w-[340px] text-[12.5px] text-muted-foreground">
-                  A per-member history feed isn’t available from the API yet. In the
-                  meantime, the platform-wide <b>Audit log</b> records every action
-                  with its actor and target.
-                </p>
+          {tab === "activity" &&
+            (activityQuery.isLoading ? (
+              <div className="flex items-center justify-center py-12 text-muted-foreground">
+                <LoadingSpinner />
               </div>
-              <button
-                onClick={() => {
-                  onClose()
-                  navigate("/audit-log")
-                }}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-input bg-card px-3 py-[7px] text-[12.5px] font-semibold text-primary transition-colors hover:border-primary hover:bg-primary/5 [&>svg]:size-[13px]"
-              >
-                Open audit log
-                <ExternalLinkIcon />
-              </button>
-              <PendingBadge>Pending backend — per-member activity endpoint</PendingBadge>
-            </div>
-          )}
+            ) : activityQuery.isError ? (
+              <Note tone="err" icon={<TriangleAlertIcon />}>
+                Couldn’t load this user’s activity.{" "}
+                <button
+                  className="font-semibold underline underline-offset-2"
+                  onClick={() => activityQuery.refetch()}
+                >
+                  Try again
+                </button>
+                .
+              </Note>
+            ) : (activityQuery.data?.length ?? 0) === 0 ? (
+              <div className="flex flex-col items-center gap-2 rounded-[14px] border border-dashed bg-muted/30 px-6 py-12 text-center text-muted-foreground">
+                <HistoryIcon className="size-[22px]" />
+                <p className="text-[13px]">No recorded activity for this user yet.</p>
+              </div>
+            ) : (
+              <MemberTimeline events={activityQuery.data ?? []} />
+            ))}
         </div>
 
         {canManage && (
@@ -860,6 +884,60 @@ function DetailRow({
   )
 }
 
+/* ---------------------------------------------------- activity timeline -- */
+
+/** Map the API's activity `kind` to a glyph + tinted dot (presentation only). */
+const KIND_GLYPH: Record<string, { glyph: string; cls: string }> = {
+  create: { glyph: "plus", cls: "bg-primary/12 text-primary" },
+  approve: { glyph: "userCheck", cls: "bg-success/15 text-success" },
+  edit: { glyph: "sparkles", cls: "bg-info/15 text-info-subtle-foreground" },
+  danger: { glyph: "ban", cls: "bg-destructive/12 text-destructive" },
+  warn: { glyph: "pause", cls: "bg-warning/18 text-warning-subtle-foreground" },
+  login: { glyph: "logIn", cls: "bg-muted text-muted-foreground" },
+  system: { glyph: "history", cls: "bg-muted text-muted-foreground" },
+}
+
+function MemberTimeline({ events }: { events: MemberActivity[] }) {
+  return (
+    <div className="flex flex-col">
+      {events.map((e, i) => {
+        const g = KIND_GLYPH[e.kind] ?? KIND_GLYPH.system
+        return (
+          <div key={e.id} className="flex gap-3">
+            <div className="flex flex-col items-center">
+              <span
+                className={cn(
+                  "grid size-[26px] shrink-0 place-items-center rounded-full [&>svg]:size-3",
+                  g.cls
+                )}
+              >
+                <AccessGlyph name={g.glyph} />
+              </span>
+              {i < events.length - 1 && <span className="w-px flex-1 bg-border" />}
+            </div>
+            <div className="min-w-0 flex-1 pb-4">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[13px] font-semibold">{e.label}</span>
+                <span className="shrink-0 text-[11px] text-muted-foreground">
+                  {fmtLastActive(e.at)}
+                </span>
+              </div>
+              {e.reason && (
+                <div className="mt-0.5 text-[12px] text-muted-foreground">
+                  {e.reason}
+                </div>
+              )}
+              <div className="mt-0.5 text-[11px] text-muted-foreground">
+                by {e.actor}
+              </div>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 /* ============================================================ users page === */
 
 const FILTER_TABS: { label: string; status: MemberStatus | "All" }[] = [
@@ -894,6 +972,7 @@ export function AccessUsersPage() {
   const [filter, setFilter] = React.useState<MemberStatus | "All">("All")
   const [openId, setOpenId] = React.useState<number | null>(null)
   const [invite, setInvite] = React.useState(false)
+  const [bulk, setBulk] = React.useState(false)
   const [modal, setModal] = React.useState<{ type: ModalType; member: Member } | null>(null)
 
   // Opening a row fetches that member's full detail from GET /members/{id};
@@ -990,10 +1069,16 @@ export function AccessUsersPage() {
         sub="Invite internal Ginja staff, assign them roles, and manage their access lifecycle."
         actions={
           canManage && (
-            <Button onClick={() => setInvite(true)}>
-              <UserPlusIcon data-icon="inline-start" />
-              Invite user
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={() => setBulk(true)}>
+                <UsersIcon data-icon="inline-start" />
+                Bulk upload
+              </Button>
+              <Button onClick={() => setInvite(true)}>
+                <UserPlusIcon data-icon="inline-start" />
+                Invite user
+              </Button>
+            </div>
           )
         }
       />
@@ -1108,9 +1193,34 @@ export function AccessUsersPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <MiniBadge tone={STATUS_TONE[m.status]}>
-                        {STATUS_LABEL[m.status]}
-                      </MiniBadge>
+                      {m.status === "INVITED" && m.inviteExpired ? (
+                        <div className="flex flex-col items-start gap-1">
+                          <MiniBadge tone="error">Expired</MiniBadge>
+                          {canManage && (
+                            <button
+                              className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary underline-offset-2 hover:underline [&>svg]:size-[11px]"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                resend(m)
+                              }}
+                            >
+                              <RotateCcwIcon />
+                              Resend invitation
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-start gap-0.5">
+                          <MiniBadge tone={STATUS_TONE[m.status]}>
+                            {STATUS_LABEL[m.status]}
+                          </MiniBadge>
+                          {m.status === "INVITED" && m.inviteExpiresAt && (
+                            <span className="text-[10.5px] text-muted-foreground">
+                              expires {fmtExpiry(m.inviteExpiresAt)}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
                       {fmtLastActive(m.lastActive)}
@@ -1152,6 +1262,14 @@ export function AccessUsersPage() {
           saving={inviteMut.isPending}
           onClose={() => setInvite(false)}
           onInvite={doInvite}
+        />
+      )}
+
+      {bulk && (
+        <BulkUploadDrawer
+          roles={roles}
+          existingEmails={members.map((m) => m.email)}
+          onClose={() => setBulk(false)}
         />
       )}
 

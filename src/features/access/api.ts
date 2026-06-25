@@ -5,16 +5,19 @@ import { apiDelete, apiGet, apiPatch, apiPost, apiPut } from "@/lib/api/client"
 import { toPaged, type Paged, type PagedDTO } from "@/lib/api/paged"
 
 import {
-  toFunctionality,
   toMember,
+  toMemberActivity,
+  toPermission,
   toRole,
   type CreateRoleRequest,
-  type Functionality,
-  type FunctionalityDTO,
   type Member,
+  type MemberActivity,
+  type MemberActivityDTO,
   type MemberDTO,
   type MemberStatus,
   type OnboardMemberRequest,
+  type Permission,
+  type PermissionDTO,
   type Role,
   type RoleDTO,
 } from "./types"
@@ -25,12 +28,13 @@ export async function fetchRoles(): Promise<Role[]> {
   return rows.map(toRole)
 }
 
-/** GET /platform/organization/functionalities → the module catalogue. */
-export async function fetchFunctionalities(): Promise<Functionality[]> {
-  const rows = await apiGet<FunctionalityDTO[]>(
-    "/platform/organization/functionalities"
+/** GET /platform/organization/permissions → the capability catalogue that the
+    role editor grants from (a flat list; the UI groups it by group_code). */
+export async function fetchPermissions(): Promise<Permission[]> {
+  const rows = await apiGet<PermissionDTO[]>(
+    "/platform/organization/permissions"
   )
-  return rows.map(toFunctionality)
+  return rows.map(toPermission)
 }
 
 /** GET /platform/organization/roles/{id} → one role. */
@@ -45,10 +49,10 @@ export async function createRole(body: CreateRoleRequest): Promise<Role> {
   return toRole(row)
 }
 
-/** PATCH /platform/organization/roles/{id} → updated name/description (CUSTOM only). */
+/** PATCH /platform/organization/roles/{id} → updated name/description/colour (CUSTOM only). */
 export async function updateRoleDetails(
   id: number,
-  body: { name?: string; description?: string }
+  body: { name?: string; description?: string; hex_color?: string }
 ): Promise<Role> {
   const row = await apiPatch<RoleDTO>(
     `/platform/organization/roles/${id}`,
@@ -57,25 +61,25 @@ export async function updateRoleDetails(
   return toRole(row)
 }
 
-/** POST …/roles/{id}/functionalities → add modules (idempotent). */
-export async function assignFunctionalities(
+/** POST …/roles/{id}/permissions → add permissions (idempotent). */
+export async function assignPermissions(
   id: number,
   codes: string[]
 ): Promise<Role> {
   const row = await apiPost<RoleDTO>(
-    `/platform/organization/roles/${id}/functionalities`,
-    { functionality_codes: codes }
+    `/platform/organization/roles/${id}/permissions`,
+    { permission_codes: codes }
   )
   return toRole(row)
 }
 
-/** DELETE …/roles/{id}/functionalities/{code} → remove one module. */
-export async function unassignFunctionality(
+/** DELETE …/roles/{id}/permissions/{permissionCode} → remove one permission. */
+export async function unassignPermission(
   id: number,
   code: string
 ): Promise<Role> {
   const row = await apiDelete<RoleDTO>(
-    `/platform/organization/roles/${id}/functionalities/${code}`
+    `/platform/organization/roles/${id}/permissions/${code}`
   )
   return toRole(row)
 }
@@ -112,17 +116,13 @@ export async function fetchMember(id: number): Promise<Member> {
   return toMember(row)
 }
 
-/** POST /platform/organization/members → onboard (no password ⇒ INVITED). */
+/** POST /platform/organization/members → onboard + send the invite in one call
+    (no password ⇒ INVITED). Pass `expiry_days` to set the link validity. */
 export async function onboardMember(
   body: OnboardMemberRequest
 ): Promise<Member> {
   const row = await apiPost<MemberDTO>(MEMBERS, body)
   return toMember(row)
-}
-
-/** POST …/members/{id}/invite → mint + send a setup link. */
-export async function sendInvite(id: number, expiryDays?: number): Promise<void> {
-  await apiPost(`${MEMBERS}/${id}/invite`, expiryDays ? { expiry_days: expiryDays } : undefined)
 }
 
 export async function resendInvite(id: number): Promise<void> {
@@ -169,4 +169,16 @@ export async function unassignMemberRole(
 /** DELETE /platform/organization/members/{id} → hard delete. */
 export async function deleteMember(id: number): Promise<void> {
   await apiDelete<void>(`${MEMBERS}/${id}`)
+}
+
+/** GET …/members/{id}/activity (paged) → the member's audit-trail timeline. */
+export async function fetchMemberActivity(
+  id: number,
+  size = 50
+): Promise<MemberActivity[]> {
+  const dto = await apiGet<PagedDTO<MemberActivityDTO>>(
+    `${MEMBERS}/${id}/activity`,
+    { params: { page: 0, size, sort: "createdAt,desc" } }
+  )
+  return (dto.content ?? []).map(toMemberActivity)
 }

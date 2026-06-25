@@ -11,9 +11,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { StaffAvatar } from "@/components/console/avatar-initials"
-import { PROV_STAGE_TONE, type ProvStage, type Staff } from "@/lib/console-data"
+import { AssigneeAvatar } from "@/components/console/avatar-initials"
+import type { ProvTone } from "@/lib/console-data"
 import { TonePill } from "./components"
+
+/** An engineer option for the queue filter (resolved from the members roster). */
+export type EngineerOption = { id: string; name: string }
+/** A stage option for the queue filter (API stage value + display + tone). */
+export type StageOption = { value: string; label: string; tone: ProvTone }
 
 const triggerCls = (active: boolean) =>
   cn(
@@ -67,7 +72,7 @@ export function EngMultiSelect({
   onClear,
   count,
 }: {
-  engineers: Staff[]
+  engineers: EngineerOption[]
   sel: Set<string>
   onToggle: (id: string) => void
   onClear: () => void
@@ -84,9 +89,9 @@ export function EngMultiSelect({
           <>
             <span className="flex items-center">
               {picked.slice(0, 3).map((e, i) => (
-                <StaffAvatar
+                <AssigneeAvatar
                   key={e.id}
-                  id={e.id}
+                  name={e.name}
                   size="sm"
                   className={cn("ring-2 ring-card", i > 0 && "-ml-1.5")}
                 />
@@ -112,7 +117,7 @@ export function EngMultiSelect({
               className="flex w-full items-center gap-2.5 px-3 py-2 text-left hover:bg-muted"
             >
               <Check on={sel.has(e.id)} />
-              <StaffAvatar id={e.id} size="sm" />
+              <AssigneeAvatar name={e.name} size="sm" />
               <span className="min-w-0 flex-1">
                 <span className="block text-[13px] font-semibold">{e.name}</span>
                 <span className="block text-[11.5px] text-muted-foreground">
@@ -136,12 +141,14 @@ export function StageMultiSelect({
   onClear,
   count,
 }: {
-  stages: ProvStage[]
-  sel: Set<ProvStage>
-  onToggle: (s: ProvStage) => void
+  stages: StageOption[]
+  sel: Set<string>
+  onToggle: (s: string) => void
   onClear: () => void
-  count: (s: ProvStage) => number
+  count: (s: string) => number
 }) {
+  const oneLabel =
+    sel.size === 1 ? stages.find((s) => sel.has(s.value))?.label : null
   return (
     <Popover>
       <PopoverTrigger className={triggerCls(sel.size > 0)}>
@@ -150,7 +157,7 @@ export function StageMultiSelect({
           {sel.size === 0
             ? "All stages"
             : sel.size === 1
-              ? [...sel][0]
+              ? oneLabel
               : `${sel.size} stages`}
         </span>
         <ChevronDownIcon className="size-3.5 text-muted-foreground" />
@@ -160,17 +167,17 @@ export function StageMultiSelect({
         <div className="pb-1">
           {stages.map((s) => (
             <button
-              key={s}
+              key={s.value}
               type="button"
-              onClick={() => onToggle(s)}
+              onClick={() => onToggle(s.value)}
               className="flex w-full items-center gap-2.5 px-3 py-2 text-left hover:bg-muted"
             >
-              <Check on={sel.has(s)} />
+              <Check on={sel.has(s.value)} />
               <span className="pointer-events-none">
-                <TonePill tone={PROV_STAGE_TONE[s]}>{s}</TonePill>
+                <TonePill tone={s.tone}>{s.label}</TonePill>
               </span>
               <span className="ml-auto text-[12px] text-muted-foreground">
-                {count(s)}
+                {count(s.value)}
               </span>
             </button>
           ))}

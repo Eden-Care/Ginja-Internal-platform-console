@@ -6,7 +6,6 @@ import {
   onboardMember,
   resendInvite,
   revokeInvite,
-  sendInvite,
   setMemberStatus,
   unassignMemberRole,
 } from "./api"
@@ -19,24 +18,23 @@ function useInvalidateMembers() {
   return () => qc.invalidateQueries({ queryKey: memberKeys.all })
 }
 
-/** Invite = onboard (no password ⇒ INVITED) then send the setup link. */
+/** Invite = onboard the member (no password ⇒ INVITED); POST /members both
+   creates the account and sends the setup link, with `expiry_days` validity. */
 export function useInviteMember() {
   const invalidate = useInvalidateMembers()
   return useMutation({
-    mutationFn: async (input: {
+    mutationFn: (input: {
       name: string
       email: string
       roleIds: number[]
       expiryDays?: number
-    }) => {
-      const member = await onboardMember({
+    }) =>
+      onboardMember({
         email: input.email,
         full_name: input.name,
         role_ids: input.roleIds,
-      })
-      await sendInvite(member.id, input.expiryDays)
-      return member
-    },
+        expiry_days: input.expiryDays,
+      }),
     onSuccess: invalidate,
   })
 }

@@ -1,6 +1,8 @@
 import * as React from "react"
+import { useNavigate } from "react-router-dom"
 import {
   CheckCircle2Icon,
+  ChevronDownIcon,
   ChevronRightIcon,
   ClockIcon,
   FlagIcon,
@@ -10,6 +12,7 @@ import {
   XIcon,
   type LucideIcon,
 } from "lucide-react"
+import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -27,37 +30,47 @@ import {
 } from "@/components/ui/table"
 import { ConsolePageHeader } from "@/components/console/page-header"
 import { Panel } from "@/components/console/panel"
+import { Note } from "@/components/console/note"
 import { Tagpill } from "@/components/console/tagpill"
-import { StaffAvatar } from "@/components/console/avatar-initials"
 import {
-  PROVISIONING,
-  PROV_SECTIONS,
-  PROV_STAGE_TONE,
-  PROV_ENGINEERS,
-  STAFF,
-  STAFF_BY_ID,
-  provDone,
-  provOpenRemarks,
-  type ProvStage,
-  type ProvTone,
-} from "@/lib/console-data"
+  AssigneeAvatar,
+  AvatarInitials,
+} from "@/components/console/avatar-initials"
+import { LoadingSpinner } from "@/components/common/loading"
+import type { ProvTone } from "@/lib/console-data"
 import { useAccess } from "@/contexts/access-context"
-import { ProvTrack, TonePill } from "./components"
-import { EngMultiSelect, StageMultiSelect } from "./filters"
-import { ProvisioningDetail } from "./detail"
+import { useMembers } from "@/features/access/use-members"
+import {
+  useAssignProvisioning,
+  useProvisioning,
+  useProvisioningMine,
+} from "@/features/provisioning/use-provisioning"
+import {
+  PROV_STAGE_LABEL,
+  PROV_STAGE_TONE,
+  type ProvStage,
+  type Provisioning,
+} from "@/features/provisioning/types"
+import { TonePill } from "./components"
+import { EngineerSelect, engineerOptions } from "./engineer-select"
+import {
+  EngMultiSelect,
+  StageMultiSelect,
+  type StageOption,
+} from "./filters"
 
 const STAGES: ProvStage[] = [
-  "Awaiting start",
-  "In progress",
-  "Blocked",
-  "Ready to activate",
+  "AWAITING_START",
+  "IN_PROGRESS",
+  "BLOCKED",
+  "READY_TO_ACTIVATE",
 ]
 
 const STAT_TILES: { stage: ProvStage; icon: LucideIcon; tone: ProvTone }[] = [
-  { stage: "Awaiting start", icon: ClockIcon, tone: "neutral" },
-  { stage: "In progress", icon: ServerIcon, tone: "warning" },
-  { stage: "Blocked", icon: TriangleAlertIcon, tone: "error" },
-  { stage: "Ready to activate", icon: CheckCircle2Icon, tone: "success" },
+  { stage: "AWAITING_START", icon: ClockIcon, tone: "neutral" },
+  { stage: "IN_PROGRESS", icon: ServerIcon, tone: "warning" },
+  { stage: "BLOCKED", icon: TriangleAlertIcon, tone: "error" },
+  { stage: "READY_TO_ACTIVATE", icon: CheckCircle2Icon, tone: "success" },
 ]
 
 const STAT_TONE: Record<ProvTone, string> = {
@@ -68,20 +81,87 @@ const STAT_TONE: Record<ProvTone, string> = {
   info: "bg-info-subtle text-info-subtle-foreground",
 }
 
-export function TenantProvisioningPage() {
-  const { role } = useAccess()
-  const me = STAFF.find((s) => s.name === role.name)
-  // A Platform Engineer sees only the tenants assigned to them.
-  const engineerView = role.key === "platform_engineer" && !!me
+const TOTAL_SECTIONS = 5
 
-  const [openId, setOpenId] = React.useState<string | null>(null)
+/** A five-segment progress track from the API section counts / statuses. */
+function ProvTrack({ p }: { p: Provisioning }) {
+  const total = p.sectionsTotal || TOTAL_SECTIONS
+  const seg = (i: number) => {
+    const s = p.sections[i]
+    if (s) {
+      if (s.status === "DONE" || s.status === "TESTED") return "bg-success"
+      if (s.status === "CONFIGURED") return "bg-warning"
+      return "bg-muted-foreground/20"
+    }
+    // Queue summaries can omit sections[]; fall back to the done count.
+    return i < p.sectionsDone ? "bg-success" : "bg-muted-foreground/20"
+  }
+  return (
+    <div className="flex w-[120px] gap-[3px]">
+      {Array.from({ length: total }, (_, i) => (
+        <span key={i} className={cn("h-[7px] flex-1 rounded-[3px]", seg(i))} />
+      ))}
+    </div>
+  )
+}
+
+export function TenantProvisioningPage() {
+  const navigate = useNavigate()
+  const { roleKey } = useAccess()
+  // A Platform Engineer sees only the tenants assigned to them (/mine).
+  const engineerView = roleKey === "platform_engineer"
+
+  const queueQ = useProvisioning({}, !engineerView)
+  const mineQ = useProvisioningMine(engineerView)
+  const activeQ = engineerView ? mineQ : queueQ
+  const rows = React.useMemo(() => activeQ.data ?? [], [activeQ.data])
+
+  // The members roster is admin-only; only admins need it (for name resolution
+  // + the assign picker). Non-admins skip it (names fall back to the raw id).
+  const isAdmin = roleKey === "platform_admin"
+  const membersQ = useMembers({}, isAdmin)
+  const members = React.useMemo(
+    () => membersQ.data?.items ?? [],
+    [membersQ.data]
+  )
+  const memberName = React.useCallback(
+    (id: string | null) => {
+      if (!id) return null
+      const m = members.find((x) => x.email.toLowerCase() === id.toLowerCase())
+      return m?.name ?? id
+    },
+    [members]
+  )
+
+  // Only an admin can (re)assign provisioning to an engineer (API-restricted).
+  const engineerPicks = React.useMemo(() => engineerOptions(members), [members])
+  const assignMut = useAssignProvisioning()
+  const assignEngineer = (tenantId: number, email: string) =>
+    assignMut.mutate(
+      { tenantId, assignee: email },
+      {
+        onSuccess: () => toast.success(`Assigned to ${memberName(email) ?? email}.`),
+        onError: (e) =>
+          toast.error(e instanceof Error ? e.message : "Couldn’t assign engineer."),
+      }
+    )
+
   const [query, setQuery] = React.useState("")
-  const [stageSel, setStageSel] = React.useState<Set<ProvStage>>(new Set())
+  const [stageSel, setStageSel] = React.useState<Set<string>>(new Set())
   const [engSel, setEngSel] = React.useState<Set<string>>(new Set())
 
-  const engineers = STAFF.filter((s) => PROV_ENGINEERS.includes(s.id))
-  const engCount = (id: string) =>
-    PROVISIONING.filter((i) => i.engineer === id).length
+  // Engineer options come from the assignees actually present in the queue.
+  const engineers = React.useMemo(() => {
+    const seen = new Map<string, string>()
+    for (const r of rows) {
+      if (r.assignee && !seen.has(r.assignee)) {
+        seen.set(r.assignee, memberName(r.assignee) ?? r.assignee)
+      }
+    }
+    return [...seen].map(([id, name]) => ({ id, name }))
+  }, [rows, memberName])
+
+  const engCount = (id: string) => rows.filter((i) => i.assignee === id).length
   const toggleEng = (id: string) =>
     setEngSel((s) => {
       const n = new Set(s)
@@ -89,7 +169,7 @@ export function TenantProvisioningPage() {
       else n.add(id)
       return n
     })
-  const toggleStage = (s: ProvStage) =>
+  const toggleStage = (s: string) =>
     setStageSel((x) => {
       const n = new Set(x)
       if (n.has(s)) n.delete(s)
@@ -97,16 +177,12 @@ export function TenantProvisioningPage() {
       return n
     })
 
-  const open = openId ? PROVISIONING.find((x) => x.id === openId) : null
-  if (open) {
-    return <ProvisioningDetail p={open} onBack={() => setOpenId(null)} />
-  }
+  // Open a tenant on its own detail route (deep-linkable), not an inline panel.
+  const openDetail = (tenantId: number) =>
+    navigate(`/tenant-provisioning/${tenantId}`)
 
-  const scoped = engineerView
-    ? PROVISIONING.filter((i) => i.engineer === me!.id)
-    : engSel.size === 0
-      ? PROVISIONING
-      : PROVISIONING.filter((i) => engSel.has(i.engineer))
+  const scoped =
+    engSel.size === 0 ? rows : rows.filter((i) => i.assignee && engSel.has(i.assignee))
 
   const counts = Object.fromEntries(
     STAGES.map((s) => [s, scoped.filter((i) => i.stage === s).length])
@@ -116,8 +192,16 @@ export function TenantProvisioningPage() {
   const list = scoped.filter(
     (i) =>
       (stageSel.size === 0 || stageSel.has(i.stage)) &&
-      (i.name.toLowerCase().includes(q) || i.id.toLowerCase().includes(q))
+      (i.legalEntityName.toLowerCase().includes(q) ||
+        i.tenantCode.toLowerCase().includes(q) ||
+        i.id.toLowerCase().includes(q))
   )
+
+  const stageOptions: StageOption[] = STAGES.map((s) => ({
+    value: s,
+    label: PROV_STAGE_LABEL[s],
+    tone: PROV_STAGE_TONE[s],
+  }))
 
   const filtersActive = stageSel.size > 0 || engSel.size > 0
   const clearAll = () => {
@@ -125,6 +209,8 @@ export function TenantProvisioningPage() {
     setEngSel(new Set())
     setQuery("")
   }
+
+  const readyCount = counts["READY_TO_ACTIVATE"] ?? 0
 
   return (
     <div className="flex flex-col gap-5">
@@ -137,200 +223,274 @@ export function TenantProvisioningPage() {
         }
       />
 
-      {engineerView && me && (
+      {engineerView && (
         <div className="flex items-center gap-2.5 rounded-xl border bg-card px-3.5 py-2.5 shadow-xs">
-          <StaffAvatar id={me.id} />
+          <ServerIcon className="size-[18px] text-muted-foreground" />
           <div className="min-w-0 flex-1 text-[13px]">
-            <b>{me.name}</b>
+            <b>Your assignments</b>
             <span className="text-muted-foreground">
               {" "}
-              · {me.role} — showing only tenants assigned to you
+              — showing only tenants assigned to you
             </span>
           </div>
           <Tagpill>{scoped.length} assigned</Tagpill>
           <Tagpill className="bg-success-subtle text-success-subtle-foreground">
-            {counts["Ready to activate"]} ready
+            {readyCount} ready
           </Tagpill>
         </div>
       )}
 
-      {/* stat tiles double as single-stage filters */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {STAT_TILES.map(({ stage, icon: Ic, tone }) => {
-          const on = stageSel.size === 1 && stageSel.has(stage)
-          return (
-            <button
-              key={stage}
-              type="button"
-              onClick={() =>
-                setStageSel((s) =>
-                  s.size === 1 && s.has(stage) ? new Set() : new Set([stage])
-                )
-              }
-              className={cn(
-                "flex flex-wrap items-center gap-2.5 rounded-[13px] border bg-card p-3.5 text-left transition-all",
-                on
-                  ? "border-primary ring-1 ring-primary"
-                  : "hover:border-primary/40 hover:shadow-xs"
-              )}
-            >
-              <span
-                className={cn(
-                  "grid size-[38px] place-items-center rounded-[10px] [&>svg]:size-4",
-                  STAT_TONE[tone]
-                )}
-              >
-                <Ic />
-              </span>
-              <span className="mono ml-auto text-[22px] font-bold">
-                {counts[stage]}
-              </span>
-              <span className="-mt-0.5 basis-full text-[11.5px] text-muted-foreground">
-                {stage}
-              </span>
-            </button>
-          )
-        })}
-      </div>
-
-      <Panel className="overflow-hidden">
-        {/* toolbar */}
-        <div className="flex flex-col gap-3 border-b p-3.5 lg:flex-row lg:items-center">
-          <InputGroup className="lg:max-w-xs">
-            <InputGroupAddon>
-              <SearchIcon />
-            </InputGroupAddon>
-            <InputGroupInput
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search tenants…"
-            />
-          </InputGroup>
-
-          {!engineerView && (
-            <EngMultiSelect
-              engineers={engineers}
-              sel={engSel}
-              onToggle={toggleEng}
-              onClear={() => setEngSel(new Set())}
-              count={engCount}
-            />
-          )}
-          <StageMultiSelect
-            stages={STAGES}
-            sel={stageSel}
-            onToggle={toggleStage}
-            onClear={() => setStageSel(new Set())}
-            count={(s) => scoped.filter((i) => i.stage === s).length}
-          />
-          {filtersActive && (
-            <Button variant="ghost" size="sm" onClick={clearAll}>
-              <XIcon data-icon="inline-start" />
-              Clear filters
-            </Button>
-          )}
-          <Tagpill className="lg:ml-auto">
-            {list.length} of {scoped.length}
-          </Tagpill>
-        </div>
-
-        <Table>
-          <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              <TableHead>Tenant</TableHead>
-              <TableHead>Progress</TableHead>
-              <TableHead>Stage</TableHead>
-              <TableHead>Engineer</TableHead>
-              <TableHead>Approved</TableHead>
-              <TableHead className="w-11" />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {list.map((p) => {
-              const eng = STAFF_BY_ID[p.engineer]
-              const openR = provOpenRemarks(p)
+      {activeQ.isError ? (
+        <Note tone="err" icon={<TriangleAlertIcon />}>
+          Couldn&rsquo;t load the provisioning queue.{" "}
+          <button
+            className="font-semibold underline underline-offset-2"
+            onClick={() => activeQ.refetch()}
+          >
+            Try again
+          </button>
+          .
+        </Note>
+      ) : (
+        <>
+          {/* stat tiles double as single-stage filters */}
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {STAT_TILES.map(({ stage, icon: Ic, tone }) => {
+              const on = stageSel.size === 1 && stageSel.has(stage)
               return (
-                <TableRow
-                  key={p.id}
-                  className="cursor-pointer"
-                  onClick={() => setOpenId(p.id)}
+                <button
+                  key={stage}
+                  type="button"
+                  onClick={() =>
+                    setStageSel((s) =>
+                      s.size === 1 && s.has(stage) ? new Set() : new Set([stage])
+                    )
+                  }
+                  className={cn(
+                    "flex flex-wrap items-center gap-2.5 rounded-[13px] border bg-card p-3.5 text-left transition-all",
+                    on
+                      ? "border-primary ring-1 ring-primary"
+                      : "hover:border-primary/40 hover:shadow-xs"
+                  )}
                 >
-                  <TableCell>
-                    <div className="flex items-center gap-2.5">
-                      <span className="grid size-[30px] shrink-0 place-items-center rounded-lg border border-primary/20 bg-primary/10 text-[11px] font-bold text-primary">
-                        {p.name.slice(0, 2).toUpperCase()}
-                      </span>
-                      <div className="min-w-0">
-                        <div className="text-[13px] font-semibold">{p.name}</div>
-                        <div className="mono text-[11.5px] text-muted-foreground">
-                          {p.id} · {p.country} · {p.modules} modules
-                        </div>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2.5">
-                      <ProvTrack p={p} />
-                      <span className="text-[11.5px] text-muted-foreground">
-                        {provDone(p)}/{PROV_SECTIONS.length}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col items-start gap-1">
-                      <TonePill tone={PROV_STAGE_TONE[p.stage]}>
-                        {p.stage}
-                      </TonePill>
-                      {openR > 0 && (
-                        <span
-                          className="inline-flex items-center gap-1 rounded-full bg-warning-subtle px-2 py-0.5 text-[10.5px] font-semibold text-warning-subtle-foreground"
-                          title={`${openR} open remark(s) from technical review`}
-                        >
-                          <FlagIcon className="size-2.5" />
-                          {openR} remark{openR > 1 ? "s" : ""}
-                        </span>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <StaffAvatar id={p.engineer} size="sm" />
-                      <span className="text-[12.5px]">
-                        {eng ? eng.name : "—"}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {p.approvedOn}
-                  </TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="icon-sm">
-                      <ChevronRightIcon />
-                    </Button>
-                  </TableCell>
-                </TableRow>
+                  <span
+                    className={cn(
+                      "grid size-[38px] place-items-center rounded-[10px] [&>svg]:size-4",
+                      STAT_TONE[tone]
+                    )}
+                  >
+                    <Ic />
+                  </span>
+                  <span className="mono ml-auto text-[22px] font-bold">
+                    {counts[stage]}
+                  </span>
+                  <span className="-mt-0.5 basis-full text-[11.5px] text-muted-foreground">
+                    {PROV_STAGE_LABEL[stage]}
+                  </span>
+                </button>
               )
             })}
-          </TableBody>
-        </Table>
-
-        {list.length === 0 && (
-          <div className="flex flex-col items-center gap-3 px-6 py-14 text-center">
-            <span className="grid size-12 place-items-center rounded-xl bg-muted text-muted-foreground">
-              <ServerIcon className="size-[22px]" />
-            </span>
-            <p className="max-w-sm text-sm text-muted-foreground">
-              <b className="text-foreground">No tenants match your filters.</b>
-              <br />
-              Try clearing the filters or adjusting your search.
-            </p>
-            <Button variant="outline" size="sm" onClick={clearAll}>
-              <XIcon data-icon="inline-start" />
-              Clear all filters
-            </Button>
           </div>
-        )}
-      </Panel>
+
+          <Panel className="overflow-hidden">
+            {/* toolbar */}
+            <div className="flex flex-col gap-3 border-b p-3.5 lg:flex-row lg:items-center">
+              <InputGroup className="lg:max-w-xs">
+                <InputGroupAddon>
+                  <SearchIcon />
+                </InputGroupAddon>
+                <InputGroupInput
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search tenants…"
+                />
+              </InputGroup>
+
+              {!engineerView && (
+                <EngMultiSelect
+                  engineers={engineers}
+                  sel={engSel}
+                  onToggle={toggleEng}
+                  onClear={() => setEngSel(new Set())}
+                  count={engCount}
+                />
+              )}
+              <StageMultiSelect
+                stages={stageOptions}
+                sel={stageSel}
+                onToggle={toggleStage}
+                onClear={() => setStageSel(new Set())}
+                count={(s) => scoped.filter((i) => i.stage === s).length}
+              />
+              {filtersActive && (
+                <Button variant="ghost" size="sm" onClick={clearAll}>
+                  <XIcon data-icon="inline-start" />
+                  Clear filters
+                </Button>
+              )}
+              <Tagpill className="lg:ml-auto">
+                {list.length} of {scoped.length}
+              </Tagpill>
+            </div>
+
+            {activeQ.isLoading ? (
+              <div className="flex items-center justify-center py-20 text-muted-foreground">
+                <LoadingSpinner />
+              </div>
+            ) : (
+              <>
+                <Table>
+                  <TableHeader>
+                    <TableRow className="hover:bg-transparent">
+                      <TableHead>Tenant</TableHead>
+                      <TableHead>Progress</TableHead>
+                      <TableHead>Stage</TableHead>
+                      <TableHead>Engineer</TableHead>
+                      <TableHead>Approved</TableHead>
+                      <TableHead className="w-11" />
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {list.map((p) => {
+                      const engName = memberName(p.assignee)
+                      return (
+                        <TableRow
+                          key={p.id}
+                          className="cursor-pointer"
+                          onClick={() => openDetail(p.tenantId)}
+                        >
+                          <TableCell>
+                            <div className="flex items-center gap-2.5">
+                              <AvatarInitials name={p.legalEntityName} />
+                              <div className="min-w-0">
+                                <div className="text-[13px] font-semibold">
+                                  {p.legalEntityName}
+                                </div>
+                                <div className="mono text-[11.5px] text-muted-foreground">
+                                  {p.tenantCode}
+                                  {p.subdomain ? ` · ${p.subdomain}` : ""}
+                                </div>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2.5">
+                              <ProvTrack p={p} />
+                              <span className="text-[11.5px] text-muted-foreground">
+                                {p.sectionsDone}/{p.sectionsTotal || TOTAL_SECTIONS}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col items-start gap-1">
+                              <TonePill tone={PROV_STAGE_TONE[p.stage]}>
+                                {PROV_STAGE_LABEL[p.stage]}
+                              </TonePill>
+                              {p.openRemarks > 0 && (
+                                <span
+                                  className="inline-flex items-center gap-1 rounded-full bg-warning-subtle px-2 py-0.5 text-[10.5px] font-semibold text-warning-subtle-foreground"
+                                  title={`${p.openRemarks} open remark(s) from technical review`}
+                                >
+                                  <FlagIcon className="size-2.5" />
+                                  {p.openRemarks} remark{p.openRemarks > 1 ? "s" : ""}
+                                </span>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell
+                            onClick={
+                              isAdmin ? (e) => e.stopPropagation() : undefined
+                            }
+                          >
+                            {isAdmin ? (
+                              <EngineerSelect
+                                value={p.assignee}
+                                engineers={engineerPicks}
+                                onAssign={(email) =>
+                                  assignEngineer(p.tenantId, email)
+                                }
+                                disabled={assignMut.isPending}
+                                trigger={
+                                  <button
+                                    type="button"
+                                    className="flex w-[176px] items-center gap-2 rounded-[9px] border border-input bg-card px-2 py-1 transition-colors hover:border-primary/50"
+                                  >
+                                    {engName ? (
+                                      <>
+                                        <AssigneeAvatar name={engName} size="sm" />
+                                        <span className="truncate text-[12.5px]">
+                                          {engName}
+                                        </span>
+                                      </>
+                                    ) : (
+                                      <span className="text-[12.5px] text-muted-foreground">
+                                        Assign
+                                      </span>
+                                    )}
+                                    <ChevronDownIcon className="ml-auto size-3.5 shrink-0 text-muted-foreground" />
+                                  </button>
+                                }
+                              />
+                            ) : engName ? (
+                              <div className="flex items-center gap-2">
+                                <AssigneeAvatar name={engName} size="sm" />
+                                <span className="text-[12.5px]">{engName}</span>
+                              </div>
+                            ) : (
+                              <span className="text-[12.5px] text-muted-foreground">
+                                Unassigned
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell
+                            className="text-xs text-muted-foreground"
+                            title="Approval date isn't returned by the provisioning API yet"
+                          >
+                            —
+                          </TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="icon-sm">
+                              <ChevronRightIcon />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </Table>
+
+                {list.length === 0 && (
+                  <div className="flex flex-col items-center gap-3 px-6 py-14 text-center">
+                    <span className="grid size-12 place-items-center rounded-xl bg-muted text-muted-foreground">
+                      <ServerIcon className="size-[22px]" />
+                    </span>
+                    <p className="max-w-sm text-sm text-muted-foreground">
+                      <b className="text-foreground">
+                        No tenants match your filters.
+                      </b>
+                      <br />
+                      Try clearing the filters or adjusting your search.
+                    </p>
+                    {filtersActive && (
+                      <Button variant="outline" size="sm" onClick={clearAll}>
+                        <XIcon data-icon="inline-start" />
+                        Clear all filters
+                      </Button>
+                    )}
+                  </div>
+                )}
+
+                <div className="border-t p-3.5">
+                  <span className="text-[11.5px] text-muted-foreground">
+                    Country, tenant type, module count and approval date aren&rsquo;t
+                    returned by the provisioning API yet — backend pending.
+                  </span>
+                </div>
+              </>
+            )}
+          </Panel>
+        </>
+      )}
     </div>
   )
 }

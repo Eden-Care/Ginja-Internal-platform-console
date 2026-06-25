@@ -69,9 +69,17 @@ const TYPES = [
 export function StepPrimary({
   form,
   set,
+  showErrors = false,
+  resume = false,
 }: {
   form: OnboardingForm
   set: SetField
+  /** Reveal field-level validation. False until the user tries to advance, so a
+     freshly opened (blank) form isn't shown all-red. */
+  showErrors?: boolean
+  /** Resume mode: primary isn't re-submitted, so suppress the duplicate /
+     subdomain self-match warnings (the draft matches its own record). */
+  resume?: boolean
 }) {
   const c = form.contacts
   const c0 = c[0] ?? { name: "", email: "", role: "", phone: "" }
@@ -95,18 +103,21 @@ export function StepPrimary({
   const deferredSub = React.useDeferredValue(form.subdomain)
   const lookup = useTenantLookup(deferredLegal)
   const subCheck = useSubdomainCheck(deferredSub)
-  const dupe = lookup.data?.found ? lookup.data.tenant : null
+  const dupe = !resume && lookup.data?.found ? lookup.data.tenant : null
   const subResult = form.subdomain.trim() ? subCheck.data : undefined
-  const subTaken = subResult && (!subResult.available || !subResult.valid)
+  const subTaken =
+    !resume && subResult && (!subResult.available || !subResult.valid)
 
+  // Gated on showErrors: until the user tries to advance, every flag is false,
+  // so errCount is 0 (banner hidden) and no field shows a red border or hint.
   const err = {
-    legal: !form.legal.trim(),
-    trading: !form.trading.trim(),
-    tax: !form.tax.trim(),
-    c0name: !(c0.name || "").trim(),
-    c0email: !emailOk(c0.email),
-    address: !(form.address || "").trim(),
-    subdomain: !form.subdomain.trim(),
+    legal: showErrors && !form.legal.trim(),
+    trading: showErrors && !form.trading.trim(),
+    tax: showErrors && !form.tax.trim(),
+    c0name: showErrors && !(c0.name || "").trim(),
+    c0email: showErrors && !emailOk(c0.email),
+    address: showErrors && !(form.address || "").trim(),
+    subdomain: showErrors && !form.subdomain.trim(),
   }
   const errCount = Object.values(err).filter(Boolean).length
 

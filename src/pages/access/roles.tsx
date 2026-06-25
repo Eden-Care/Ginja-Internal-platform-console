@@ -7,6 +7,7 @@ import {
   InfoIcon,
   KeyRoundIcon,
   LayersIcon,
+  PaletteIcon,
   PlusIcon,
   SearchIcon,
   Trash2Icon,
@@ -31,12 +32,17 @@ import { Field } from "@/components/console/form-atoms"
 import { LoadingSpinner } from "@/components/common/loading"
 import { useAccess } from "@/contexts/access-context"
 import { useRoles } from "@/features/access/use-roles"
-import { useFunctionalities } from "@/features/access/use-functionalities"
+import { usePermissions } from "@/features/access/use-permissions"
 import { useCreateRole } from "@/features/access/use-create-role"
 import { useUpdateRole } from "@/features/access/use-update-role"
 import { useDeleteRole } from "@/features/access/use-delete-role"
-import type { Functionality, Role } from "@/features/access/types"
 import {
+  groupPermissions,
+  type Permission,
+  type Role,
+} from "@/features/access/types"
+import {
+  AccessGlyph,
   AccessTabs,
   CheckSquare,
   ConfirmDialog,
@@ -45,29 +51,67 @@ import {
   useEditParam,
 } from "./access-shared"
 
-/* The API stores no role colour, so the icon tint is derived deterministically
-   from the role code (presentation only — never persisted). */
+/* A role badge tint: the backend's real `hex_color` when present, otherwise a
+   stable palette key derived from the role code (presentation only). */
 const PALETTE_KEYS = ["iris", "emerald", "amber", "sky", "rose", "violet"]
 function roleColor(role: Role): string {
+  if (role.hexColor) return role.hexColor
   if (role.system) return "iris"
   let h = 0
   for (const ch of role.code) h += ch.charCodeAt(0)
   return PALETTE_KEYS[h % PALETTE_KEYS.length]
 }
 
+/* The API carries no per-group icon, so map known capability groups to a glyph
+   (presentation only; unknown groups fall back to a generic one). */
+const GROUP_ICON: Record<string, string> = {
+  TENANT_MANAGEMENT: "building",
+  APPROVALS: "shieldCheck",
+  CONFIG_LIBRARY: "layers",
+  ACCESS_SECURITY: "key",
+  OBSERVABILITY: "history",
+}
+
+/** On-brand preset accent colours offered in the role editor (hex — the value
+   the API stores as `hex_color`). A native picker covers anything else. */
+const ROLE_COLORS = [
+  "#6741D9",
+  "#3B5BDB",
+  "#1098AD",
+  "#0CA678",
+  "#2F9E44",
+  "#F08C00",
+  "#E8590C",
+  "#E03131",
+  "#C2255C",
+  "#9C36B5",
+]
+const DEFAULT_ROLE_COLOR = "#6741D9"
+
 type EditorPayload = {
   name: string
   description: string
-  functionalityCodes: string[]
+  permissionCodes: string[]
+  hexColor: string
+}
+
+/* =============================================================== sensitive === */
+
+function SensitiveBadge() {
+  return (
+    <span className="inline-flex items-center rounded-[5px] bg-warning-subtle px-1.5 py-px text-[9px] font-semibold tracking-[0.03em] text-warning-subtle-foreground uppercase">
+      Sensitive
+    </span>
+  )
 }
 
 /* ============================================================ role editor === */
 
 function RoleEditor({
   base,
-  functionalities,
-  fnsLoading,
-  fnsError,
+  permissions,
+  permsLoading,
+  permsError,
   saving,
   deleting,
   onCancel,
@@ -75,9 +119,9 @@ function RoleEditor({
   onDelete,
 }: {
   base: Role | null
-  functionalities: Functionality[]
-  fnsLoading: boolean
-  fnsError: boolean
+  permissions: Permission[]
+  permsLoading: boolean
+  permsError: boolean
   saving: boolean
   deleting: boolean
   onCancel: () => void
@@ -91,12 +135,17 @@ function RoleEditor({
 
   const [name, setName] = React.useState(base?.name ?? "")
   const [desc, setDesc] = React.useState(base?.description ?? "")
+  const [color, setColor] = React.useState(base?.hexColor ?? DEFAULT_ROLE_COLOR)
   const [selected, setSelected] = React.useState<Set<string>>(
-    () => new Set(base?.functionalityCodes ?? [])
+    () => new Set(base?.permissionCodes ?? [])
   )
   const [confirmDel, setConfirmDel] = React.useState(false)
   const valid = name.trim().length > 0
-  const total = functionalities.length
+  const total = permissions.length
+  const groups = React.useMemo(
+    () => groupPermissions(permissions),
+    [permissions]
+  )
 
   const toggle = (code: string) => {
     if (!editable) return
@@ -108,12 +157,23 @@ function RoleEditor({
     })
   }
 
+  const toggleGroup = (codes: string[]) => {
+    if (!editable) return
+    setSelected((prev) => {
+      const next = new Set(prev)
+      const allOn = codes.every((c) => next.has(c))
+      codes.forEach((c) => (allOn ? next.delete(c) : next.add(c)))
+      return next
+    })
+  }
+
   const submit = () => {
     if (!valid || saving) return
     onSubmit({
       name: name.trim(),
       description: desc.trim(),
-      functionalityCodes: [...selected],
+      permissionCodes: [...selected],
+      hexColor: color,
     })
   }
 
@@ -133,10 +193,10 @@ function RoleEditor({
           title={isNew ? "Create role" : base.name}
           sub={
             isNew
-              ? "Name the role and grant the modules it can access. Modules can be changed later."
+              ? "Name the role and grant the permissions it can use. Permissions can be changed later."
               : isSystem
-                ? "Built-in system role — view the modules it grants."
-                : "Edit the role’s details and the modules it can access."
+                ? "Built-in system role — view the permissions it grants."
+                : "Edit the role’s details and the permissions it grants."
           }
           actions={
             base && !isSystem ? (
@@ -155,7 +215,7 @@ function RoleEditor({
 
       {isSystem && (
         <Note tone="info" icon={<InfoIcon />}>
-          This is a built-in system role. Its modules are fixed and can’t be
+          This is a built-in system role. Its permissions are fixed and can’t be
           edited.
         </Note>
       )}
@@ -183,20 +243,61 @@ function RoleEditor({
               placeholder="What is this role for?"
             />
           </Field>
+          <Field label="Colour" className="mt-3" optional>
+            <div className="flex flex-wrap items-center gap-2">
+              {ROLE_COLORS.map((c) => {
+                const on = color.toLowerCase() === c.toLowerCase()
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    disabled={!editable}
+                    title={c}
+                    onClick={() => setColor(c)}
+                    className={cn(
+                      "size-6 rounded-full border-2 transition-transform",
+                      on ? "scale-110 border-foreground" : "border-transparent",
+                      !editable && "cursor-default"
+                    )}
+                    style={{ background: c }}
+                  />
+                )
+              })}
+              <label
+                title="Custom colour"
+                className={cn(
+                  "relative grid size-6 place-items-center rounded-full border border-dashed text-muted-foreground",
+                  editable ? "cursor-pointer hover:border-primary" : "opacity-50"
+                )}
+              >
+                <PaletteIcon className="size-3.5" />
+                <input
+                  type="color"
+                  value={color}
+                  disabled={!editable}
+                  onChange={(e) => setColor(e.target.value.toUpperCase())}
+                  className="absolute inset-0 cursor-pointer opacity-0 disabled:cursor-default"
+                />
+              </label>
+              <span className="mono text-[11px] text-muted-foreground">
+                {color.toUpperCase()}
+              </span>
+            </div>
+          </Field>
         </Panel>
 
-        {/* right: module matrix */}
+        {/* right: permission matrix */}
         <Panel className="overflow-hidden p-0">
           <div className="flex items-center justify-between gap-3 border-b px-4 py-[15px]">
             <div>
               <div className="text-[10px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
-                Modules{" "}
+                Permissions{" "}
                 <span className="font-normal tracking-normal normal-case">
-                  · what this role can access
+                  · what this role can do
                 </span>
               </div>
               <div className="mt-0.5 text-xs text-muted-foreground">
-                Grant the platform modules this role should reach.
+                Grant the capabilities this role should have.
               </div>
             </div>
             <span className="mono shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
@@ -204,55 +305,91 @@ function RoleEditor({
             </span>
           </div>
 
-          {fnsLoading ? (
+          {permsLoading ? (
             <div className="flex items-center justify-center py-12 text-muted-foreground">
               <LoadingSpinner />
             </div>
-          ) : fnsError ? (
+          ) : permsError ? (
             <div className="p-4">
               <Note tone="err" icon={<TriangleAlertIcon />}>
-                Couldn’t load the module catalogue. Try again in a moment.
+                Couldn’t load the permission catalogue. Try again in a moment.
               </Note>
             </div>
           ) : total === 0 ? (
             <div className="px-4 py-10 text-center text-[13px] text-muted-foreground">
-              No modules are defined yet.
+              No permissions are defined yet.
             </div>
           ) : (
             <div>
-              {functionalities.map((f) => (
-                <label
-                  key={f.code}
-                  className={cn(
-                    "flex items-start gap-[11px] border-t border-border/60 px-4 py-[13px] first:border-t-0",
-                    editable
-                      ? "cursor-pointer hover:bg-muted/35"
-                      : "cursor-default"
-                  )}
-                >
-                  <CheckSquare on={selected.has(f.code)} />
-                  <input
-                    type="checkbox"
-                    className="hidden"
-                    checked={selected.has(f.code)}
-                    disabled={!editable}
-                    onChange={() => toggle(f.code)}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5 text-[13px] font-medium">
-                      {f.name}
-                      <span className="mono rounded-[5px] bg-muted px-1.5 py-px text-[9.5px] font-semibold tracking-[0.02em] text-muted-foreground">
-                        {f.code}
+              {groups.map((group) => {
+                const codes = group.permissions.map((p) => p.code)
+                const picked = codes.filter((c) => selected.has(c)).length
+                const allOn = picked === codes.length
+                return (
+                  <div
+                    key={group.code}
+                    className="border-t border-border/60 first:border-t-0"
+                  >
+                    {/* group header — toggles the whole group */}
+                    <button
+                      type="button"
+                      disabled={!editable}
+                      onClick={() => toggleGroup(codes)}
+                      className={cn(
+                        "flex w-full items-center gap-[11px] bg-muted/35 px-4 py-2.5 text-left",
+                        editable ? "cursor-pointer hover:bg-muted/55" : "cursor-default"
+                      )}
+                    >
+                      <span className="grid size-[26px] shrink-0 place-items-center rounded-[7px] bg-primary/10 text-primary [&>svg]:size-[14px]">
+                        <AccessGlyph name={GROUP_ICON[group.code] ?? "layers"} />
                       </span>
-                    </div>
-                    {f.description && (
-                      <div className="mt-px text-[11.5px] text-muted-foreground">
-                        {f.description}
-                      </div>
-                    )}
+                      <span className="flex-1 text-[12px] font-semibold">
+                        {group.label}
+                      </span>
+                      <span className="mono text-[11px] font-semibold text-muted-foreground">
+                        {picked} / {codes.length}
+                      </span>
+                      <CheckSquare on={allOn} />
+                    </button>
+
+                    {/* permission rows */}
+                    {group.permissions.map((p) => (
+                      <label
+                        key={p.code}
+                        className={cn(
+                          "flex items-start gap-[11px] border-t border-border/60 px-4 py-[13px] pl-[22px]",
+                          editable
+                            ? "cursor-pointer hover:bg-muted/35"
+                            : "cursor-default"
+                        )}
+                      >
+                        <CheckSquare on={selected.has(p.code)} />
+                        <input
+                          type="checkbox"
+                          className="hidden"
+                          checked={selected.has(p.code)}
+                          disabled={!editable}
+                          onChange={() => toggle(p.code)}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-1.5 text-[13px] font-medium">
+                            {p.name}
+                            <span className="mono rounded-[5px] bg-muted px-1.5 py-px text-[9.5px] font-semibold tracking-[0.02em] text-muted-foreground">
+                              {p.code}
+                            </span>
+                            {p.sensitive && <SensitiveBadge />}
+                          </div>
+                          {p.description && (
+                            <div className="mt-px text-[11.5px] text-muted-foreground">
+                              {p.description}
+                            </div>
+                          )}
+                        </div>
+                      </label>
+                    ))}
                   </div>
-                </label>
-              ))}
+                )
+              })}
             </div>
           )}
         </Panel>
@@ -262,8 +399,8 @@ function RoleEditor({
         <div className="flex items-center gap-2.5 border-t pt-3.5">
           <span className="flex-1 text-xs text-muted-foreground">
             {selected.size === 0
-              ? "No modules selected — you can grant them later"
-              : `${selected.size} module${selected.size === 1 ? "" : "s"} selected`}
+              ? "No permissions selected — you can grant them later"
+              : `${selected.size} permission${selected.size === 1 ? "" : "s"} selected`}
           </span>
           <Button variant="ghost" onClick={onCancel} disabled={saving}>
             Cancel
@@ -293,8 +430,8 @@ function RoleEditor({
           body={
             <p>
               This permanently removes the role. Members currently holding it
-              lose its module access immediately. A role that is still assigned
-              can’t be deleted.
+              lose its access immediately. A role that is still assigned can’t be
+              deleted.
             </p>
           }
         />
@@ -306,7 +443,7 @@ function RoleEditor({
 /* ============================================================== roles list === */
 
 function RoleCard({ role, onOpen }: { role: Role; onOpen: () => void }) {
-  const count = role.functionalities.length
+  const count = role.permissions.length
   return (
     <div
       role="button"
@@ -331,7 +468,7 @@ function RoleCard({ role, onOpen }: { role: Role; onOpen: () => void }) {
         <div>
           <b className="text-[17px] font-bold tabular-nums">{count}</b>
           <span className="mt-px block text-[10.5px] text-muted-foreground">
-            {count === 1 ? "module" : "modules"}
+            {count === 1 ? "permission" : "permissions"}
           </span>
         </div>
       </div>
@@ -352,7 +489,7 @@ export function AccessRolesPage() {
   const editParam = useEditParam()
 
   const rolesQuery = useRoles()
-  const fnsQuery = useFunctionalities()
+  const permsQuery = usePermissions()
   const createMut = useCreateRole()
   const updateMut = useUpdateRole()
   const deleteMut = useDeleteRole()
@@ -393,7 +530,8 @@ export function AccessRolesPage() {
         {
           name: payload.name,
           description: payload.description || undefined,
-          functionality_codes: payload.functionalityCodes,
+          hex_color: payload.hexColor,
+          permission_codes: payload.permissionCodes,
         },
         {
           onSuccess: (role) => {
@@ -412,7 +550,8 @@ export function AccessRolesPage() {
           role: active,
           name: payload.name,
           description: payload.description,
-          functionalityCodes: payload.functionalityCodes,
+          hexColor: payload.hexColor,
+          permissionCodes: payload.permissionCodes,
         },
         {
           onSuccess: (role) => {
@@ -445,9 +584,9 @@ export function AccessRolesPage() {
     return (
       <RoleEditor
         base={active === "new" ? null : active}
-        functionalities={fnsQuery.data ?? []}
-        fnsLoading={fnsQuery.isLoading}
-        fnsError={fnsQuery.isError}
+        permissions={permsQuery.data ?? []}
+        permsLoading={permsQuery.isLoading}
+        permsError={permsQuery.isError}
         saving={createMut.isPending || updateMut.isPending}
         deleting={deleteMut.isPending}
         onCancel={close}
@@ -461,7 +600,7 @@ export function AccessRolesPage() {
     <div className="flex flex-col gap-5">
       <ConsolePageHeader
         title="Roles & permissions"
-        sub="Build roles from the platform modules, then assign them to users from the Users tab. Modules can be changed anytime."
+        sub="Build roles from platform permissions, then assign them to users from the Users tab. Permissions can be changed anytime."
         actions={
           canManage && (
             <Button onClick={() => setEditing("new")}>
@@ -545,8 +684,8 @@ export function AccessRolesPage() {
               <div className="flex flex-col items-center gap-2.5 rounded-[14px] border border-dashed bg-muted/30 px-6 py-10 text-center text-muted-foreground">
                 <LayersIcon className="size-[22px]" />
                 <p className="max-w-[46ch] text-[13px] leading-relaxed">
-                  No custom roles yet. Create one to tailor module access to your
-                  team.
+                  No custom roles yet. Create one to tailor permission access to
+                  your team.
                 </p>
                 {canManage && (
                   <Button variant="outline" onClick={() => setEditing("new")}>

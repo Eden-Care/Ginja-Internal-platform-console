@@ -48,6 +48,7 @@ export function sectionStatuses(
     !!form.legal.trim() &&
     !!form.trading.trim() &&
     !!form.tax.trim() &&
+    !!form.country.trim() && // required by POST /platform/payers — gate the create on it
     !!(c0.name || "").trim() &&
     emailOk(c0.email) &&
     !!(form.address || "").trim() &&

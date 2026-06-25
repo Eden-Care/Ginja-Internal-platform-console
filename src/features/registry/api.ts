@@ -5,7 +5,12 @@ import { apiGet } from "@/lib/api/client"
 import type { PagedDTO } from "@/lib/api/paged"
 import type { RegistryModule } from "@/lib/console-data"
 
-import { toRegistryModule, type ModuleDTO } from "./types"
+import {
+  toModuleCatalogueItem,
+  toRegistryModule,
+  type ModuleCatalogueItem,
+  type ModuleDTO,
+} from "./types"
 
 type ModuleListDTO = PagedDTO<ModuleDTO> | ModuleDTO[]
 
@@ -21,6 +26,24 @@ export async function fetchModuleRegistry(): Promise<RegistryModule[]> {
   })
   console.log("[GET /platform/organization/modules]", res)
   return rowsOf(res).map(toRegistryModule)
+}
+
+/** A new tenant can only be entitled to live modules — DRAFT (unreleased) and
+    SUNSET (retiring) modules are excluded from the onboarding catalogue. */
+function isEntitleable(d: ModuleDTO): boolean {
+  const status = (d.status ?? "").toUpperCase()
+  return status !== "DRAFT" && status !== "SUNSET"
+}
+
+/** GET /platform/organization/modules → the catalogue for the onboarding
+    entitlement step. Same endpoint as the registry, but keeps each module's
+    functional `code` (what PUT /entitlements expects, which RegistryModule drops)
+    and offers only entitleable (non-DRAFT/SUNSET) modules. */
+export async function fetchModuleCatalogue(): Promise<ModuleCatalogueItem[]> {
+  const res = await apiGet<ModuleListDTO>("/platform/organization/modules", {
+    params: { page: 0, size: 100, sort: "code,asc" },
+  })
+  return rowsOf(res).filter(isEntitleable).map(toModuleCatalogueItem)
 }
 
 /** GET /platform/organization/modules/search?q= → modules matching the query. */

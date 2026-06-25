@@ -1,27 +1,39 @@
 import { ChevronRightIcon, UsersIcon } from "lucide-react"
+
 import { SheetTitle } from "@/components/ui/sheet"
-import { AvatarInitials, StaffAvatar } from "@/components/console/avatar-initials"
-import { ONB_SECTIONS, STAFF, type OnbDraft } from "@/lib/console-data"
-import { RoleChip } from "./draft-shared"
+import {
+  AssigneeAvatar,
+  AvatarInitials,
+} from "@/components/console/avatar-initials"
+import type {
+  DraftAssignee,
+  DraftSection,
+  DraftVM,
+} from "@/features/payers/draft-vm"
+
+type WorkItem = { draft: DraftVM; secs: DraftSection[] }
+type WorkRow = { assignee: DraftAssignee; items: WorkItem[]; totalSecs: number }
 
 /** Roster workload: who is assigned across in-progress onboardings. */
 export function WorkloadView({
   drafts,
   onOpenDraft,
 }: {
-  drafts: OnbDraft[]
-  onOpenDraft: (id: string) => void
+  drafts: DraftVM[]
+  onOpenDraft: (payerId: number) => void
 }) {
-  const active = STAFF.map((p) => {
-    const items = drafts
-      .map((d) => ({
-        d,
-        secs: ONB_SECTIONS.filter((s) => d.assign[s.k] === p.id),
-      }))
-      .filter((x) => x.secs.length)
-    const totalSecs = items.reduce((n, x) => n + x.secs.length, 0)
-    return { p, items, totalSecs }
-  }).filter((x) => x.items.length)
+  const byEmail = new Map<string, WorkRow>()
+  for (const d of drafts) {
+    for (const a of d.team) {
+      const secs = d.sections.filter((s) => s.assignee?.email === a.email)
+      if (!secs.length) continue
+      const row = byEmail.get(a.email) ?? { assignee: a, items: [], totalSecs: 0 }
+      row.items.push({ draft: d, secs })
+      row.totalSecs += secs.length
+      byEmail.set(a.email, row)
+    }
+  }
+  const active = [...byEmail.values()]
 
   return (
     <>
@@ -42,16 +54,23 @@ export function WorkloadView({
       </div>
 
       <div className="flex flex-col gap-3 overflow-y-auto p-5">
-        {active.map(({ p, items, totalSecs }) => (
-          <div key={p.id} className="overflow-hidden rounded-xl border">
+        {active.length === 0 ? (
+          <div className="rounded-xl border border-dashed p-6 text-center text-[12.5px] text-muted-foreground">
+            No teammates assigned to any draft yet.
+          </div>
+        ) : null}
+        {active.map(({ assignee, items, totalSecs }) => (
+          <div key={assignee.email} className="overflow-hidden rounded-xl border">
             <div className="flex items-center gap-2.5 border-b bg-muted/50 px-3 py-2.5">
-              <StaffAvatar id={p.id} />
+              <AssigneeAvatar name={assignee.name} />
               <div className="min-w-0 flex-1">
                 <div className="text-[13px] font-semibold leading-tight">
-                  {p.name}
+                  {assignee.name}
                 </div>
                 <div className="mt-0.5">
-                  <RoleChip role={p.role} />
+                  <span className="inline-flex items-center rounded-full bg-muted px-[7px] py-px text-[10px] font-semibold tracking-[0.02em] text-muted-foreground">
+                    {assignee.roleLabel ?? "Member"}
+                  </span>
                 </div>
               </div>
               <span className="text-[11px] whitespace-nowrap text-muted-foreground">
@@ -60,19 +79,19 @@ export function WorkloadView({
               </span>
             </div>
             <div className="flex flex-col divide-y">
-              {items.map(({ d, secs }) => (
+              {items.map(({ draft, secs }) => (
                 <button
-                  key={d.id}
+                  key={draft.payerId}
                   type="button"
-                  onClick={() => onOpenDraft(d.id)}
+                  onClick={() => onOpenDraft(draft.payerId)}
                   className="flex items-center gap-2.5 px-3 py-2.5 text-left hover:bg-muted/50"
                 >
                   <AvatarInitials
-                    name={d.name}
+                    name={draft.name}
                     className="size-[26px] rounded-md text-[10px]"
                   />
                   <span className="flex min-w-0 flex-col">
-                    <b className="truncate text-[13px]">{d.name}</b>
+                    <b className="truncate text-[13px]">{draft.name}</b>
                     <span className="truncate text-[11px] text-muted-foreground">
                       {secs.map((s) => s.short).join(" · ")}
                     </span>

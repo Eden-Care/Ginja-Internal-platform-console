@@ -11,18 +11,21 @@ import {
 import { Button } from "@/components/ui/button"
 import {
   DOC_CATEGORY_LABEL,
-  ONB_TEAM,
   REQUIRED_DOC_CATEGORIES,
-  type OnbTeamKey,
   type OnboardingForm,
   type WizStepKey,
 } from "@/lib/console-data"
 import type { WizStatus } from "@/lib/console-format"
-import { useFunctionalities } from "@/features/access/use-functionalities"
-import { usePricingStructures } from "@/features/pricing/use-pricing-structures"
-import { MiniAvatar } from "@/components/console/avatar-initials"
+import { useModuleCatalogue } from "@/features/registry/use-module-catalogue"
+import { useTenantPricingOptions } from "@/features/pricing/use-pricing-structures"
+import { useMembers } from "@/features/access/use-members"
+import { AssigneeAvatar } from "@/components/console/avatar-initials"
 import { Note } from "@/components/console/note"
 import { MiniBadge, Tagpill } from "@/components/console/tagpill"
+import {
+  toOwnerOption,
+  type OwnerOption,
+} from "@/pages/tenant-accounts/components/owner-select"
 
 const STEP_BY_KEY: Record<string, number> = {
   primary: 0,
@@ -45,18 +48,17 @@ function ReviewSection({
   title,
   sectionKey,
   status,
-  assignees,
+  owner,
   setStep,
   children,
 }: {
   title: string
   sectionKey: WizStepKey
   status: Record<WizStepKey, WizStatus>
-  assignees: Record<WizStepKey, OnbTeamKey>
+  owner: OwnerOption | null
   setStep: (n: number) => void
   children: React.ReactNode
 }) {
-  const a = ONB_TEAM[assignees[sectionKey]]
   const badge = STATUS_BADGE[status[sectionKey]]
   return (
     <div className="rounded-xl border">
@@ -64,8 +66,17 @@ function ReviewSection({
         <h4 className="text-[13.5px] font-semibold">{title}</h4>
         <MiniBadge tone={badge.tone}>{badge.label}</MiniBadge>
         <Tagpill className="text-[10.5px]">
-          <MiniAvatar initials={a.initials} className="size-[15px] text-[9px]" />
-          {a.name}
+          {owner ? (
+            <>
+              <AssigneeAvatar
+                name={owner.name}
+                className="size-[15px] text-[9px]"
+              />
+              {owner.name}
+            </>
+          ) : (
+            "Unassigned"
+          )}
         </Tagpill>
         <Button
           variant="ghost"
@@ -103,20 +114,37 @@ export function StepReview({
 }: {
   form: OnboardingForm
   status: Record<WizStepKey, WizStatus>
-  assignees: Record<WizStepKey, OnbTeamKey>
+  assignees: Record<WizStepKey, string | null>
   setStep: (n: number) => void
 }) {
-  const { data: funcs } = useFunctionalities()
-  const { data: structures } = usePricingStructures("ACTIVE")
-  const nameByCode = new Map((funcs ?? []).map((f) => [f.code, f.name]))
+  const { data: modules } = useModuleCatalogue()
+  const { data: structures } = useTenantPricingOptions()
+  const { data: membersPage } = useMembers()
+  const ownerByEmail = React.useMemo(() => {
+    const m = new Map<string, OwnerOption>()
+    for (const mb of membersPage?.items ?? []) m.set(mb.email, toOwnerOption(mb))
+    return m
+  }, [membersPage])
+  const resolveOwner = (email: string | null): OwnerOption | null =>
+    email ? ownerByEmail.get(email) ?? { email, name: email, roleLabel: null } : null
+  const catByCode = new Map((modules ?? []).map((m) => [m.code, m]))
   const modCodes = Object.keys(form.modules)
+  /** "Module" or "Module · 2/3" when only some sub-modules are entitled. */
+  const moduleLabel = (code: string) => {
+    const cat = catByCode.get(code)
+    const name = cat?.name ?? code
+    const total = cat?.subs.length ?? 0
+    const picked = form.modules[code]?.length ?? 0
+    if (total && picked && picked < total) return `${name} · ${picked}/${total}`
+    return name
+  }
   const structure = (structures ?? []).find(
     (s) => s.id === form.pricingStructureId
   )
   const allDone = (Object.values(status) as WizStatus[]).every(
     (v) => v === "complete"
   )
-  const sectionProps = { status, assignees, setStep }
+  const sectionProps = { status, setStep }
 
   return (
     <div className="flex flex-col gap-4">
@@ -142,7 +170,12 @@ export function StepReview({
         )}
       </Note>
 
-      <ReviewSection title="Basic profile" sectionKey="primary" {...sectionProps}>
+      <ReviewSection
+        title="Basic profile"
+        sectionKey="primary"
+        owner={resolveOwner(assignees.primary)}
+        {...sectionProps}
+      >
         <Meta
           items={[
             ["Legal entity", form.legal || "—"],
@@ -161,6 +194,7 @@ export function StepReview({
       <ReviewSection
         title={`Secondary tenants (${form.secondaries.length})`}
         sectionKey="secondary"
+        owner={resolveOwner(assignees.secondary)}
         {...sectionProps}
       >
         {form.secondaries.length === 0 ? (
@@ -185,6 +219,7 @@ export function StepReview({
       <ReviewSection
         title={`Module access (${modCodes.length})`}
         sectionKey="modules"
+        owner={resolveOwner(assignees.modules)}
         {...sectionProps}
       >
         {modCodes.length === 0 ? (
@@ -194,7 +229,7 @@ export function StepReview({
         ) : (
           <div className="flex flex-wrap gap-2">
             {modCodes.map((code) => (
-              <Tagpill key={code}>{nameByCode.get(code) ?? code}</Tagpill>
+              <Tagpill key={code}>{moduleLabel(code)}</Tagpill>
             ))}
           </div>
         )}
@@ -203,6 +238,7 @@ export function StepReview({
       <ReviewSection
         title="Subscription & billing"
         sectionKey="billing"
+        owner={resolveOwner(assignees.billing)}
         {...sectionProps}
       >
         <div className="flex flex-wrap gap-6 text-[13px]">
@@ -224,7 +260,12 @@ export function StepReview({
         </div>
       </ReviewSection>
 
-      <ReviewSection title="KYC & documents" sectionKey="documents" {...sectionProps}>
+      <ReviewSection
+        title="KYC & documents"
+        sectionKey="documents"
+        owner={resolveOwner(assignees.documents)}
+        {...sectionProps}
+      >
         <div className="flex flex-col gap-2">
           {REQUIRED_DOC_CATEGORIES.map((cat) => {
             const ok = form.documents.some((d) => d.category === cat)

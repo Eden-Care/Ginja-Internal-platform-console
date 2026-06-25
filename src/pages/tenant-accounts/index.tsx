@@ -4,7 +4,6 @@ import { formatDistanceToNow } from "date-fns"
 import {
   DownloadIcon,
   GlobeIcon,
-  MoreHorizontalIcon,
   PlusIcon,
   SearchIcon,
   TriangleAlertIcon,
@@ -25,7 +24,6 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
-import { ONB_DRAFTS, type OnbDraft } from "@/lib/console-data"
 import { AvatarInitials } from "@/components/console/avatar-initials"
 import { ConsolePageHeader } from "@/components/console/page-header"
 import { Panel } from "@/components/console/panel"
@@ -33,42 +31,52 @@ import { Note } from "@/components/console/note"
 import { StatusPill } from "@/components/console/status-pill"
 import { LoadingSpinner } from "@/components/common/loading"
 import { usePayers } from "@/features/payers/use-payers"
-import type { Payer } from "@/features/payers/types"
+import type { PayerSortField, SortDir } from "@/features/payers/api"
+import { useDrafts } from "@/features/payers/use-drafts"
 import { OnboardingDraftsStrip } from "./components/onboarding-drafts-strip"
 import { DraftsDrawer, type DrawerView } from "./components/drafts-drawer"
 
-type SortKey = "name" | "status" | "region" | "subTenants" | "subscription" | "updated"
-type Sort = { k: SortKey; dir: 1 | -1 }
+type ColKey =
+  | "name"
+  | "status"
+  | "region"
+  | "members"
+  | "subTenants"
+  | "subscription"
+  | "mrr"
+  | "updated"
 
 type Col = {
-  k: SortKey | "members" | "mrr"
+  k: ColKey
   label: string
   numeric?: boolean
-  /** No API field yet — header is flagged and cells render "—". */
+  /** No API field yet — header is flagged with "*" and cells render "—". */
   pending?: boolean
+  /** Present → header is clickable and sorts server-side on this property.
+     Name/Region/Sub-tenants/Subscription aren't sortable by the API. */
+  sortField?: PayerSortField
 }
 
 const COLS: Col[] = [
   { k: "name", label: "Tenant account" },
-  { k: "status", label: "Status" },
+  { k: "status", label: "Status", sortField: "status" },
   { k: "region", label: "Region" },
   { k: "members", label: "Members", numeric: true, pending: true },
   { k: "subTenants", label: "Sub-tenants", numeric: true },
   { k: "subscription", label: "Subscription" },
   { k: "mrr", label: "MRR", numeric: true, pending: true },
-  { k: "updated", label: "Updated" },
+  { k: "updated", label: "Updated", sortField: "createdAt" },
 ]
 
-const SORT_VAL: Record<SortKey, (p: Payer) => string | number> = {
-  name: (p) => p.name.toLowerCase(),
-  status: (p) => p.status,
-  region: (p) => p.region,
-  subTenants: (p) => p.subTenants,
-  subscription: (p) => p.subscriptionLabel.toLowerCase(),
-  updated: (p) => p.updatedAt ?? "",
+/** Filter chip label → API status enum (undefined = no filter). */
+const STATUS_PARAM: Record<string, string | undefined> = {
+  All: undefined,
+  Active: "ACTIVE",
+  Draft: "DRAFT",
+  Suspended: "SUSPENDED",
+  Retired: "RETIRED",
 }
-
-const STATUS_OPTS = ["All", "Active", "Draft", "Suspended", "Retired"]
+const STATUS_OPTS = Object.keys(STATUS_PARAM)
 const PAGE_SIZE = 12
 
 const fmtUpdated = (iso: string | null) =>
@@ -76,45 +84,39 @@ const fmtUpdated = (iso: string | null) =>
 
 export function TenantAccountsPage() {
   const navigate = useNavigate()
-  const { data, isLoading, isError, refetch } = usePayers()
-  const payers = React.useMemo(() => data ?? [], [data])
 
-  const [query, setQuery] = React.useState("")
   const [status, setStatus] = React.useState("All")
-  const [sort, setSort] = React.useState<Sort>({ k: "updated", dir: -1 })
-  const [page, setPage] = React.useState(1)
+  const [sort, setSort] = React.useState<{ field: PayerSortField; dir: SortDir }>(
+    { field: "createdAt", dir: "desc" }
+  )
+  const [page, setPage] = React.useState(0) // 0-based (server pages)
   const [drawer, setDrawer] = React.useState<DrawerView | null>(null)
-  const [drafts, setDrafts] = React.useState<OnbDraft[]>(ONB_DRAFTS)
 
-  const saveAssign = (id: string, assign: Record<string, string | null>) =>
-    setDrafts((ds) => ds.map((d) => (d.id === id ? { ...d, assign } : d)))
+  const { data, isLoading, isFetching, isError, refetch } = usePayers({
+    status: STATUS_PARAM[status],
+    sort,
+    page,
+    size: PAGE_SIZE,
+  })
+  const { drafts } = useDrafts()
 
-  const rows = React.useMemo(() => {
-    const q = query.toLowerCase()
-    const filtered = payers.filter(
-      (p) =>
-        (status === "All" || p.status === status) &&
-        (p.name.toLowerCase().includes(q) ||
-          p.code.toLowerCase().includes(q) ||
-          p.country.toLowerCase().includes(q))
+  const rows = data?.items ?? []
+  const totalElements = data?.totalElements ?? 0
+  const totalPages = Math.max(1, data?.totalPages ?? 1)
+  const start = page * PAGE_SIZE
+
+  const toggleSort = (field: PayerSortField) => {
+    setSort((s) =>
+      s.field === field
+        ? { field, dir: s.dir === "asc" ? "desc" : "asc" }
+        : { field, dir: "asc" }
     )
-    const val = SORT_VAL[sort.k]
-    return [...filtered].sort((a, b) => (val(a) > val(b) ? 1 : -1) * sort.dir)
-  }, [payers, query, status, sort])
-
-  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE))
-  const safePage = Math.min(page, totalPages)
-  const start = (safePage - 1) * PAGE_SIZE
-  const pageRows = rows.slice(start, start + PAGE_SIZE)
-
-  const toggleSort = (k: SortKey) => {
-    setSort((s) => ({ k, dir: s.k === k ? ((s.dir * -1) as 1 | -1) : 1 }))
-    setPage(1)
+    setPage(0)
   }
 
-  const resume = () => {
+  const resume = (payerId: number) => {
     setDrawer(null)
-    navigate("/tenant-accounts/onboard")
+    navigate(`/tenant-accounts/onboard?draft=${payerId}`)
   }
 
   return (
@@ -136,12 +138,14 @@ export function TenantAccountsPage() {
         }
       />
 
-      <OnboardingDraftsStrip
-        drafts={drafts}
-        onOpenDraft={(id) => setDrawer({ mode: "detail", id })}
-        onViewAll={() => setDrawer({ mode: "list" })}
-        onManageTeam={(id) => setDrawer({ mode: "team", id })}
-      />
+      {drafts.length > 0 ? (
+        <OnboardingDraftsStrip
+          drafts={drafts}
+          onOpenDraft={(payerId) => setDrawer({ mode: "detail", payerId })}
+          onViewAll={() => setDrawer({ mode: "list" })}
+          onManageTeam={(payerId) => setDrawer({ mode: "team", payerId })}
+        />
+      ) : null}
 
       {isError ? (
         <Note tone="err" icon={<TriangleAlertIcon />}>
@@ -163,12 +167,9 @@ export function TenantAccountsPage() {
                 <SearchIcon />
               </InputGroupAddon>
               <InputGroupInput
-                value={query}
-                onChange={(e) => {
-                  setQuery(e.target.value)
-                  setPage(1)
-                }}
-                placeholder="Search by name, ID or country…"
+                disabled
+                title="Search isn’t supported by the payers API yet — filter by status instead."
+                placeholder="Search (pending backend)…"
               />
             </InputGroup>
 
@@ -179,7 +180,7 @@ export function TenantAccountsPage() {
                   type="button"
                   onClick={() => {
                     setStatus(o)
-                    setPage(1)
+                    setPage(0)
                   }}
                   className={cn(
                     "h-7 rounded-full border px-3 text-[13px] transition-colors",
@@ -196,7 +197,7 @@ export function TenantAccountsPage() {
             <span className="text-xs text-muted-foreground lg:ml-auto">
               {isLoading
                 ? "Loading…"
-                : `Showing ${rows.length === 0 ? 0 : start + 1}–${start + pageRows.length} of ${rows.length} accounts`}
+                : `Showing ${totalElements === 0 ? 0 : start + 1}–${start + rows.length} of ${totalElements} accounts`}
             </span>
           </div>
 
@@ -206,16 +207,17 @@ export function TenantAccountsPage() {
             </div>
           ) : (
             <>
-              <Table>
+              <Table className={cn(isFetching && "opacity-60 transition-opacity")}>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
                     {COLS.map((c) => {
-                      const sortable = !c.pending
+                      const sortable = !!c.sortField
+                      const active = sortable && sort.field === c.sortField
                       return (
                         <TableHead
                           key={c.k}
                           onClick={
-                            sortable ? () => toggleSort(c.k as SortKey) : undefined
+                            sortable ? () => toggleSort(c.sortField!) : undefined
                           }
                           className={cn(
                             "whitespace-nowrap select-none",
@@ -232,21 +234,24 @@ export function TenantAccountsPage() {
                               >
                                 *
                               </span>
-                            ) : sort.k === c.k ? (
+                            ) : active ? (
                               <span className="text-[10px] text-muted-foreground">
-                                {sort.dir > 0 ? "▲" : "▼"}
+                                {sort.dir === "asc" ? "▲" : "▼"}
                               </span>
                             ) : null}
                           </span>
                         </TableHead>
                       )
                     })}
-                    <TableHead className="w-11" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {pageRows.map((p) => (
-                    <TableRow key={p.id}>
+                  {rows.map((p) => (
+                    <TableRow
+                      key={p.id}
+                      className="cursor-pointer"
+                      onClick={() => navigate(`/tenant-accounts/${p.id}`)}
+                    >
                       <TableCell>
                         <div className="flex items-center gap-2.5">
                           <AvatarInitials name={p.name} />
@@ -280,17 +285,12 @@ export function TenantAccountsPage() {
                       <TableCell className="text-[12.5px] text-muted-foreground">
                         {fmtUpdated(p.updatedAt)}
                       </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="icon-sm" title="More">
-                          <MoreHorizontalIcon />
-                        </Button>
-                      </TableCell>
                     </TableRow>
                   ))}
-                  {pageRows.length === 0 && (
+                  {rows.length === 0 && (
                     <TableRow className="hover:bg-transparent">
                       <TableCell
-                        colSpan={COLS.length + 1}
+                        colSpan={COLS.length}
                         className="py-12 text-center text-[13px] text-muted-foreground"
                       >
                         No tenant accounts match your filters.
@@ -307,22 +307,22 @@ export function TenantAccountsPage() {
                 </span>
                 <div className="flex items-center gap-3">
                   <span className="text-muted-foreground">
-                    Page {safePage} of {totalPages}
+                    Page {page + 1} of {totalPages}
                   </span>
                   <div className="flex items-center gap-1.5">
                     <Button
                       variant="outline"
                       size="sm"
-                      disabled={safePage <= 1}
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      disabled={page <= 0 || isFetching}
+                      onClick={() => setPage((p) => Math.max(0, p - 1))}
                     >
                       Previous
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      disabled={safePage >= totalPages}
-                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={page >= totalPages - 1 || isFetching}
+                      onClick={() => setPage((p) => p + 1)}
                     >
                       Next
                     </Button>
@@ -340,7 +340,6 @@ export function TenantAccountsPage() {
         onChangeView={setDrawer}
         onClose={() => setDrawer(null)}
         onResume={resume}
-        onSaveAssign={saveAssign}
       />
     </div>
   )

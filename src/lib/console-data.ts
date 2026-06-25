@@ -148,8 +148,9 @@ export type AuditEntry = {
   kind: "create" | "system" | "approve" | "edit" | "danger" | "warn"
 }
 
+/** Onboarding step owner *category* (the `owner_role` the steps API returns).
+   Actual people are real platform members now — see OwnerSelect / useMembers. */
 export type OnbTeamKey = "profile" | "tech" | "compliance"
-export type OnbTeamMember = { name: string; initials: string; role: string }
 
 export type SecStatus = "complete" | "progress" | "empty"
 
@@ -160,20 +161,6 @@ export type OnbSection = {
   /** The specialty that naturally owns this section (drives "suggest by specialty"). */
   specRole: StaffRole
   icon: string
-}
-
-export type OnbDraft = {
-  id: string
-  name: string
-  country: string
-  type: TenantType
-  started: string
-  updated: string
-  /** Section key → assigned staff id (or null when no owner yet). */
-  assign: Record<string, string | null>
-  waiting: string
-  sections: Record<string, SecStatus>
-  edited: Record<string, string>
 }
 
 export type WizStepKey =
@@ -203,14 +190,26 @@ export type Secondary = {
   country: string
   region: string
   subdomain: string
+  /** Server tenant id once this secondary is saved (POSTed) under the draft.
+     Present → server-backed (PATCH on edit, DELETE on remove); absent → a new,
+     not-yet-saved row. */
+  tenantId?: number
 }
 
-/** A KYB/contract document captured in onboarding. Metadata only — the API
-   stores filename + category; actual file bytes aren't accepted yet. */
+/** A KYB/contract document captured in onboarding. The API now accepts real
+   file bytes (multipart) and serves a pre-signed download URL per document. */
 export type OnbDocument = {
   category: string
   fileName: string
   expiryDate?: string
+  /** Optional free-text note sent as the document `description`. */
+  description?: string
+  /** The picked File — present for a not-yet-uploaded document. */
+  file?: File
+  /** Server document id once uploaded (used for the pre-signed download). */
+  documentId?: string
+  /** True when the file is already stored on the server (e.g. on resume). */
+  uploaded?: boolean
 }
 
 /** KYB categories the submit gate requires on the primary tenant (API §8.6). */
@@ -250,9 +249,15 @@ export type OnboardingForm = {
   modules: Record<string, string[]>
   /** Chosen ACTIVE pricing structure id (null until picked). */
   pricingStructureId: number | null
-  /** subscription_model: PMPM | PER_CLAIM | PCT_GWP. */
+  /** subscription_model: PMPM | PER_CLAIM | PCT_GWP. Derived from the chosen
+     structure (no separate picker). */
   model: string
   freq: string
+  /** Free-trial length in days → subscription `free_trial_days` (§8.4). */
+  freeTrialDays: string
+  /** Contract window (ISO yyyy-mm-dd) → subscription `contract_start`/`_end`. */
+  contractStart: string
+  contractEnd: string
   documents: OnbDocument[]
 }
 
@@ -1310,22 +1315,6 @@ export const STATUS_TONE: Record<string, StatusTone> = {
 
 /* ---------------------------------------------------------- onboarding -- */
 
-export const ONB_TEAM: Record<OnbTeamKey, OnbTeamMember> = {
-  profile: {
-    name: "Amara Okeke",
-    initials: "AO",
-    role: "Onboarding Specialist",
-  },
-  tech: { name: "Lily Tesfaye", initials: "LT", role: "Platform Engineer" },
-  compliance: {
-    name: "David Kimani",
-    initials: "DK",
-    role: "Compliance Officer",
-  },
-}
-
-export const ONB_TEAM_KEYS: OnbTeamKey[] = ["profile", "tech", "compliance"]
-
 /** Fillable sections (mirror the wizard, minus Review) — drive the draft cards.
     `specRole` is the specialty that naturally owns the section. Technical config
     moved out of onboarding into Tenant provisioning, so it's no longer here. */
@@ -1364,216 +1353,6 @@ export const ONB_SECTIONS: OnbSection[] = [
     short: "KYC",
     specRole: "Compliance Officer",
     icon: "fileText",
-  },
-]
-
-export const onbDone = (d: OnbDraft) =>
-  ONB_SECTIONS.filter((s) => d.sections[s.k] === "complete").length
-
-/** Unique staff assigned anywhere on a draft, in roster order. */
-export const onbTeamIds = (d: OnbDraft) =>
-  STAFF.map((p) => p.id).filter((id) =>
-    Object.values(d.assign || {}).includes(id)
-  )
-
-/** Sections that still have no owner. */
-export const onbUnassigned = (d: OnbDraft) =>
-  ONB_SECTIONS.filter((s) => !(d.assign || {})[s.k])
-
-/** Auto-distribute a team across sections by specialty (null where no match). */
-export function suggestAssign(
-  teamIds: string[]
-): Record<string, string | null> {
-  const team = teamIds.map((id) => STAFF_BY_ID[id]).filter(Boolean)
-  const out: Record<string, string | null> = {}
-  ONB_SECTIONS.forEach((s) => {
-    const match = team.find((p) => p.role === s.specRole)
-    out[s.k] = match ? match.id : null
-  })
-  return out
-}
-
-/** In-progress onboarding drafts (resumable). */
-export const ONB_DRAFTS: OnbDraft[] = [
-  {
-    id: "ONB-2041",
-    name: "CIC Insurance Group",
-    country: "Kenya",
-    type: "Insurer",
-    started: "08 Jun",
-    updated: "2 min ago",
-    assign: {
-      primary: "amara",
-      secondary: "amara",
-      modules: "lily",
-      billing: "amara",
-      documents: "david",
-    },
-    waiting: "KYC & documents",
-    sections: {
-      primary: "complete",
-      secondary: "complete",
-      modules: "complete",
-      billing: "progress",
-      documents: "empty",
-    },
-    edited: {
-      primary: "08 Jun 09:12",
-      secondary: "08 Jun 09:20",
-      modules: "08 Jun 10:40",
-      billing: "2 min ago",
-      documents: "—",
-    },
-  },
-  {
-    id: "ONB-2036",
-    name: "Equity Afia Care",
-    country: "Kenya",
-    type: "Insurer",
-    started: "08 Jun",
-    updated: "1 hr ago",
-    assign: {
-      primary: "fatima",
-      secondary: "fatima",
-      modules: "kwame",
-      billing: "fatima",
-      documents: null,
-    },
-    waiting: "KYC owner",
-    sections: {
-      primary: "complete",
-      secondary: "complete",
-      modules: "empty",
-      billing: "empty",
-      documents: "empty",
-    },
-    edited: {
-      primary: "08 Jun 08:30",
-      secondary: "08 Jun 08:51",
-      modules: "—",
-      billing: "—",
-      documents: "—",
-    },
-  },
-  {
-    id: "ONB-2033",
-    name: "Strategis Insurance",
-    country: "Tanzania",
-    type: "Insurer",
-    started: "08 Jun",
-    updated: "3 hr ago",
-    assign: {
-      primary: "amara",
-      secondary: "amara",
-      modules: "amara",
-      billing: "amara",
-      documents: "amara",
-    },
-    waiting: "Secondary tenants",
-    sections: {
-      primary: "complete",
-      secondary: "empty",
-      modules: "empty",
-      billing: "empty",
-      documents: "empty",
-    },
-    edited: {
-      primary: "3 hr ago",
-      secondary: "—",
-      modules: "—",
-      billing: "—",
-      documents: "—",
-    },
-  },
-  {
-    id: "ONB-2029",
-    name: "Liberty Health",
-    country: "Uganda",
-    type: "TPA",
-    started: "07 Jun",
-    updated: "Yesterday",
-    assign: {
-      primary: "fatima",
-      secondary: "fatima",
-      modules: "lily",
-      billing: "fatima",
-      documents: "naledi",
-    },
-    waiting: "KYC & documents",
-    sections: {
-      primary: "complete",
-      secondary: "complete",
-      modules: "complete",
-      billing: "complete",
-      documents: "progress",
-    },
-    edited: {
-      primary: "07 Jun 11:00",
-      secondary: "07 Jun 11:18",
-      modules: "07 Jun 15:10",
-      billing: "07 Jun 16:02",
-      documents: "Yesterday",
-    },
-  },
-  {
-    id: "ONB-2025",
-    name: "Britam Health",
-    country: "Kenya",
-    type: "Insurer",
-    started: "07 Jun",
-    updated: "Yesterday",
-    assign: {
-      primary: "amara",
-      secondary: "amara",
-      modules: "kwame",
-      billing: "amara",
-      documents: null,
-    },
-    waiting: "KYC owner",
-    sections: {
-      primary: "complete",
-      secondary: "complete",
-      modules: "progress",
-      billing: "empty",
-      documents: "empty",
-    },
-    edited: {
-      primary: "07 Jun 09:40",
-      secondary: "07 Jun 09:58",
-      modules: "Yesterday",
-      billing: "—",
-      documents: "—",
-    },
-  },
-  {
-    id: "ONB-2018",
-    name: "Jubilee Tanzania",
-    country: "Tanzania",
-    type: "Insurer",
-    started: "05 Jun",
-    updated: "3 days ago",
-    assign: {
-      primary: "fatima",
-      secondary: "fatima",
-      modules: "fatima",
-      billing: "fatima",
-      documents: "fatima",
-    },
-    waiting: "Basic profile",
-    sections: {
-      primary: "progress",
-      secondary: "empty",
-      modules: "empty",
-      billing: "empty",
-      documents: "empty",
-    },
-    edited: {
-      primary: "3 days ago",
-      secondary: "—",
-      modules: "—",
-      billing: "—",
-      documents: "—",
-    },
   },
 ]
 
@@ -2753,35 +2532,35 @@ export const PWD_POLICY_DAYS = 90
 export const pwdOf = (id: string): PasswordRecord =>
   PASSWORD_STATUS[id] ?? { pending: true }
 
+/* A blank wizard seed — "Onboard tenant" must open an empty form, not demo
+   data. Only neutral UI defaults are kept (tenant type radio, billing
+   frequency); every identity/contact field starts empty. One empty Primary
+   Tenant Admin contact is seeded so its card renders ready to fill. */
 export const BASE_FORM: OnboardingForm = {
-  legal: "CIC Insurance Group",
-  trading: "CIC Health",
-  contact: "Grace Achieng",
-  email: "grace.a@cic.co.ke",
-  country: "Kenya",
-  region: "af-east-1",
+  legal: "",
+  trading: "",
+  contact: "",
+  email: "",
+  country: "",
+  region: "",
   type: "Insurer",
-  subdomain: "cic-health",
+  subdomain: "",
   isolation: "dedicated",
   sso: "None",
   customDomain: "",
-  tax: "KRA-P051234567X",
-  contacts: [
-    {
-      name: "Grace Achieng",
-      email: "grace.a@cic.co.ke",
-      role: "Chief Executive Officer",
-      phone: "+254 711 000 111",
-    },
-  ],
-  address: "CIC Plaza, Mara Road, Upper Hill, Nairobi, Kenya",
-  website: "www.cic.co.ke",
+  tax: "",
+  contacts: [{ name: "", email: "", role: "", phone: "" }],
+  address: "",
+  website: "",
   secondaries: [],
   // Start empty — Step 3 selects from the live module catalogue (real codes).
   modules: {},
   pricingStructureId: null,
   model: "",
   freq: "Monthly",
+  freeTrialDays: "",
+  contractStart: "",
+  contractEnd: "",
   documents: [],
 }
 

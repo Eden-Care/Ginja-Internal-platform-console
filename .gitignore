@@ -26,3 +26,6 @@ Ginja-Console.postman_collection.json
 *.njsproj
 *.sln
 *.sw?
+
+# Playwright MCP run artifacts
+.playwright-mcp/

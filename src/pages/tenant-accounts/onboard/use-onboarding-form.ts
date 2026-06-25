@@ -3,24 +3,27 @@ import * as React from "react"
 import {
   BASE_FORM,
   WIZ_STEPS,
-  type OnbTeamKey,
   type OnboardingForm,
   type WizStepKey,
 } from "@/lib/console-data"
 import { sectionStatuses } from "@/lib/console-format"
 
+/** Per-step section owner, keyed by step. The value is a platform member's email
+   (the key the assign API takes), or null when the step is unassigned. */
+export type AssigneeMap = Record<WizStepKey, string | null>
+
 /** Wizard state: the form object, current step, section owners, and derived status. */
-export function useOnboardingForm(initialStep = 0) {
-  const [form, setForm] = React.useState<OnboardingForm>(BASE_FORM)
+export function useOnboardingForm(
+  initialStep = 0,
+  initialForm?: OnboardingForm,
+  initialAssignees?: AssigneeMap
+) {
+  const [form, setForm] = React.useState<OnboardingForm>(initialForm ?? BASE_FORM)
   const [step, setStep] = React.useState(initialStep)
-  const [assignees, setAssignees] = React.useState<
-    Record<WizStepKey, OnbTeamKey>
-  >(
+  const [assignees, setAssignees] = React.useState<AssigneeMap>(
     () =>
-      Object.fromEntries(WIZ_STEPS.map((s) => [s.k, s.owner])) as Record<
-        WizStepKey,
-        OnbTeamKey
-      >
+      initialAssignees ??
+      (Object.fromEntries(WIZ_STEPS.map((s) => [s.k, null])) as AssigneeMap)
   )
   const [lastSaved, setLastSaved] = React.useState("just now")
 

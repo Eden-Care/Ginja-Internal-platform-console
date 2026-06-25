@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
 
-import { fetchPricingStructures } from "./api"
+import { fetchPricingStructures, fetchTenantPricingOptions } from "./api"
 import { pricingKeys } from "./queries"
 
 /** Pricing structures, optionally filtered by status (e.g. "ACTIVE" for the
@@ -10,5 +10,13 @@ export function usePricingStructures(status?: string) {
   return useQuery({
     queryKey: pricingKeys.list(status),
     queryFn: () => fetchPricingStructures(status),
+  })
+}
+
+/** Slim ACTIVE pricing options for the onboarding billing-step picker (no tiers). */
+export function useTenantPricingOptions() {
+  return useQuery({
+    queryKey: pricingKeys.tenant(),
+    queryFn: fetchTenantPricingOptions,
   })
 }
