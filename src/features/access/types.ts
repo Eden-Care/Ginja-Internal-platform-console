@@ -92,10 +92,13 @@ export type MemberDTO = {
   email: string
   full_name: string
   status: MemberStatus | string
+  status_reason?: string | null
+  mfa_enabled?: boolean | null
   roles?: MemberRoleRef[] | null
   accessible_modules?: string[] | null
   accessible_permissions?: string[] | null
   invited_by: string | null
+  invite_expired?: boolean | null
   member_since: string | null
   last_active: string | null
   active_sessions: number
@@ -109,6 +112,10 @@ export type Member = {
   email: string
   name: string
   status: MemberStatus
+  /** Whether the (INVITED) member's invite link has lapsed. */
+  inviteExpired: boolean
+  /** Whether the member has completed multi-factor enrolment. */
+  mfaEnabled: boolean
   roles: MemberRoleRef[]
   roleIds: number[]
   invitedBy: string | null
@@ -126,6 +133,8 @@ export function toMember(d: MemberDTO): Member {
     email: d.email,
     name: d.full_name,
     status: (d.status as MemberStatus) ?? "INVITED",
+    inviteExpired: !!d.invite_expired,
+    mfaEnabled: !!d.mfa_enabled,
     roles,
     roleIds: roles.map((r) => r.id),
     invitedBy: d.invited_by,

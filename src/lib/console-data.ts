@@ -64,6 +64,10 @@ export type ModuleStatus = "Published" | "Beta" | "Sunset"
 
 export type RegistryModule = {
   id: string
+  /** Functional code, e.g. "CLAIMS". */
+  code: string
+  /** Module URL/route, e.g. "/claims" (may be blank). */
+  url: string
   name: string
   icon: string
   version: string
@@ -96,26 +100,74 @@ export type DocTemplate = {
   version: string
   status: DocStatus
   updated: string
-  overrides: number
+  /** Tenant-override count — not exposed by the list API (optional). */
+  overrides?: number
   by: string
+  /** Short description from the API (optional; absent in legacy mock rows). */
+  description?: string
 }
 
 export type EmailChannel = "Email" | "Email + SMS"
 
 export type EmailTemplate = {
   id: string
+  /** Numeric template id from the API — used to fetch full detail (get-one + version). */
+  templateId?: number
   name: string
   trigger: string
   channel: EmailChannel
   status: DocStatus
   version: string
   updated: string
-  overrides: number
+  /** Tenant-override count — not exposed by the list API (optional). */
+  overrides?: number
   subject: string
   body: string
+  /** Short description from the API (optional; absent in legacy mock rows). */
+  description?: string
+  /** Which platform the template belongs to, e.g. "TENANT_PLATFORMS" (optional). */
+  usedBy?: string
+  /** Whether the template is enabled (active) — drives the Disabled state. */
+  active?: boolean
+  /** Whether the template is archived (hidden from the default list). */
+  archived?: boolean
 }
 
 export type EmailVar = { n: string; d: string }
+
+/** A point-in-time version of an email template (version-history + diff). */
+export type EmailVersion = {
+  v: string
+  status: DocStatus
+  current: boolean
+  note: string
+  date: string
+  by: string
+  subject: string
+  body: string
+  text?: string
+}
+
+export type EmailAuditKind = "create" | "edit" | "publish" | "rollback" | "test"
+
+/** A single audit-feed event on an email template. */
+export type EmailAuditEvent = {
+  id: string
+  kind: EmailAuditKind
+  action: string
+  detail: string
+  when: string
+  by: string
+  initials: string
+}
+
+/** A centrally-managed placeholder auto-injected into every email at send time. */
+export type GlobalPlaceholder = {
+  key: string
+  value: string
+  desc: string
+  active: boolean
+}
 
 export type TierRow = {
   tier: string
@@ -296,7 +348,13 @@ export const C_MODULES: ConsoleModule[] = [
   },
   {
     id: "email-templates",
-    label: "Email & SMS templates",
+    label: "Email templates",
+    icon: "mail",
+    group: "Configuration library",
+  },
+  {
+    id: "sms-templates",
+    label: "SMS templates",
     icon: "mail",
     group: "Configuration library",
   },
@@ -1144,6 +1202,192 @@ export const SAMPLE: Record<string, string> = {
   document_date: "08 Jun 2026",
   policy_no: "POL-99231",
 }
+
+/* ----------------------------------------- email editor — rich mock data -- */
+
+/** Allowed attachment file extensions offered in the create form. */
+export const ATTACH_EXTS = ["pdf", "png", "jpg", "docx", "xlsx", "csv"]
+
+/** Branded HTML starter shell shown when creating a fresh email template. */
+export const STARTER_HTML = `<!DOCTYPE html>
+<html>
+  <body style="font-family: Arial, sans-serif; background:#f4f5f7; padding:24px; margin:0;">
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr><td align="center">
+        <table width="520" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:10px; overflow:hidden;">
+          <tr><td style="background:#5B5BD6; padding:20px 28px;">
+            <span style="color:#fff; font-size:18px; font-weight:700;">{{org_name}}</span>
+          </td></tr>
+          <tr><td style="padding:28px;">
+            <h1 style="font-size:20px; margin:0 0 12px;">Hi {{admin_name}},</h1>
+            <p style="font-size:14px; line-height:1.6; color:#374151;">
+              Your Ginja workspace for <strong>{{org_name}}</strong> is ready. Click below to set up your account.
+            </p>
+            <a href="{{invite_link}}" style="display:inline-block; margin:18px 0; background:#5B5BD6; color:#fff; text-decoration:none; padding:11px 22px; border-radius:8px; font-weight:600;">Set up your account</a>
+            <p style="font-size:12px; color:#6b7280;">This link expires in {{expiry_hours}} hours.</p>
+          </td></tr>
+          <tr><td style="padding:16px 28px; border-top:1px solid #eee; font-size:11px; color:#9ca3af;">
+            Sent by Ginja on behalf of {{org_name}}.
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
+</html>`
+
+/** Wrap an existing template's plain body into the branded HTML shell for editing. */
+export const htmlFromTemplate = (t: EmailTemplate) => `<!DOCTYPE html>
+<html>
+  <body style="font-family: Arial, sans-serif; background:#f4f5f7; padding:24px; margin:0;">
+    <table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
+      <table width="520" cellpadding="0" cellspacing="0" style="background:#fff; border-radius:10px; overflow:hidden;">
+        <tr><td style="background:#5B5BD6; padding:20px 28px;"><img src="{{logo_url}}" alt="{{org_name}}" height="24" style="display:inline-block;vertical-align:middle" /></td></tr>
+        <tr><td style="padding:28px; font-size:14px; line-height:1.6; color:#374151; white-space:pre-line;">${t.body}</td></tr>
+        <tr><td style="padding:16px 28px; border-top:1px solid #eee; font-size:11px; color:#9ca3af;">Need help? Contact {{support_email}}.<br/>&copy; {{current_year}} Ginja · <a href="{{unsubscribe_url}}">Unsubscribe</a></td></tr>
+      </table>
+    </td></tr></table>
+  </body>
+</html>`
+
+/** Centrally-managed placeholders auto-injected into every email at send time. */
+export const GLOBAL_PLACEHOLDERS: GlobalPlaceholder[] = [
+  {
+    key: "logo_url",
+    value: "https://cdn.ginja.ai/brand/logo.png",
+    desc: "Platform logo shown in the email header.",
+    active: true,
+  },
+  {
+    key: "support_email",
+    value: "support@ginja.ai",
+    desc: "Support inbox shown in footers.",
+    active: true,
+  },
+  {
+    key: "current_year",
+    value: "2026",
+    desc: "Current calendar year for copyright lines.",
+    active: true,
+  },
+  {
+    key: "unsubscribe_url",
+    value: "https://ginja.ai/unsubscribe",
+    desc: "Standard unsubscribe link.",
+    active: true,
+  },
+  {
+    key: "company_address",
+    value: "Ginja AI, Westlands, Nairobi",
+    desc: "Registered postal address (legacy templates).",
+    active: false,
+  },
+]
+
+/** Version history for the editor's Versions tab (newest first; one is current). */
+export const EMAIL_VERSIONS: EmailVersion[] = [
+  {
+    v: "v3.0",
+    status: "Published",
+    current: true,
+    note: "Refreshed copy and added a 72-hour expiry note.",
+    date: "04 Jun 2026",
+    by: "Amara Okeke",
+    subject: "You're invited to administer {{org_name}} on Ginja",
+    body: "Hi {{admin_name}},\n\nYour Ginja workspace for {{org_name}} is ready. You have been assigned as Tenant Administrator.\n\nSet up your account using the secure link below. This link expires in {{expiry_hours}} hours.\n\n{{invite_link}}\n\nWelcome aboard,\nThe Ginja Team",
+    text: "Hi {{admin_name}},\n\nYour Ginja workspace for {{org_name}} is ready. Set up your account: {{invite_link}}",
+  },
+  {
+    v: "v2.0",
+    status: "Draft",
+    current: false,
+    note: "Switched the CTA wording from 'Activate' to 'Set up'.",
+    date: "21 May 2026",
+    by: "Lily Tesfaye",
+    subject: "You're invited to manage {{org_name}} on Ginja",
+    body: "Hi {{admin_name}},\n\nYour Ginja workspace for {{org_name}} is ready. You have been assigned as Tenant Administrator.\n\nSet up your account using the link below. This link expires soon.\n\n{{invite_link}}\n\nThanks,\nThe Ginja Team",
+    text: "Hi {{admin_name}},\n\nYour Ginja workspace for {{org_name}} is ready. Set up your account: {{invite_link}}",
+  },
+  {
+    v: "v1.0",
+    status: "Draft",
+    current: false,
+    note: "Initial invitation template.",
+    date: "02 May 2026",
+    by: "Amara Okeke",
+    subject: "Activate your {{org_name}} workspace",
+    body: "Hi {{admin_name}},\n\nA Ginja workspace for {{org_name}} has been created. Activate your account below.\n\n{{invite_link}}",
+  },
+]
+
+/** Audit feed for the editor's Audit tab. */
+export const EMAIL_AUDIT: EmailAuditEvent[] = [
+  {
+    id: "EA-08",
+    kind: "publish",
+    action: "Published v3.0",
+    detail: "Refreshed copy and added a 72-hour expiry note.",
+    when: "04 Jun 09:12",
+    by: "Amara Okeke",
+    initials: "AO",
+  },
+  {
+    id: "EA-07",
+    kind: "test",
+    action: "Sent test email",
+    detail: "Test of v3.0 sent to amara.okeke@ginja.ai.",
+    when: "04 Jun 09:05",
+    by: "Amara Okeke",
+    initials: "AO",
+  },
+  {
+    id: "EA-06",
+    kind: "edit",
+    action: "Edited subject & body",
+    detail: "Reworded the call to action and footer.",
+    when: "03 Jun 16:40",
+    by: "Lily Tesfaye",
+    initials: "LT",
+  },
+  {
+    id: "EA-05",
+    kind: "rollback",
+    action: "Rolled back to v2.0",
+    detail: "Restored the previous CTA wording as a new version.",
+    when: "21 May 11:22",
+    by: "David Kimani",
+    initials: "DK",
+  },
+  {
+    id: "EA-01",
+    kind: "create",
+    action: "Created template",
+    detail: "Initial Tenant Admin Invitation template added to the library.",
+    when: "02 May 14:08",
+    by: "Amara Okeke",
+    initials: "AO",
+  },
+]
+
+/** Audit-feed event kind → dot tone. */
+export const EMAIL_AUDIT_TONE: Record<
+  EmailAuditKind,
+  "success" | "warning" | "info" | "neutral"
+> = {
+  create: "info",
+  edit: "neutral",
+  publish: "success",
+  rollback: "warning",
+  test: "info",
+}
+
+/** Template codes already in the library — used for uniqueness validation. */
+export const RESERVED_CODES = EMAIL_TEMPLATES.map((t) =>
+  t.name
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "_")
+    .replace(/^_|_$/g, "")
+)
 
 /* --------------------------------------------------------- approval queue -- */
 
@@ -3403,6 +3647,7 @@ export const CONSOLE_ROLES: Record<ConsoleRoleKey, ConsoleRole> = {
       "view:registry",
       "view:doc-templates",
       "view:email-templates",
+      "view:sms-templates",
       "view:pricing",
       "view:audit",
     ],
@@ -3446,6 +3691,7 @@ export const CONSOLE_ROLES: Record<ConsoleRoleKey, ConsoleRole> = {
       "view:registry",
       "view:doc-templates",
       "view:email-templates",
+      "view:sms-templates",
       "view:pricing",
       "view:access-users",
       "view:access-roles",
@@ -3458,6 +3704,7 @@ export const CONSOLE_ROLES: Record<ConsoleRoleKey, ConsoleRole> = {
       "registry",
       "doc-templates",
       "email-templates",
+      "sms-templates",
       "pricing",
       "access-users",
       "access-roles",

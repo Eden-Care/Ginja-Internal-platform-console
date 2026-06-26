@@ -1,42 +1,48 @@
+import * as React from "react"
 import {
   CheckIcon,
-  CheckCircle2Icon,
+  FingerprintIcon,
   KeyRoundIcon,
   MailIcon,
   ShieldCheckIcon,
   ShieldIcon,
-  TriangleAlertIcon,
+  SmartphoneIcon,
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { MiniBadge } from "@/components/console/tagpill"
+import type { Member } from "@/features/access/types"
+import { useMfaDetail } from "@/features/settings/use-mfa"
 import {
-  MFA_METHOD_LABEL,
-  USER_STATUS_TONE,
-  mfaEnabled,
-  mfaOf,
-  type AccessUser,
-} from "@/lib/console-data"
-import { UserAvatar } from "./ua-shared"
+  MEMBER_STATUS_TONE,
+  UserAvatar,
+  initialsOf,
+  memberAccountLabel,
+} from "./ua-shared"
+
+/** Enrolment method → label + icon. */
+const METHOD_META: Record<string, { label: string; icon: React.ReactNode }> = {
+  totp: { label: "Authenticator app (TOTP)", icon: <KeyRoundIcon /> },
+  sms: { label: "SMS code", icon: <SmartphoneIcon /> },
+  webauthn: { label: "Security key (WebAuthn)", icon: <FingerprintIcon /> },
+  email: { label: "Email code", icon: <MailIcon /> },
+}
 
 /** Uppercase eyebrow used for drawer block headings. */
-function BlockHead({
-  children,
-  count,
-}: {
-  children: React.ReactNode
-  count?: number
-}) {
+function BlockHead({ children }: { children: React.ReactNode }) {
   return (
     <div className="mb-2 flex items-center gap-[7px] text-[10.5px] font-semibold tracking-[0.05em] text-muted-foreground uppercase">
       {children}
-      {typeof count === "number" ? (
-        <span className="mono rounded-full bg-muted px-1.5 py-px text-[10px] font-bold tracking-normal text-muted-foreground">
-          {count}
-        </span>
-      ) : null}
+    </div>
+  )
+}
+
+function GapBox({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="rounded-[10px] border border-dashed border-input px-[11px] py-[9px] text-[12.5px] text-muted-foreground">
+      {children}
     </div>
   )
 }
@@ -48,29 +54,36 @@ export function MfaDetailDrawer({
   onRemind,
   onClose,
 }: {
-  user: AccessUser | null
+  user: Member | null
   readonly: boolean
   reminded: boolean
-  onRemind: (u: AccessUser) => void
+  onRemind: (u: Member) => void
   onClose: () => void
 }) {
+  // GET /platform/settings/mfa-status/{id} — fetched when the drawer opens.
+  const detailQuery = useMfaDetail(user?.id ?? null)
+  const detail = detailQuery.data
+
   return (
     <Sheet open={!!user} onOpenChange={(o) => !o && onClose()}>
       <SheetContent
         side="right"
         showCloseButton
-        className="w-[416px] gap-0 p-0 sm:max-w-[416px]"
+        className="gap-0 p-0 data-[side=right]:w-[416px] data-[side=right]:max-w-[92vw] data-[side=right]:sm:max-w-[416px]"
       >
         {user
           ? (() => {
-              const m = mfaOf(user.id)
-              const on = mfaEnabled(user.id)
-              const accountLabel = user.inviteExpired ? "Expired" : user.status
+              // The detail endpoint is authoritative; fall back to the row's
+              // mfa_enabled flag while it loads.
+              const on = detail?.enabled ?? user.mfaEnabled
+              const methods = detail?.methods ?? []
+              const backupCodes = detail?.backupCodes ?? null
+              const loading = detailQuery.isLoading
               return (
                 <>
                   <div className="flex items-center gap-[11px] border-b px-[18px] py-4">
                     <UserAvatar
-                      initials={user.initials}
+                      initials={initialsOf(user.name)}
                       className="size-[38px] text-[12px]"
                     />
                     <div className="min-w-0">
@@ -107,7 +120,7 @@ export function MfaDetailDrawer({
                         </div>
                         <div className="mt-0.5 text-[11.5px] text-muted-foreground">
                           {on
-                            ? `Active since ${m.enabledOn}`
+                            ? "User has completed multi-factor enrolment"
                             : "User hasn't completed MFA setup"}
                         </div>
                       </div>
@@ -120,88 +133,65 @@ export function MfaDetailDrawer({
                           User ID
                         </span>
                         <span className="mono text-[12.5px] font-medium">
-                          {user.id}
+                          {user.code}
                         </span>
                       </div>
                       <div className="flex flex-col gap-1 bg-card px-3 py-2.5">
                         <span className="text-[9.5px] font-semibold tracking-[0.05em] text-muted-foreground uppercase">
                           Account
                         </span>
-                        <MiniBadge tone={USER_STATUS_TONE[user.status]}>
-                          {accountLabel}
+                        <MiniBadge tone={MEMBER_STATUS_TONE[user.status]}>
+                          {memberAccountLabel(user)}
                         </MiniBadge>
                       </div>
                     </div>
 
-                    {/* Methods */}
+                    {/* Methods (from /mfa-status/{id}) */}
                     <div>
-                      <BlockHead count={on ? m.methods.length : undefined}>
-                        Methods
-                      </BlockHead>
-                      {on ? (
+                      <BlockHead>Methods</BlockHead>
+                      {loading ? (
+                        <GapBox>Loading…</GapBox>
+                      ) : methods.length > 0 ? (
                         <div className="grid gap-[7px]">
-                          {m.methods.map((x) => (
-                            <div
-                              key={x}
-                              className="flex items-center gap-2.5 rounded-[10px] border bg-card px-[11px] py-[9px]"
-                            >
-                              <span className="grid size-[30px] shrink-0 place-items-center rounded-lg bg-primary/12 text-primary [&>svg]:size-3.5">
-                                {x === "totp" ? <KeyRoundIcon /> : <MailIcon />}
-                              </span>
-                              <div>
-                                <div className="text-[12.5px] font-semibold">
-                                  {MFA_METHOD_LABEL[x]}
-                                </div>
-                                <div className="mt-px text-[11px] text-muted-foreground">
-                                  {x === "totp"
-                                    ? "Time-based code"
-                                    : "One-time passcode"}
-                                </div>
+                          {methods.map((m) => {
+                            const meta = METHOD_META[m] ?? {
+                              label: m,
+                              icon: <ShieldCheckIcon />,
+                            }
+                            return (
+                              <div
+                                key={m}
+                                className="flex items-center gap-2.5 rounded-[10px] border bg-card px-[11px] py-[9px]"
+                              >
+                                <span className="grid size-[30px] shrink-0 place-items-center rounded-lg bg-primary/12 text-primary [&>svg]:size-3.5">
+                                  {meta.icon}
+                                </span>
+                                <span className="text-[12.5px] font-semibold">
+                                  {meta.label}
+                                </span>
                               </div>
-                            </div>
-                          ))}
+                            )
+                          })}
                         </div>
                       ) : (
-                        <div className="rounded-[10px] border border-dashed border-input px-[11px] py-[9px] text-[12.5px] text-muted-foreground">
-                          No methods enrolled.
-                        </div>
+                        <GapBox>No methods enrolled.</GapBox>
                       )}
                     </div>
 
-                    {/* Backup codes */}
+                    {/* Backup codes (from /mfa-status/{id}) */}
                     <div>
                       <BlockHead>Backup codes</BlockHead>
-                      {!on ? (
-                        <div className="rounded-[10px] border border-dashed border-input px-[11px] py-[9px] text-[12.5px] text-muted-foreground">
-                          Not applicable
-                        </div>
-                      ) : (m.backupCodes ?? 0) > 0 ? (
-                        <div className="flex items-center gap-2.5 rounded-[10px] bg-success-subtle/50 p-[11px] text-[12.5px] text-success-subtle-foreground">
-                          <CheckCircle2Icon className="size-[15px] shrink-0" />
-                          <div className="flex-1">
-                            <b className="font-semibold">
-                              {m.backupCodes} of 10 remaining
-                            </b>
-                            <div className="mt-[5px] h-[5px] overflow-hidden rounded-full bg-success/20">
-                              <span
-                                className="block h-full rounded-full bg-success"
-                                style={{
-                                  width: `${(m.backupCodes ?? 0) * 10}%`,
-                                }}
-                              />
-                            </div>
-                          </div>
+                      {loading ? (
+                        <GapBox>Loading…</GapBox>
+                      ) : backupCodes != null ? (
+                        <div className="flex items-center gap-2 rounded-[10px] border bg-card px-[11px] py-[9px] text-[12.5px]">
+                          <span className="font-semibold">{backupCodes}</span>
+                          <span className="text-muted-foreground">
+                            {backupCodes === 1 ? "code" : "codes"} remaining
+                          </span>
                         </div>
                       ) : (
-                        <div className="flex items-center gap-2.5 rounded-[10px] bg-destructive/8 p-[11px] text-[12.5px] text-destructive">
-                          <TriangleAlertIcon className="size-[15px] shrink-0" />
-                          <div>
-                            <b className="font-semibold">None remaining</b>
-                            <div className="mt-px text-[11px] opacity-85">
-                              User should regenerate backup codes.
-                            </div>
-                          </div>
-                        </div>
+                        <GapBox>Not applicable</GapBox>
                       )}
                     </div>
                   </div>

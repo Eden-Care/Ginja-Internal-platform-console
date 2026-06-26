@@ -18,6 +18,12 @@ export default defineConfig({
         changeOrigin: true,
         secure: true,
       },
+      // Document service (templates / org settings) — same host, different prefix.
+      "/document-service": {
+        target: API_TARGET,
+        changeOrigin: true,
+        secure: true,
+      },
     },
   },
   resolve: {

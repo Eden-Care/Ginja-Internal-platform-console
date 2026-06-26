@@ -9,9 +9,7 @@ import {
   TriangleAlertIcon,
   ZapIcon,
 } from "lucide-react"
-import { toast } from "sonner"
 
-import { Button } from "@/components/ui/button"
 import {
   InputGroup,
   InputGroupAddon,
@@ -25,6 +23,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Button } from "@/components/ui/button"
 import { ConsolePageHeader } from "@/components/console/page-header"
 import { Panel } from "@/components/console/panel"
 import { MiniBadge } from "@/components/console/tagpill"
@@ -32,10 +31,13 @@ import { Note } from "@/components/console/note"
 import { Glyph } from "@/components/console/glyph"
 import { hifiTableHead } from "@/components/console/table"
 import { LoadingSpinner } from "@/components/common/loading"
+import { LoadMore } from "@/components/common/load-more"
 import { useModuleRegistry } from "@/features/registry/use-module-registry"
 import { useModuleSearch } from "@/features/registry/use-module-search"
 import { useModule } from "@/features/registry/use-module"
-import { MODULE_TONE, ModuleDrawer } from "./components/module-drawer"
+import { MODULE_TONE } from "./status"
+import { ModuleRecord } from "./components/module-record"
+import { ModuleForm } from "./components/module-form"
 
 /** Compact KPI tile: icon left, big mono value over an uppercase label. */
 function StatTile({
@@ -64,7 +66,12 @@ function StatTile({
 
 export function ModuleRegistryPage() {
   const listQuery = useModuleRegistry()
-  const all = listQuery.data ?? []
+  // Flattened across infinite-scroll pages. KPI tiles below count this loaded
+  // set (not a guaranteed grand total — same as the old size-100 single fetch).
+  const all = React.useMemo(
+    () => listQuery.data?.pages.flatMap((p) => p.items) ?? [],
+    [listQuery.data]
+  )
 
   // Search box → debounced → server-side /modules/search.
   const [query, setQuery] = React.useState("")
@@ -78,11 +85,12 @@ export function ModuleRegistryPage() {
   const searchQuery = useModuleSearch(dq)
   const rows = searching ? (searchQuery.data ?? []) : all
 
-  // Click a row → fetch that module's full detail (/modules/{moduleId}); the
-  // clicked list row is shown immediately and upgraded when detail arrives.
+  // Navigation: list → record → create/edit form.
   const [openId, setOpenId] = React.useState<string | null>(null)
+  const [creating, setCreating] = React.useState(false)
+  const [editing, setEditing] = React.useState(false)
   const detailQuery = useModule(openId)
-  const drawerModule =
+  const recordModule =
     detailQuery.data ??
     rows.find((m) => m.id === openId) ??
     all.find((m) => m.id === openId) ??
@@ -94,13 +102,31 @@ export function ModuleRegistryPage() {
   const beta = all.filter((m) => m.status === "Beta").length
   const subs = all.reduce((n, m) => n + m.subs.length, 0)
 
+  if (creating) return <ModuleForm onBack={() => setCreating(false)} />
+  if (editing && recordModule)
+    return (
+      <ModuleForm existing={recordModule} onBack={() => setEditing(false)} />
+    )
+  if (openId && recordModule)
+    return (
+      <ModuleRecord
+        key={recordModule.id}
+        module={recordModule}
+        onBack={() => {
+          setOpenId(null)
+          setEditing(false)
+        }}
+        onEdit={() => setEditing(true)}
+      />
+    )
+
   return (
     <div className="flex flex-col gap-5">
       <ConsolePageHeader
         title="Module registry"
         sub="The platform catalogue of modules and sub-modules. Everything here is selectable during tenant onboarding — nothing is hard-coded."
         actions={
-          <Button size="sm" onClick={() => toast("Register a new module.")}>
+          <Button size="sm" onClick={() => setCreating(true)}>
             <PlusIcon data-icon="inline-start" />
             Register module
           </Button>
@@ -244,10 +270,14 @@ export function ModuleRegistryPage() {
             </Panel>
           )}
 
-          <ModuleDrawer
-            module={openId ? drawerModule : null}
-            onClose={() => setOpenId(null)}
-          />
+          {/* Infinite scroll only for the browse list; search returns one set. */}
+          {!searching ? (
+            <LoadMore
+              hasMore={listQuery.hasNextPage}
+              loading={listQuery.isFetchingNextPage}
+              onLoadMore={() => listQuery.fetchNextPage()}
+            />
+          ) : null}
         </>
       )}
     </div>

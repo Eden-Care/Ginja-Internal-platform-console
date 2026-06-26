@@ -1,12 +1,13 @@
 import * as React from "react"
-import { ArrowRightIcon, ShieldIcon, UsersIcon } from "lucide-react"
+import { ArrowRightIcon, GlobeIcon, ShieldIcon, UsersIcon } from "lucide-react"
 
 import { useAccess } from "@/contexts/access-context"
 import { ConsolePageHeader } from "@/components/console/page-header"
 import { SecurityPolicies } from "./security"
 import { UserAccessSecurity } from "./user-access"
+import { LocaleRules } from "./locale-rules"
 
-type Section = "security" | "user-access"
+type Section = "security" | "user-access" | "locale"
 
 type Category = {
   k: Section
@@ -14,6 +15,7 @@ type Category = {
   title: string
   desc: string
   items: string[]
+  tag: string
 }
 
 /* settings categories — add more cards here as the platform grows */
@@ -29,6 +31,7 @@ const CATEGORIES: Category[] = [
       "Lockout",
       "Sessions",
     ],
+    tag: "Admin only",
   },
   {
     k: "user-access",
@@ -36,6 +39,15 @@ const CATEGORIES: Category[] = [
     title: "User access & security",
     desc: "Monitor active sessions, MFA enrolment and password status for every user.",
     items: ["Active sessions", "MFA status", "Password status"],
+    tag: "Admin only",
+  },
+  {
+    k: "locale",
+    icon: <GlobeIcon />,
+    title: "Localization & data rules",
+    desc: "Default formats, currency, languages and the versioned validation-rule library tenants inherit.",
+    items: ["Formatting & locale", "Validation rules", "Versioned"],
+    tag: "Versioned",
   },
 ]
 
@@ -57,6 +69,9 @@ export function PlatformSettingsPage() {
         onBack={() => setSection(null)}
       />
     )
+  }
+  if (section === "locale") {
+    return <LocaleRules readonly={readonly} onBack={() => setSection(null)} />
   }
 
   return (
@@ -86,7 +101,7 @@ export function PlatformSettingsPage() {
                   {c.title}
                   <span className="inline-flex items-center gap-1 text-[10.5px] font-semibold tracking-[0.02em] text-muted-foreground [&>svg]:size-[11px]">
                     <ShieldIcon />
-                    Admin only
+                    {c.tag}
                   </span>
                 </div>
                 <div className="mt-[3px] text-xs leading-[1.45] text-muted-foreground">

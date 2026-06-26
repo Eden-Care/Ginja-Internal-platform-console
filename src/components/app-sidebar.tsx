@@ -13,6 +13,7 @@ import {
   LayoutDashboardIcon,
   LogOutIcon,
   MailIcon,
+  MessageSquareIcon,
   ServerIcon,
   SettingsIcon,
   ShieldCheckIcon,
@@ -114,10 +115,16 @@ export const navGroups: NavGroup[] = [
         permId: "doc-templates",
       },
       {
-        title: "Email & SMS templates",
+        title: "Email templates",
         url: "/email-templates",
         icon: MailIcon,
         permId: "email-templates",
+      },
+      {
+        title: "SMS templates",
+        url: "/sms-templates",
+        icon: MessageSquareIcon,
+        permId: "sms-templates",
       },
       {
         title: "Pricing & plans",
