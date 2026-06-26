@@ -1740,6 +1740,159 @@ export const roleById = (id: string): AccessRole | undefined =>
 export const rolePermCount = (r: AccessRole): number =>
   r.perms.includes("*") ? PERM_TOTAL : r.perms.length
 
+/* ===================== My Account (self-service) =========================
+   Mock data for the signed-in user's own profile / security center. There is
+   no backend endpoint for self-service yet, so these mirror the hi-fi `MY_*`
+   block verbatim (sessions, security activity, role grants). */
+
+export type MySession = {
+  id: string
+  browser: string
+  os: string
+  device: string
+  ip: string
+  loc: string
+  started: string
+  /** "Active now" / "3 hr ago" / … */
+  lastSeen: string
+  /** This is the device the user is currently signed in from. */
+  current: boolean
+  /** Set once the session has been signed out from the UI. */
+  ended?: boolean
+}
+
+export const MY_SESSIONS: MySession[] = [
+  {
+    id: "MSE-01",
+    browser: "Chrome 126",
+    os: "macOS 14.5",
+    device: "MacBook Pro",
+    ip: "197.232.14.8",
+    loc: "Nairobi, KE",
+    started: "25 Jun · 08:02",
+    lastSeen: "Active now",
+    current: true,
+  },
+  {
+    id: "MSE-02",
+    browser: "Safari 17",
+    os: "iOS 17.5",
+    device: "iPhone 15",
+    ip: "197.232.61.140",
+    loc: "Nairobi, KE",
+    started: "24 Jun · 19:40",
+    lastSeen: "3 hr ago",
+    current: false,
+  },
+  {
+    id: "MSE-03",
+    browser: "Chrome 125",
+    os: "Windows 11",
+    device: "Office desktop",
+    ip: "102.134.88.3",
+    loc: "Mombasa, KE",
+    started: "21 Jun · 09:12",
+    lastSeen: "4 days ago",
+    current: false,
+  },
+]
+
+export type MyActivityKind = "login" | "mfa" | "password"
+
+export type MyActivity = {
+  kind: MyActivityKind
+  /** false → a failed/denied event, rendered with an alert glyph. */
+  ok: boolean
+  label: string
+  detail: string
+  ip: string
+  when: string
+}
+
+export const MY_ACTIVITY: MyActivity[] = [
+  {
+    kind: "login",
+    ok: true,
+    label: "Signed in",
+    detail: "Chrome on macOS · Nairobi, KE",
+    ip: "197.232.14.8",
+    when: "Today · 08:02",
+  },
+  {
+    kind: "login",
+    ok: false,
+    label: "Failed sign-in",
+    detail: "Wrong password · Chrome on Windows",
+    ip: "41.90.7.55",
+    when: "Yesterday · 22:14",
+  },
+  {
+    kind: "mfa",
+    ok: true,
+    label: "MFA verified",
+    detail: "Authenticator app",
+    ip: "197.232.14.8",
+    when: "24 Jun · 19:40",
+  },
+  {
+    kind: "password",
+    ok: true,
+    label: "Password changed",
+    detail: "From My account → Password",
+    ip: "197.232.14.8",
+    when: "12 May · 09:14",
+  },
+  {
+    kind: "login",
+    ok: true,
+    label: "Signed in",
+    detail: "Safari on iOS · Nairobi, KE",
+    ip: "197.232.61.140",
+    when: "21 Jun · 07:30",
+  },
+  {
+    kind: "mfa",
+    ok: true,
+    label: "Backup codes generated",
+    detail: "10 new single-use codes",
+    ip: "197.232.14.8",
+    when: "02 Apr · 10:11",
+  },
+]
+
+export const MY_ACTIVITY_KIND: Record<
+  MyActivityKind,
+  { icon: string; tone: AccessTone }
+> = {
+  login: { icon: "logOut", tone: "neutral" },
+  mfa: { icon: "key", tone: "success" },
+  password: { icon: "lock", tone: "success" },
+}
+
+/** A role held by the signed-in user, with grant provenance. */
+export type MyRoleGrant = {
+  /** AccessRole id — resolved via roleById for name/desc/perms/colour. */
+  id: string
+  grantedBy: string
+  when: string
+  note?: string
+}
+
+export const MY_ROLES: MyRoleGrant[] = [
+  {
+    id: "platform_admin",
+    grantedBy: "System (founder)",
+    when: "10 Jan 2026",
+    note: "Initial platform owner",
+  },
+  {
+    id: "compliance_officer",
+    grantedBy: "Amara Okeke",
+    when: "14 Mar 2026",
+    note: "Added for KYB review coverage",
+  },
+]
+
 export const USER_STATUS_TONE: Record<UserStatus, AccessTone> = {
   Active: "success",
   Invited: "info",

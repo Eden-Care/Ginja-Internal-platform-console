@@ -51,7 +51,7 @@ All endpoints require this scheme unless noted otherwise (the `/dev/token` helpe
 - [Pricing Structures](#pricing-structures) (7)
 - [Payer Onboarding](#payer-onboarding) (14)
 - [Onboarding Steps](#onboarding-steps) (4)
-- [Approvals](#approvals) (5)
+- [Approvals](#approvals) (8)
 - [Payer Lifecycle](#payer-lifecycle) (6)
 - [Tenant Provisioning & Technical Review](#tenant-provisioning-technical-review) (11)
 - [Platform Settings · Localization](#platform-settings-localization) (9)
@@ -5275,11 +5275,141 @@ _Approver queue and approve / reject / request-info decisions (separation of dut
 
 | Method | Path | Summary |
 |---|---|---|
+| `POST` | `/platform/payers/{payerId}/sections/{sectionKey}/request-info` | Request more information on one review section |
+| `POST` | `/platform/payers/{payerId}/sections/{sectionKey}/reject` | Reject one review section |
+| `POST` | `/platform/payers/{payerId}/sections/{sectionKey}/approve` | Approve one review section |
 | `POST` | `/platform/payers/{payerId}/request-info` | Request more information from the submitter |
 | `POST` | `/platform/payers/{payerId}/reject` | Reject a payer |
 | `POST` | `/platform/payers/{payerId}/approve` | Approve a payer → auto-activate |
 | `GET` | `/platform/approvals` | Approval queue (Pending / Approved / All) |
 | `GET` | `/platform/approvals/{payerId}` | Approval review (by id) |
+
+### `POST` `/platform/payers/{payerId}/sections/{sectionKey}/request-info`
+
+**Request more information on one review section**
+
+`operationId: requestInfoSection`
+
+Records this approver's decision on **one review section** of the request — persisted server-side so
+the "Review · as Approver" checklist rehydrates from `GET /platform/approvals/{payerId}`. Returns the
+refreshed review payload (its `sections[]` now carry each section's `review_status`, `decided_by`,
+`comment` and `decided_at`). The decision upserts the section's latest state.
+
+`sectionKey` ∈ `primary_tenant_details` | `module_entitlements` | `subscription_billing` |
+`kyb_documents`. **Role:** `PLATFORM_APPROVER`; the payer must be **awaiting approval** and
+**separation of duties** is enforced (the submitter cannot decide). Unlike the final approval, a
+per-section decision does not require provisioning to be complete.
+
+`comment` is **mandatory** (states what information is required).
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `payerId` | path | ✓ | integer (int64) | Numeric id of the payer. |
+| `sectionKey` | path | ✓ | string | Section key. |
+
+**Request body** (required): [`ApprovalActionRequest`](#schema-approvalactionrequest)
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `comment` | string |  | Decision note shown to the submitter; mandatory for reject / request-info. _(e.g. `Verified — entitlements and contract are in order.`)_ |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | Information requested; refreshed review payload returned. |
+| `400` | Unknown section key, or missing mandatory comment. |
+| `403` | Caller is not PLATFORM_APPROVER, or submitted this payer (separation of duties). |
+| `404` | Payer not found. |
+| `409` | Payer is not awaiting approval. |
+
+---
+
+### `POST` `/platform/payers/{payerId}/sections/{sectionKey}/reject`
+
+**Reject one review section**
+
+`operationId: rejectSection`
+
+Records this approver's decision on **one review section** of the request — persisted server-side so
+the "Review · as Approver" checklist rehydrates from `GET /platform/approvals/{payerId}`. Returns the
+refreshed review payload (its `sections[]` now carry each section's `review_status`, `decided_by`,
+`comment` and `decided_at`). The decision upserts the section's latest state.
+
+`sectionKey` ∈ `primary_tenant_details` | `module_entitlements` | `subscription_billing` |
+`kyb_documents`. **Role:** `PLATFORM_APPROVER`; the payer must be **awaiting approval** and
+**separation of duties** is enforced (the submitter cannot decide). Unlike the final approval, a
+per-section decision does not require provisioning to be complete.
+
+`comment` is **mandatory**.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `payerId` | path | ✓ | integer (int64) | Numeric id of the payer. |
+| `sectionKey` | path | ✓ | string | Section key. |
+
+**Request body** (required): [`ApprovalActionRequest`](#schema-approvalactionrequest)
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `comment` | string |  | Decision note shown to the submitter; mandatory for reject / request-info. _(e.g. `Verified — entitlements and contract are in order.`)_ |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | Section rejected; refreshed review payload returned. |
+| `400` | Unknown section key, or missing mandatory comment. |
+| `403` | Caller is not PLATFORM_APPROVER, or submitted this payer (separation of duties). |
+| `404` | Payer not found. |
+| `409` | Payer is not awaiting approval. |
+
+---
+
+### `POST` `/platform/payers/{payerId}/sections/{sectionKey}/approve`
+
+**Approve one review section**
+
+`operationId: approveSection_1`
+
+Records this approver's decision on **one review section** of the request — persisted server-side so
+the "Review · as Approver" checklist rehydrates from `GET /platform/approvals/{payerId}`. Returns the
+refreshed review payload (its `sections[]` now carry each section's `review_status`, `decided_by`,
+`comment` and `decided_at`). The decision upserts the section's latest state.
+
+`sectionKey` ∈ `primary_tenant_details` | `module_entitlements` | `subscription_billing` |
+`kyb_documents`. **Role:** `PLATFORM_APPROVER`; the payer must be **awaiting approval** and
+**separation of duties** is enforced (the submitter cannot decide). Unlike the final approval, a
+per-section decision does not require provisioning to be complete.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `payerId` | path | ✓ | integer (int64) | Numeric id of the payer. |
+| `sectionKey` | path | ✓ | string | Section key. |
+
+**Request body**: [`ApprovalActionRequest`](#schema-approvalactionrequest)
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `comment` | string |  | Decision note shown to the submitter; mandatory for reject / request-info. _(e.g. `Verified — entitlements and contract are in order.`)_ |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | Section approved; refreshed review payload returned. |
+| `400` | Unknown section key. |
+| `403` | Caller is not PLATFORM_APPROVER, or submitted this payer (separation of duties). |
+| `404` | Payer not found. |
+| `409` | Payer is not awaiting approval. |
+
+---
 
 ### `POST` `/platform/payers/{payerId}/request-info`
 

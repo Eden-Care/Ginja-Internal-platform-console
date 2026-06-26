@@ -34,6 +34,7 @@ import { AccessUsersPage } from "@/pages/access/users"
 import { AccessRolesPage } from "@/pages/access/roles"
 import { PlatformSettingsPage } from "@/pages/platform-settings"
 import { AuditLogPage } from "@/pages/audit-log"
+import { MyAccountPage } from "@/pages/my-account"
 
 function ThemeToggle() {
   const { theme, setTheme } = useTheme()
@@ -104,6 +105,7 @@ function AppShell() {
             <Route path="access-roles" element={<AccessRolesPage />} />
             <Route path="platform-settings" element={<PlatformSettingsPage />} />
             <Route path="audit-log" element={<AuditLogPage />} />
+            <Route path="my-account" element={<MyAccountPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>

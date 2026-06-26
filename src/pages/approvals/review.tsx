@@ -29,7 +29,7 @@ import type { ApprovalQueueItem } from "@/features/approvals/types"
 import type { PayerDTO } from "@/features/payers/types"
 import { Panel, PanelBody, PanelHead } from "@/components/console/panel"
 import { Note } from "@/components/console/note"
-import { MiniBadge } from "@/components/console/tagpill"
+import { MiniBadge, Tagpill } from "@/components/console/tagpill"
 import { LoadingSpinner } from "@/components/common/loading"
 import { Breadcrumbs } from "@/components/console/breadcrumbs"
 
@@ -42,13 +42,20 @@ const PAYER_TYPE_LABEL: Record<string, string> = {
   SELF_MANAGED_SCHEME: "Self-managed Scheme",
 }
 
+/** Small round dot used to separate inline metadata (v3 `.dotsep`). */
+const Dot = () => (
+  <span className="size-[3px] shrink-0 rounded-full bg-muted-foreground/40" />
+)
+
 function Meta({ items }: { items: [string, string][] }) {
   return (
-    <div className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3">
+    <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-3">
       {items.map(([k, v]) => (
-        <div key={k}>
-          <div className="text-[11.5px] text-muted-foreground">{k}</div>
-          <div className="text-[13px]">{v || "—"}</div>
+        <div key={k} className="bg-card px-[15px] py-[13px]">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.05em] text-muted-foreground">
+            {k}
+          </div>
+          <div className="mt-[5px] text-[13px] font-semibold">{v || "—"}</div>
         </div>
       ))}
     </div>
@@ -116,13 +123,11 @@ function sectionsFor(d: PayerDTO): Section[] {
       entitlements.length > 0 ? (
         <div className="flex flex-wrap gap-2">
           {entitlements.map((e) => (
-            <span
-              key={e.entitlement_id}
-              className="mono inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-[11.5px] text-muted-foreground"
-            >
+            <Tagpill key={e.entitlement_id}>
+              <LayersIcon className="size-3" />
               {e.module_code}
               {e.submodule_code ? ` · ${e.submodule_code}` : ""}
-            </span>
+            </Tagpill>
           ))}
         </div>
       ) : (
@@ -163,17 +168,17 @@ function sectionsFor(d: PayerDTO): Section[] {
       icon: FileCheck2Icon,
       title: `KYB documents (${docs.length})`,
       body: (
-        <div className="flex flex-col gap-1.5">
+        <div className="grid gap-[9px]">
           {docs.map((doc) => (
             <div
               key={doc.document_id}
-              className="flex items-center gap-2 rounded-lg border px-3 py-2 text-[12.5px]"
+              className="flex items-center gap-2.5 text-[12.5px]"
             >
-              <span className="grid size-4 place-items-center rounded-full bg-success text-white">
-                <CheckIcon className="size-2.5" />
+              <span className="grid size-5 shrink-0 place-items-center rounded-full bg-success-subtle text-success-subtle-foreground">
+                <CheckIcon className="size-3" />
               </span>
-              {doc.file_name}
-              <span className="mono ml-1 text-[11px] text-muted-foreground">
+              <span>{doc.file_name}</span>
+              <span className="mono text-[11px] text-muted-foreground">
                 {doc.category}
               </span>
               <MiniBadge tone="neutral" className="ml-auto">
@@ -189,10 +194,12 @@ function sectionsFor(d: PayerDTO): Section[] {
   return sections
 }
 
-const DECISION_BTN: Record<Decision, string> = {
-  ok: "data-[on=true]:border-success data-[on=true]:bg-success-subtle data-[on=true]:text-success-subtle-foreground",
-  info: "data-[on=true]:border-warning data-[on=true]:bg-warning-subtle data-[on=true]:text-warning-subtle-foreground",
-  no: "data-[on=true]:border-destructive data-[on=true]:bg-destructive-subtle data-[on=true]:text-destructive-subtle-foreground",
+// v3 segmented control: a muted track holds three borderless buttons; the active
+// choice fills with its solid status colour and white text.
+const SEG: Record<Decision, string> = {
+  ok: "data-[on=true]:bg-success data-[on=true]:text-white",
+  info: "data-[on=true]:bg-warning data-[on=true]:text-white",
+  no: "data-[on=true]:bg-destructive data-[on=true]:text-white",
 }
 
 /**
@@ -312,22 +319,24 @@ export function ApprovalReviewPage() {
 
       {/* record header */}
       {head ? (
-        <div className="flex items-start gap-3.5">
-          <span className="grid size-[52px] shrink-0 place-items-center rounded-[13px] border border-primary/20 bg-primary/10 text-[19px] font-bold text-primary">
+        <div className="flex items-start gap-4">
+          <span className="grid size-[56px] shrink-0 place-items-center rounded-[13px] border border-primary/20 bg-primary/10 text-[22px] font-bold text-primary">
             {head.name.slice(0, 2).toUpperCase()}
           </span>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2.5">
-              <h2 className="text-xl font-semibold">{head.name}</h2>
+              <h2 className="text-[22px] font-bold tracking-[-0.015em]">
+                {head.name}
+              </h2>
               <MiniBadge tone={head.approved ? "success" : "warning"}>
                 {head.approved ? "Approved" : "Pending review"}
               </MiniBadge>
             </div>
             <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[12.5px] text-muted-foreground">
-              <span className="mono">{head.code}</span>
-              <span className="text-muted-foreground/50">·</span>
+              <span className="mono text-foreground">{head.code}</span>
+              <Dot />
               <span>Tenant onboarding</span>
-              <span className="text-muted-foreground/50">·</span>
+              <Dot />
               <span>
                 Submitted by{" "}
                 <b className="text-foreground">{head.submittedBy ?? "—"}</b>
@@ -342,8 +351,8 @@ export function ApprovalReviewPage() {
         </div>
       ) : (
         // Deep-linked with no queue row in hand — skeleton until the fetch resolves.
-        <div className="flex items-start gap-3.5">
-          <span className="size-[52px] shrink-0 animate-pulse rounded-[13px] bg-muted" />
+        <div className="flex items-start gap-4">
+          <span className="size-[56px] shrink-0 animate-pulse rounded-[13px] bg-muted" />
           <div className="min-w-0 flex-1 space-y-2 py-1.5">
             <div className="h-5 w-48 animate-pulse rounded bg-muted" />
             <div className="h-3.5 w-72 animate-pulse rounded bg-muted" />
@@ -407,12 +416,15 @@ export function ApprovalReviewPage() {
             {sections.map((s) => {
               const Ico = s.icon
               return (
-                <Panel key={s.k} className="overflow-hidden">
-                  <div className="flex flex-wrap items-center gap-2 border-b px-4 py-3">
+                <div
+                  key={s.k}
+                  className="overflow-hidden rounded-[11px] border bg-card"
+                >
+                  <div className="flex flex-wrap items-center gap-3 px-[15px] py-[13px]">
                     <Ico className="size-4 text-muted-foreground" />
                     <h4 className="text-[13.5px] font-semibold">{s.title}</h4>
                     {!decided && (
-                      <div className="ml-auto flex items-center gap-1.5">
+                      <div className="ml-auto inline-flex gap-[3px] rounded-lg bg-muted p-[3px]">
                         {(
                           [
                             { v: "ok", label: "Approve" },
@@ -428,8 +440,8 @@ export function ApprovalReviewPage() {
                             data-on={decisions[s.k] === b.v}
                             onClick={() => setDec(s.k, b.v)}
                             className={cn(
-                              "inline-flex h-7 items-center gap-1 rounded-md border border-input bg-card px-2.5 text-[11.5px] font-medium transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50",
-                              DECISION_BTN[b.v]
+                              "inline-flex h-7 items-center gap-[5px] rounded-md px-[11px] text-[11.5px] font-semibold text-muted-foreground transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+                              SEG[b.v]
                             )}
                           >
                             {b.v === "ok" && <CheckIcon className="size-3" />}
@@ -440,13 +452,13 @@ export function ApprovalReviewPage() {
                       </div>
                     )}
                   </div>
-                  <PanelBody>{s.body}</PanelBody>
-                </Panel>
+                  <div className="px-[15px] pb-[14px]">{s.body}</div>
+                </div>
               )
             })}
             {(anyReject || anyInfo) && (
               <div className="flex flex-col gap-1.5">
-                <label className="flex items-center gap-1 text-[13px] font-medium">
+                <label className="flex items-center gap-1 text-[12.5px] font-medium">
                   Reason for rejection / information required
                   <span className="text-destructive">*</span>
                 </label>
@@ -473,7 +485,7 @@ export function ApprovalReviewPage() {
             <Panel className="overflow-hidden">
               <PanelHead title="Decision" />
               <PanelBody className="flex flex-col gap-3">
-                <div className="flex flex-col gap-1.5">
+                <div className="flex flex-col gap-[9px]">
                   {sections.map((s) => {
                     const dec = decisions[s.k]
                     const Ico =
@@ -485,17 +497,13 @@ export function ApprovalReviewPage() {
                             ? AlertTriangleIcon
                             : MinusIcon
                     return (
-                      <div key={s.k} className="flex items-center gap-2">
+                      <div key={s.k} className="flex items-center gap-2.5">
                         <span
                           className={cn(
-                            "grid size-[18px] shrink-0 place-items-center rounded-full",
+                            "grid size-5 shrink-0 place-items-center rounded-full",
                             dec === "ok"
-                              ? "bg-success text-white"
-                              : dec === "no"
-                                ? "bg-destructive text-white"
-                                : dec === "info"
-                                  ? "bg-warning text-white"
-                                  : "bg-muted text-muted-foreground"
+                              ? "bg-success-subtle text-success-subtle-foreground"
+                              : "bg-muted text-muted-foreground"
                           )}
                         >
                           <Ico className="size-3" />

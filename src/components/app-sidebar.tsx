@@ -1,5 +1,5 @@
 import * as React from "react"
-import { NavLink, useLocation } from "react-router-dom"
+import { NavLink, useLocation, useNavigate } from "react-router-dom"
 import {
   Building2Icon,
   ChevronsUpDownIcon,
@@ -180,6 +180,7 @@ function isActivePath(pathname: string, url: string, exact?: boolean) {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const location = useLocation()
+  const navigate = useNavigate()
   const { brand } = useBrand()
   const { user, hasPermission } = useAccess()
   const { logout } = useAuth()
@@ -339,11 +340,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => navigate("/my-account")}>
                     <UserIcon data-icon="inline-start" />
                     Profile
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => navigate("/my-account?tab=profile")}
+                  >
                     <SettingsIcon data-icon="inline-start" />
                     Preferences
                   </DropdownMenuItem>
