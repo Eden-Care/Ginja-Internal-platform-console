@@ -26,7 +26,7 @@ const DEFAULT_BRAND: BrandSettings = {
   colors: {
     primary: "240 61% 60%",
     secondary: "224 24% 96%",
-    accent: "156 65% 95%",
+    accent: "240 88% 96%",
   },
 }
 
