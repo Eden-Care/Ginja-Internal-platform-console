@@ -60,6 +60,9 @@
   --color-violet: hsl(var(--violet));
   --color-violet-foreground: hsl(var(--violet-foreground));
 
+  /* Email-specific accent for global-placeholder keys (not in the base palette). */
+  --color-ph-global: hsl(var(--ph-global));
+
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
@@ -205,6 +208,9 @@
   --violet: 262 83% 62%;
   --violet-foreground: 262 83% 56%;
 
+  /* Global-placeholder accent — email templates only. */
+  --ph-global: 270 70% 55%;
+
   --border: var(--c-slate-200);
   --input: var(--c-slate-300);
   --ring: var(--c-iris-600);
@@ -286,6 +292,9 @@
 
   --violet: 262 83% 72%;
   --violet-foreground: 262 83% 78%;
+
+  /* Global-placeholder accent — email templates only. */
+  --ph-global: 270 80% 72%;
 
   --border: 223 16% 24%;
   --input: 223 14% 30%;

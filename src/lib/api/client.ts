@@ -19,6 +19,16 @@ const BASE_URL =
     ? "/internal-platform/api/v1"
     : "https://dev-api.ginja.ai/internal-platform/api/v1")
 
+// The document service (PDF / email & SMS templates, org settings) is a separate
+// microservice — proxied under "/document-service" in dev. Same { …, result }
+// envelope and bearer auth, so callers pass it as a per-request `baseURL`
+// override on apiGet/etc. Override with VITE_DOC_API_BASE_URL.
+export const DOC_BASE_URL =
+  import.meta.env.VITE_DOC_API_BASE_URL ??
+  (import.meta.env.DEV
+    ? "/document-service/api/v1"
+    : "https://dev-api.ginja.ai/document-service/api/v1")
+
 export type ApiEnvelope<T> = {
   status: number
   success: boolean

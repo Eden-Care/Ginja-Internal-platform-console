@@ -28,10 +28,36 @@ export async function fetchAuditLogs(
     "/platform/organization/audit-logs",
     { params }
   )
+  console.log("[GET /platform/organization/audit-logs]", {
+    params,
+    response: dto,
+  })
   return toPaged(dto, toAuditRow)
 }
 
 /** GET /platform/organization/audit-logs/modules → entity types for filtering. */
 export async function fetchAuditModules(): Promise<string[]> {
-  return apiGet<string[]>("/platform/organization/audit-logs/modules")
+  const res = await apiGet<string[]>(
+    "/platform/organization/audit-logs/modules"
+  )
+  console.log("[GET /platform/organization/audit-logs/modules]", res)
+  return res
+}
+
+/** GET /platform/organization/audit-logs/export → the filtered trail as a file
+   (CSV by default). Returned as a Blob so the caller can trigger a download. */
+export async function exportAuditLogs(
+  q: AuditQuery = {},
+  format: "csv" | "json" = "csv"
+): Promise<Blob> {
+  const params: Record<string, string | number> = { format }
+  if (q.entityType) params.entity_type = q.entityType
+  if (q.action) params.action = q.action
+  if (q.actor) params.actor = q.actor
+
+  console.log("[GET /platform/organization/audit-logs/export]", { params })
+  return apiGet<Blob>("/platform/organization/audit-logs/export", {
+    params,
+    responseType: "blob",
+  })
 }

@@ -1,8 +1,67 @@
 import * as React from "react"
-import { SearchIcon } from "lucide-react"
+import { ClockIcon, SearchIcon } from "lucide-react"
+import { format, formatDistanceToNow } from "date-fns"
 
 import { cn } from "@/lib/utils"
 import { Tagpill } from "@/components/console/tagpill"
+import type { MemberStatus } from "@/features/access/types"
+
+/* ----------------------------------- member status + formatting helpers --- */
+
+/** MemberStatus → MiniBadge tone (mirrors the Users directory). */
+export const MEMBER_STATUS_TONE: Record<
+  MemberStatus,
+  "success" | "info" | "warning" | "error"
+> = {
+  ACTIVE: "success",
+  INVITED: "info",
+  SUSPENDED: "warning",
+  DISABLED: "error",
+}
+export const MEMBER_STATUS_LABEL: Record<MemberStatus, string> = {
+  ACTIVE: "Active",
+  INVITED: "Invited",
+  SUSPENDED: "Suspended",
+  DISABLED: "Disabled",
+}
+
+/** Account badge label — a lapsed invite reads "Expired". */
+export const memberAccountLabel = (m: {
+  status: MemberStatus
+  inviteExpired: boolean
+}) =>
+  m.inviteExpired && m.status === "INVITED"
+    ? "Expired"
+    : MEMBER_STATUS_LABEL[m.status]
+
+/** First letters of the first two name parts, uppercased (avatar fallback). */
+export const initialsOf = (name: string) =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((s) => s[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase() || "?"
+
+export const fmtLastActive = (iso: string | null) =>
+  iso ? formatDistanceToNow(new Date(iso), { addSuffix: true }) : "Never"
+export const fmtSince = (iso: string | null) =>
+  iso ? format(new Date(iso), "dd MMM yyyy") : "—"
+
+/** Dashed, muted pill marking a value the backend doesn't power yet. */
+export function PendingBadge({
+  children = "Pending backend",
+}: {
+  children?: React.ReactNode
+}) {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full border border-dashed bg-muted/50 px-2 py-[2px] text-[10.5px] font-medium text-muted-foreground [&>svg]:size-2.5">
+      <ClockIcon />
+      {children}
+    </span>
+  )
+}
 
 /** Centered empty / no-results tile with a toned icon, used across the tabs. */
 export function EmptyTile({

@@ -15,20 +15,20 @@ import { Button } from "@/components/ui/button"
 import { MiniBadge } from "@/components/console/tagpill"
 import { Note } from "@/components/console/note"
 import { StatTile } from "@/components/console/stat-tile"
-import {
-  ACCESS_USERS,
-  MFA_METHOD_LABEL,
-  USER_STATUS_TONE,
-  mfaEnabled,
-  mfaOf,
-  type AccessUser,
-} from "@/lib/console-data"
+import { LoadingSpinner } from "@/components/common/loading"
+import { useMembers } from "@/features/access/use-members"
+import type { Member } from "@/features/access/types"
+import { useRemindMfa } from "@/features/settings/use-mfa"
 import {
   EmptyTile,
+  MEMBER_STATUS_TONE,
+  PendingBadge,
   SearchBox,
   SegToggle,
   Toolbar,
   UserIdCell,
+  initialsOf,
+  memberAccountLabel,
 } from "./ua-shared"
 import { MfaDetailDrawer } from "./mfa-detail-drawer"
 
@@ -42,35 +42,70 @@ const GRID =
   "grid grid-cols-[minmax(0,1.4fr)_120px_130px_150px] items-center gap-3.5 lg:grid-cols-[minmax(0,1.4fr)_110px_130px_minmax(0,1.2fr)_120px_168px]"
 
 export function MfaTab({ readonly }: { readonly: boolean }) {
-  const users = ACCESS_USERS
+  const membersQuery = useMembers({})
+  const users = membersQuery.data?.items ?? []
+
   const [q, setQ] = React.useState("")
   const [filter, setFilter] = React.useState("All")
-  const [detail, setDetail] = React.useState<AccessUser | null>(null)
-  const [reminded, setReminded] = React.useState<Set<string>>(() => new Set())
+  const [detail, setDetail] = React.useState<Member | null>(null)
+  const [reminded, setReminded] = React.useState<Set<number>>(() => new Set())
 
-  const enabledCount = users.filter((u) => mfaEnabled(u.id)).length
+  const enabledCount = users.filter((u) => u.mfaEnabled).length
   const notConfigured = users.length - enabledCount
-  const adoption = Math.round((enabledCount / users.length) * 100)
+  const adoption = users.length
+    ? Math.round((enabledCount / users.length) * 100)
+    : 0
 
-  const matchesFilter = (u: AccessUser) =>
-    filter === "All" ||
-    (filter === "Enabled" ? mfaEnabled(u.id) : !mfaEnabled(u.id))
+  const matchesFilter = (u: Member) =>
+    filter === "All" || (filter === "Enabled" ? u.mfaEnabled : !u.mfaEnabled)
   const list = users.filter(
     (u) =>
       matchesFilter(u) &&
       (u.name + u.email).toLowerCase().includes(q.toLowerCase())
   )
-  const remind = (u: AccessUser) => {
-    setReminded((s) => new Set(s).add(u.id))
-    toast(`Enrolment reminder sent to ${u.name}.`)
+
+  const remindMut = useRemindMfa()
+  const remind = (u: Member) => {
+    remindMut.mutate(u.id, {
+      onSuccess: () => {
+        setReminded((s) => new Set(s).add(u.id))
+        toast.success(`Enrolment reminder sent to ${u.name}.`)
+      },
+      onError: (e) =>
+        toast.error("Couldn't send the reminder", {
+          description: e instanceof Error ? e.message : undefined,
+        }),
+    })
+  }
+
+  if (membersQuery.isLoading) {
+    return (
+      <div className="grid place-items-center py-20">
+        <LoadingSpinner />
+      </div>
+    )
+  }
+  if (membersQuery.isError) {
+    return (
+      <Note tone="err" icon={<TriangleAlertIcon />}>
+        Couldn’t load users.{" "}
+        <button
+          className="font-semibold underline underline-offset-2"
+          onClick={() => membersQuery.refetch()}
+        >
+          Try again
+        </button>
+        .
+      </Note>
+    )
   }
 
   return (
     <>
       <Note tone="info" icon={<ShieldCheckIcon />} className="mb-4">
         <b>Admin-only.</b> Multi-factor enrolment for every Platform Console
-        user. You can send enrolment reminders, but only the user can complete
-        MFA setup.
+        user. Enrolment status is live; the specific methods and backup-code
+        counts aren’t exposed by the API yet.
       </Note>
 
       <div className="mb-[18px] grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -122,15 +157,18 @@ export function MfaTab({ readonly }: { readonly: boolean }) {
         </div>
 
         {list.map((u) => {
-          const m = mfaOf(u.id)
-          const on = mfaEnabled(u.id)
+          const on = u.mfaEnabled
           const sent = reminded.has(u.id)
           return (
             <div key={u.id} className={cn(GRID, "border-t px-4 py-3")}>
-              <UserIdCell initials={u.initials} name={u.name} email={u.email} />
+              <UserIdCell
+                initials={initialsOf(u.name)}
+                name={u.name}
+                email={u.email}
+              />
               <div>
-                <MiniBadge tone={USER_STATUS_TONE[u.status]}>
-                  {u.inviteExpired ? "Expired" : u.status}
+                <MiniBadge tone={MEMBER_STATUS_TONE[u.status]}>
+                  {memberAccountLabel(u)}
                 </MiniBadge>
               </div>
               <div>
@@ -142,28 +180,16 @@ export function MfaTab({ readonly }: { readonly: boolean }) {
               </div>
               <div className="hidden lg:block">
                 {on ? (
-                  <div className="flex flex-wrap gap-[5px]">
-                    {m.methods.map((x) => (
-                      <span
-                        key={x}
-                        className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary [&>svg]:size-[11px]"
-                      >
-                        {x === "totp" ? <KeyRoundIcon /> : <MailIcon />}
-                        {MFA_METHOD_LABEL[x]}
-                      </span>
-                    ))}
-                  </div>
+                  <PendingBadge />
                 ) : (
                   <span className="text-muted-foreground">—</span>
                 )}
               </div>
               <div className="hidden text-[13px] lg:block">
-                {!on ? (
-                  <span className="text-muted-foreground">N/A</span>
-                ) : (m.backupCodes ?? 0) > 0 ? (
-                  <span>{m.backupCodes} remaining</span>
+                {on ? (
+                  <PendingBadge />
                 ) : (
-                  <span className="text-destructive">None remaining</span>
+                  <span className="text-muted-foreground">N/A</span>
                 )}
               </div>
               <div className="flex items-center justify-end gap-2">
@@ -175,7 +201,12 @@ export function MfaTab({ readonly }: { readonly: boolean }) {
                       Reminder sent
                     </span>
                   ) : (
-                    <Button variant="ghost" size="sm" onClick={() => remind(u)}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={remindMut.isPending}
+                      onClick={() => remind(u)}
+                    >
                       <MailIcon data-icon="inline-start" />
                       Remind
                     </Button>

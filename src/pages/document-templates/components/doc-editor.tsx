@@ -122,7 +122,11 @@ export function DocEditor({
                   ["Category", tpl.cat, false],
                   ["Format", tpl.format, false],
                   ["Version", tpl.version, false],
-                  ["Tenant overrides", String(tpl.overrides), true],
+                  [
+                    "Tenant overrides",
+                    tpl.overrides == null ? "—" : String(tpl.overrides),
+                    true,
+                  ],
                 ] as const
               ).map(([k, v, mono]) => (
                 <div

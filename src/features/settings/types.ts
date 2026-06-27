@@ -111,3 +111,335 @@ export function toSecurityPolicyPatch(p: SecurityPolicy): SecurityPolicyDTO {
     },
   }
 }
+
+/* ------------------------------------------------------------ localization --- */
+
+export type LocalizationDTO = {
+  id?: number
+  timezone?: string | null
+  week_start?: string | null
+  date_format?: string | null
+  time_format?: string | null
+  decimal_sep?: string | null
+  thousands_sep?: string | null
+  currency?: string | null
+  currency_symbol?: string | null
+  currency_decimals?: number | null
+  default_language?: string | null
+}
+
+export type Localization = {
+  timezone: string
+  weekStart: string
+  dateFormat: string
+  timeFormat: string
+  decimalSep: string
+  thousandsSep: string
+  currency: string
+  currencySymbol: string
+  currencyDecimals: string
+  defaultLanguage: string
+}
+
+export function toLocalization(d: LocalizationDTO): Localization {
+  return {
+    timezone: d.timezone ?? "",
+    weekStart: d.week_start ?? "",
+    dateFormat: d.date_format ?? "",
+    timeFormat: d.time_format ?? "",
+    decimalSep: d.decimal_sep ?? "",
+    thousandsSep: d.thousands_sep ?? "",
+    currency: d.currency ?? "",
+    currencySymbol: d.currency_symbol ?? "",
+    currencyDecimals:
+      d.currency_decimals != null ? String(d.currency_decimals) : "",
+    defaultLanguage: d.default_language ?? "",
+  }
+}
+
+/* -------------------------------------------------------- validation rules --- */
+
+export type ValidationVariantDTO = {
+  c?: string | null
+  country?: string | null
+  pattern?: string | null
+  example?: string | null
+}
+export type ValidationRuleDTO = {
+  id: string
+  field: string
+  applies?: string | null
+  pattern?: string | null
+  example?: string | null
+  error?: string | null
+  normalize?: string[] | null
+  required?: boolean | null
+  status?: string | null
+  variants?: ValidationVariantDTO[] | null
+}
+export type ValidationGroupDTO = {
+  icon?: string | null
+  group: string
+  rules?: ValidationRuleDTO[] | null
+}
+export type ValidationRulesDTO = {
+  status?: string | null
+  version?: number | string | null
+  active_rules?: number | null
+  note?: string | null
+  published_at?: string | null
+  created_at?: string | null
+  updated_by?: string | null
+  rules?: ValidationGroupDTO[] | null
+}
+
+export type ValidationVariant = {
+  country: string
+  pattern: string
+  example: string
+}
+export type ValidationRule = {
+  id: string
+  field: string
+  applies: string
+  pattern: string
+  example: string
+  error: string
+  normalize: string[]
+  required: boolean
+  status: string
+  variants: ValidationVariant[]
+}
+export type ValidationGroup = {
+  icon: string
+  group: string
+  rules: ValidationRule[]
+}
+export type ValidationRuleset = {
+  status: string
+  version: string
+  activeRules: number
+  note: string
+  publishedAt: string
+  updatedBy: string
+  groups: ValidationGroup[]
+}
+
+export function toValidationRuleset(d: ValidationRulesDTO): ValidationRuleset {
+  return {
+    status: d.status ?? "",
+    version: d.version != null ? `v${d.version}` : "",
+    activeRules: d.active_rules ?? 0,
+    note: d.note ?? "",
+    publishedAt: d.published_at ?? d.created_at ?? "",
+    updatedBy: d.updated_by ?? "",
+    groups: (d.rules ?? []).map((g) => ({
+      icon: g.icon ?? "",
+      group: g.group,
+      rules: (g.rules ?? []).map((r) => ({
+        id: r.id,
+        field: r.field,
+        applies: r.applies ?? "",
+        pattern: r.pattern ?? "",
+        example: r.example ?? "",
+        error: r.error ?? "",
+        normalize: r.normalize ?? [],
+        required: !!r.required,
+        status: r.status ?? "",
+        variants: (r.variants ?? []).map((v) => ({
+          country: v.c ?? v.country ?? "",
+          pattern: v.pattern ?? "",
+          example: v.example ?? "",
+        })),
+      })),
+    })),
+  }
+}
+
+/* -------------------------------------------------------- active sessions --- */
+
+/* GET /platform/settings/sessions returns a FLAT array of device sessions —
+   one row per signed-in device. The UI groups them under the user they belong
+   to, so we map each row to a SessionItem and fold them into SessionUsers. */
+
+export type SessionDTO = {
+  session_id: string
+  user_session_id?: string | null
+  member_id?: number | null
+  account?: string | null
+  user?: string | null
+  browser?: string | null
+  os?: string | null
+  device?: string | null
+  ip_address?: string | null
+  location?: string | null
+  started_at?: string | null
+  last_seen_at?: string | null
+  expires_at?: string | null
+  status?: string | null
+  current?: boolean | null
+}
+
+/** One device session (a row in the expanded per-user panel). */
+export type SessionItem = {
+  id: string // session_id — the handle used to revoke
+  code: string // user_session_id (SES…)
+  browser: string
+  os: string
+  device: string
+  ip: string // host only (port + brackets stripped)
+  loc: string
+  started: string // formatted for display
+  lastSeen: string // formatted for display
+  startedAt: number // epoch ms (sorting)
+  lastSeenAt: number // epoch ms (sorting)
+  current: boolean
+  status: string
+}
+
+/** A user with all their active device sessions. */
+export type SessionUser = {
+  id: string // account email — the stable group key
+  memberId: number
+  name: string
+  email: string
+  initials: string
+  lastActive: string // most-recent last-seen, formatted
+  firstLogin: string // earliest session start, formatted
+  sessions: SessionItem[]
+}
+
+function cleanIp(raw?: string | null): string {
+  if (!raw) return ""
+  const s = raw.replace(/^\[|\]$/g, "").trim()
+  const m = /^(\d{1,3}(?:\.\d{1,3}){3}):\d+$/.exec(s) // IPv4:port
+  return m ? m[1] : s
+}
+
+function initialsFromName(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return "?"
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+}
+
+function fmtDateTime(iso?: string | null): string {
+  if (!iso) return ""
+  const d = new Date(iso)
+  return isNaN(d.getTime())
+    ? ""
+    : d.toLocaleString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+}
+
+function epoch(iso?: string | null): number {
+  if (!iso) return 0
+  const t = new Date(iso).getTime()
+  return isNaN(t) ? 0 : t
+}
+
+function toSessionItem(d: SessionDTO): SessionItem {
+  return {
+    id: d.session_id,
+    code: d.user_session_id ?? "",
+    browser:
+      d.browser && d.browser !== "Unknown" ? d.browser : "Unknown browser",
+    os: d.os && d.os !== "Unknown" ? d.os : "Unknown OS",
+    device: d.device ?? "Device",
+    ip: cleanIp(d.ip_address),
+    loc: d.location ?? "",
+    started: fmtDateTime(d.started_at),
+    lastSeen: fmtDateTime(d.last_seen_at),
+    startedAt: epoch(d.started_at),
+    lastSeenAt: epoch(d.last_seen_at),
+    current: !!d.current,
+    status: d.status ?? "",
+  }
+}
+
+export function toSessionUsers(dtos: SessionDTO[]): SessionUser[] {
+  const groups = new Map<string, SessionDTO[]>()
+  for (const d of dtos) {
+    const key = d.account ?? String(d.member_id ?? "")
+    const arr = groups.get(key)
+    if (arr) arr.push(d)
+    else groups.set(key, [d])
+  }
+
+  const users: SessionUser[] = []
+  for (const [key, rows] of groups) {
+    const sessions = rows
+      .map(toSessionItem)
+      .sort(
+        (a, b) =>
+          Number(b.current) - Number(a.current) || b.lastSeenAt - a.lastSeenAt
+      )
+    const name = rows[0].user ?? key
+    const lastSeenMax = Math.max(0, ...sessions.map((s) => s.lastSeenAt))
+    const startedVals = sessions.map((s) => s.startedAt).filter((n) => n > 0)
+    const startedMin = startedVals.length ? Math.min(...startedVals) : 0
+    users.push({
+      id: key,
+      memberId: rows[0].member_id ?? 0,
+      name,
+      email: rows[0].account ?? key,
+      initials: initialsFromName(name),
+      lastActive: lastSeenMax
+        ? fmtDateTime(new Date(lastSeenMax).toISOString())
+        : "",
+      firstLogin: startedMin
+        ? fmtDateTime(new Date(startedMin).toISOString())
+        : "",
+      sessions,
+    })
+  }
+
+  // Most-recently-active users first.
+  return users.sort(
+    (a, b) =>
+      Math.max(0, ...b.sessions.map((s) => s.lastSeenAt)) -
+      Math.max(0, ...a.sessions.map((s) => s.lastSeenAt))
+  )
+}
+
+/* --------------------------------------------------------------- mfa detail --- */
+
+/* GET /platform/settings/mfa-status/{memberId} — one member's MFA enrolment.
+   `enabled_on` is null (not modeled by the API yet). */
+export type MfaDetailDTO = {
+  member_id: number
+  account?: string | null
+  user?: string | null
+  enabled?: boolean | null
+  methods?: string[] | null
+  backup_codes?: number | null
+  enabled_on?: string | null
+}
+
+export type MfaDetail = {
+  memberId: number
+  account: string
+  user: string
+  enabled: boolean
+  /** Enrolled methods, e.g. ["totp", "sms", "webauthn"]. */
+  methods: string[]
+  /** Remaining backup codes; null when not applicable / not tracked. */
+  backupCodes: number | null
+  enabledOn: string | null
+}
+
+export function toMfaDetail(d: MfaDetailDTO): MfaDetail {
+  return {
+    memberId: d.member_id,
+    account: d.account ?? "",
+    user: d.user ?? "",
+    enabled: !!d.enabled,
+    methods: d.methods ?? [],
+    backupCodes: d.backup_codes ?? null,
+    enabledOn: d.enabled_on ?? null,
+  }
+}

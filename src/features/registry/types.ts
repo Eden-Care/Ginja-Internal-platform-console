@@ -118,6 +118,8 @@ export function toRegistryModule(d: ModuleDTO): RegistryModule {
     // module_id (e.g. "MRC000001") is the identifier the get-one endpoint
     // expects at /modules/{moduleId}; fall back to the functional code.
     id: d.module_id ?? d.code,
+    code: d.code ?? "",
+    url: d.url ?? "",
     name: d.name,
     icon: d.icon || CODE_GLYPH[code] || "layers",
     version: d.version || "—",
@@ -126,5 +128,153 @@ export function toRegistryModule(d: ModuleDTO): RegistryModule {
     tenants: d.tenants ?? d.active_tenants ?? 0,
     desc: d.description ?? "",
     subs: (d.sub_modules ?? []).map(toSubModule),
+  }
+}
+
+/* ------------------------------------------------ create / update bodies --- */
+
+export type SubModuleInput = {
+  code: string
+  name: string
+  description?: string
+  requires?: string
+}
+
+/** POST /platform/organization/modules body (snake_case, as the API expects). */
+export type CreateModuleBody = {
+  code: string
+  name: string
+  description?: string
+  icon?: string
+  url?: string
+  version?: string
+  owner_team?: string
+  status?: string
+  sub_modules: SubModuleInput[]
+}
+
+/** PATCH /platform/organization/modules/{id} body — same shape, all optional. */
+export type UpdateModuleBody = Partial<CreateModuleBody>
+
+/* ------------------------------------------------------------- versions --- */
+
+export type ModuleVersionDTO = {
+  version: string
+  status?: string | null
+  note?: string | null
+  by?: string | null
+  by_name?: string | null
+  created_at?: string | null
+  published_at?: string | null
+  current?: boolean | null
+  snapshot?: ModuleDTO | null
+}
+
+/** One row of a module's version history. */
+export type ModuleVersion = {
+  version: string
+  status: string
+  note: string
+  byName: string
+  createdAt: string
+  current: boolean
+}
+
+export function toModuleVersion(d: ModuleVersionDTO): ModuleVersion {
+  return {
+    version: d.version ?? "",
+    status: d.status ?? "",
+    note: d.note ?? "",
+    byName: d.by_name ?? d.by ?? "",
+    createdAt: d.created_at ?? "",
+    current: !!d.current,
+  }
+}
+
+/* ------------------------------------------------------------- activity --- */
+
+export type ModuleChangeMap = Record<
+  string,
+  { from?: unknown; to?: unknown }
+> | null
+
+export type ModuleActivityDTO = {
+  audit_id: string
+  actor?: string | null
+  actor_name?: string | null
+  actor_role?: string | null
+  action: string
+  entity_id?: string | null
+  entity_label?: string | null
+  changes?: ModuleChangeMap
+  reason?: string | null
+  created_at?: string | null
+  kind?: string | null
+}
+
+export type ModuleFieldChange = { field: string; from: string; to: string }
+
+export type ModuleActivity = {
+  id: string
+  actor: string
+  /** Raw action code, e.g. "MODULE_PUBLISHED". */
+  action: string
+  createdAt: string
+  kind: string
+  reason: string
+  changes: ModuleFieldChange[]
+}
+
+const valueStr = (v: unknown): string =>
+  v === null || v === undefined || v === "" ? "—" : String(v)
+
+function toFieldChanges(changes: ModuleChangeMap): ModuleFieldChange[] {
+  if (!changes) return []
+  return Object.entries(changes).map(([field, v]) => ({
+    field,
+    from: valueStr(v?.from),
+    to: valueStr(v?.to),
+  }))
+}
+
+export function toModuleActivity(d: ModuleActivityDTO): ModuleActivity {
+  return {
+    id: d.audit_id,
+    actor: d.actor_name || d.actor || "—",
+    action: d.action ?? "",
+    createdAt: d.created_at ?? "",
+    kind: d.kind ?? "",
+    reason: d.reason ?? "",
+    changes: toFieldChanges(d.changes ?? null),
+  }
+}
+
+/* -------------------------------------------------------------- compare --- */
+
+export type ModuleCompareDTO = {
+  from?: ModuleVersionDTO | null
+  to?: ModuleVersionDTO | null
+  sub_modules_added?: SubModuleDTO[] | null
+  sub_modules_removed?: SubModuleDTO[] | null
+  changed_fields?: ModuleChangeMap
+}
+
+export type ModuleCompare = {
+  fromVersion: string
+  toVersion: string
+  changedFields: ModuleFieldChange[]
+  subsAdded: { code: string; name: string }[]
+  subsRemoved: { code: string; name: string }[]
+}
+
+export function toModuleCompare(d: ModuleCompareDTO): ModuleCompare {
+  const subs = (list: SubModuleDTO[] | null | undefined) =>
+    (list ?? []).map((s) => ({ code: s.code, name: s.name }))
+  return {
+    fromVersion: d.from?.version ?? "",
+    toVersion: d.to?.version ?? "",
+    changedFields: toFieldChanges(d.changed_fields ?? null),
+    subsAdded: subs(d.sub_modules_added),
+    subsRemoved: subs(d.sub_modules_removed),
   }
 }

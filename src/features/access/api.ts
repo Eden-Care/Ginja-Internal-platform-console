@@ -93,7 +93,12 @@ export async function deleteRole(id: number): Promise<void> {
 
 const MEMBERS = "/platform/organization/members"
 
-export type MemberQuery = { q?: string; status?: string; page?: number; size?: number }
+export type MemberQuery = {
+  q?: string
+  status?: string
+  page?: number
+  size?: number
+}
 
 /** GET /platform/organization/members (paged). */
 export async function fetchMembers(
@@ -107,12 +112,14 @@ export async function fetchMembers(
   if (query.q) params.q = query.q
   if (query.status) params.status = query.status
   const dto = await apiGet<PagedDTO<MemberDTO>>(MEMBERS, { params })
+  console.log("[GET /platform/organization/members]", { params, response: dto })
   return toPaged(dto, toMember)
 }
 
 /** GET /platform/organization/members/{id} → one member (full detail). */
 export async function fetchMember(id: number): Promise<Member> {
   const row = await apiGet<MemberDTO>(`${MEMBERS}/${id}`)
+  console.log(`[GET /platform/organization/members/${id}]`, row)
   return toMember(row)
 }
 
@@ -123,6 +130,17 @@ export async function onboardMember(
 ): Promise<Member> {
   const row = await apiPost<MemberDTO>(MEMBERS, body)
   return toMember(row)
+}
+
+/** POST …/members/{id}/invite → mint + send a setup link. */
+export async function sendInvite(
+  id: number,
+  expiryDays?: number
+): Promise<void> {
+  await apiPost(
+    `${MEMBERS}/${id}/invite`,
+    expiryDays ? { expiry_days: expiryDays } : undefined
+  )
 }
 
 export async function resendInvite(id: number): Promise<void> {

@@ -1,5 +1,10 @@
 import * as React from "react"
-import { DownloadIcon, LockIcon, SearchIcon, TriangleAlertIcon } from "lucide-react"
+import {
+  DownloadIcon,
+  LockIcon,
+  SearchIcon,
+  TriangleAlertIcon,
+} from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -22,8 +27,24 @@ import { Note } from "@/components/console/note"
 import { MiniBadge, Tagpill } from "@/components/console/tagpill"
 import { hifiTableHead } from "@/components/console/table"
 import { LoadingSpinner } from "@/components/common/loading"
-import { useAuditLogs } from "@/features/audit/use-audit-logs"
+import { LoadMore } from "@/components/common/load-more"
+import {
+  useExportAuditLogs,
+  useInfiniteAuditLogs,
+} from "@/features/audit/use-audit-logs"
 import type { AuditKind } from "@/features/audit/types"
+
+/** Trigger a browser download for a fetched file Blob. */
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+}
 
 const KIND_TONE: Record<
   AuditKind,
@@ -39,10 +60,36 @@ const KIND_TONE: Record<
 
 export function AuditLogPage() {
   const [query, setQuery] = React.useState("")
-  const { data, isLoading, isError, refetch } = useAuditLogs({ size: 100 })
+  // Infinite scroll: append 20/page as the user reaches the bottom.
+  const {
+    data,
+    isLoading,
+    isError,
+    refetch,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useInfiniteAuditLogs()
+  const exportMut = useExportAuditLogs()
+
+  const onExport = () =>
+    exportMut.mutate(
+      { format: "csv" },
+      {
+        onSuccess: (blob) => {
+          const stamp = new Date().toISOString().slice(0, 10)
+          downloadBlob(blob, `audit-log-${stamp}.csv`)
+          toast.success("Audit log exported.")
+        },
+        onError: (e) =>
+          toast.error("Couldn’t export the audit log", {
+            description: e instanceof Error ? e.message : undefined,
+          }),
+      }
+    )
 
   const rows = React.useMemo(() => {
-    const items = data?.items ?? []
+    const items = data?.pages.flatMap((p) => p.items) ?? []
     const q = query.toLowerCase()
     if (!q) return items
     return items.filter((a) =>
@@ -59,10 +106,11 @@ export function AuditLogPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => toast("Exporting audit log…")}
+            onClick={onExport}
+            disabled={exportMut.isPending}
           >
             <DownloadIcon data-icon="inline-start" />
-            Export
+            {exportMut.isPending ? "Exporting…" : "Export"}
           </Button>
         }
       />
@@ -148,6 +196,14 @@ export function AuditLogPage() {
           </Table>
         </Panel>
       )}
+
+      {!isLoading && !isError ? (
+        <LoadMore
+          hasMore={hasNextPage}
+          loading={isFetchingNextPage}
+          onLoadMore={() => fetchNextPage()}
+        />
+      ) : null}
     </div>
   )
 }

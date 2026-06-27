@@ -1,10 +1,4 @@
-import {
-  Navigate,
-  Outlet,
-  Route,
-  Routes,
-  useLocation,
-} from "react-router-dom"
+import { Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom"
 import { BellDotIcon, MoonIcon, SunIcon } from "lucide-react"
 
 import { AppSidebar } from "@/components/app-sidebar"
@@ -29,6 +23,7 @@ import { ProvisioningDetailPage } from "@/pages/tenant-provisioning/detail"
 import { ModuleRegistryPage } from "@/pages/module-registry"
 import { DocumentTemplatesPage } from "@/pages/document-templates"
 import { EmailTemplatesPage } from "@/pages/email-templates"
+import { SmsTemplatesPage } from "@/pages/sms-templates"
 import { PricingPage } from "@/pages/pricing"
 import { AccessUsersPage } from "@/pages/access/users"
 import { AccessRolesPage } from "@/pages/access/roles"
@@ -100,10 +95,14 @@ function AppShell() {
               element={<DocumentTemplatesPage />}
             />
             <Route path="email-templates" element={<EmailTemplatesPage />} />
+            <Route path="sms-templates" element={<SmsTemplatesPage />} />
             <Route path="pricing" element={<PricingPage />} />
             <Route path="access-users" element={<AccessUsersPage />} />
             <Route path="access-roles" element={<AccessRolesPage />} />
-            <Route path="platform-settings" element={<PlatformSettingsPage />} />
+            <Route
+              path="platform-settings"
+              element={<PlatformSettingsPage />}
+            />
             <Route path="audit-log" element={<AuditLogPage />} />
             <Route path="my-account" element={<MyAccountPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
