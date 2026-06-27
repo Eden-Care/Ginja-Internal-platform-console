@@ -13,9 +13,10 @@ export function ConsolePageHeader({
 }: {
   /**
    * Optional breadcrumb override; by default the trail is derived from the
-   * route. Accepts `Crumb[]` (with hrefs) or a plain `string[]` of labels.
+   * route. Accepts any mix of `Crumb` objects (with hrefs) and plain string
+   * labels — e.g. `[{ label: "Platform" }, "Settings"]`.
    */
-  crumbs?: Crumb[] | string[]
+  crumbs?: (Crumb | string)[]
   title: React.ReactNode
   sub?: React.ReactNode
   actions?: React.ReactNode

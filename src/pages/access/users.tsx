@@ -1,5 +1,6 @@
 import * as React from "react"
 import { useNavigate } from "react-router-dom"
+import { format, formatDistanceToNow } from "date-fns"
 import {
   BanIcon,
   CalendarIcon,
@@ -8,8 +9,10 @@ import {
   ChevronRightIcon,
   ClockIcon,
   ExternalLinkIcon,
+  HistoryIcon,
   InfoIcon,
   KeyRoundIcon,
+  LayersIcon,
   MailIcon,
   PauseIcon,
   PencilIcon,
@@ -17,8 +20,8 @@ import {
   RotateCcwIcon,
   SearchIcon,
   ShieldCheckIcon,
-  ShieldIcon,
   Trash2Icon,
+  TriangleAlertIcon,
   UserPlusIcon,
   UsersIcon,
   XIcon,
@@ -54,35 +57,59 @@ import { Note } from "@/components/console/note"
 import { MiniBadge, Tagpill } from "@/components/console/tagpill"
 import { ConsoleSelect, Field } from "@/components/console/form-atoms"
 import { hifiTableHead } from "@/components/console/table"
+import { LoadingSpinner } from "@/components/common/loading"
 import { useAccess } from "@/contexts/access-context"
 import {
-  ACCESS_ROLES,
-  ACCESS_USERS,
-  type AccessUser,
-  ALL_PERMS,
-  permLabel,
-  PERM_TOTAL,
-  roleById,
-  rolePermCount,
-  type TimelineEvent,
-  TL_KIND,
-  USER_STATUS_TONE,
-} from "@/lib/console-data"
+  useMember,
+  useMemberActivity,
+  useMembers,
+} from "@/features/access/use-members"
+import { useRoles } from "@/features/access/use-roles"
+import {
+  useDeleteMember,
+  useInviteMember,
+  useResendInvite,
+  useRevokeInvite,
+  useSetMemberStatus,
+  useUpdateMemberRoles,
+} from "@/features/access/use-member-mutations"
+import type {
+  Member,
+  MemberActivity,
+  MemberStatus,
+  Role,
+} from "@/features/access/types"
 import {
   AccessGlyph,
   AccessTabs,
   CheckSquare,
   ConfirmDialog,
   ImpactBox,
-  RoleBadge,
   RoleIcon,
   SysChip,
+  roleDotStyle,
 } from "./access-shared"
+import { BulkUploadDrawer } from "./bulk-upload-drawer"
 
 type ModalType = "suspend" | "revoke" | "delete"
 
-/* ------------------------------------------------------------- atoms ----- */
+/* The API stores no role colour — derive a stable tint from a string key. */
+const PALETTE_KEYS = ["iris", "emerald", "amber", "sky", "rose", "violet"]
+function paletteFor(key: string, system = false): string {
+  if (system) return "iris"
+  let h = 0
+  for (const ch of key) h += ch.charCodeAt(0)
+  return PALETTE_KEYS[h % PALETTE_KEYS.length]
+}
 
+const STATUS_TONE: Record<MemberStatus, "success" | "info" | "warning" | "error"> =
+  { ACTIVE: "success", INVITED: "info", SUSPENDED: "warning", DISABLED: "error" }
+const STATUS_LABEL: Record<MemberStatus, string> = {
+  ACTIVE: "Active",
+  INVITED: "Invited",
+  SUSPENDED: "Suspended",
+  DISABLED: "Disabled",
+}
 const AVATAR_TONE: Record<string, string> = {
   success: "bg-primary/12 text-primary",
   info: "bg-info/15 text-info-subtle-foreground",
@@ -90,94 +117,71 @@ const AVATAR_TONE: Record<string, string> = {
   error: "bg-destructive/15 text-destructive",
 }
 
-function UserAvatar({ u, lg }: { u: AccessUser; lg?: boolean }) {
-  const tone = USER_STATUS_TONE[u.status] ?? "neutral"
+const initialsOf = (name: string) =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((s) => s[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase() || "?"
+
+const fmtLastActive = (iso: string | null) =>
+  iso ? formatDistanceToNow(new Date(iso), { addSuffix: true }) : "Never"
+const fmtSince = (iso: string | null) =>
+  iso ? format(new Date(iso), "dd MMM yyyy") : "—"
+/** Relative invite expiry, e.g. "in 6 days" / "2 days ago". */
+const fmtExpiry = (iso: string) =>
+  formatDistanceToNow(new Date(iso), { addSuffix: true })
+
+/* ------------------------------------------------------------- atoms ----- */
+
+function MemberAvatar({ m, lg }: { m: Member; lg?: boolean }) {
   return (
     <span
       className={cn(
         "inline-grid shrink-0 place-items-center rounded-full font-bold",
         lg ? "size-[46px] text-base" : "size-[34px] text-xs",
-        AVATAR_TONE[tone] ?? "bg-primary/12 text-primary"
+        AVATAR_TONE[STATUS_TONE[m.status]] ?? "bg-primary/12 text-primary"
       )}
     >
-      {u.initials}
+      {initialsOf(m.name)}
     </span>
   )
 }
 
-/* ----------------------------------------------------------- timeline ---- */
-
-function Timeline({ events }: { events: TimelineEvent[] }) {
+/** Small role pill with a coloured dot + name. */
+function RoleChip({ name, size }: { name: string; size?: "sm" }) {
   return (
-    <div>
-      {events.map((e, i) => {
-        const k = TL_KIND[e.kind] ?? {
-          icon: "history",
-          tone: "neutral" as const,
-          label: e.kind,
-        }
-        const last = i === events.length - 1
-        return (
-          <div key={i} className="grid grid-cols-[28px_1fr] gap-3">
-            <div className="flex flex-col items-center">
-              <span
-                className={cn(
-                  "z-10 grid size-7 shrink-0 place-items-center rounded-full [&>svg]:size-3",
-                  TONE_BADGE[k.tone]
-                )}
-              >
-                <AccessGlyph name={k.icon} />
-              </span>
-              {!last && (
-                <span className="my-0.5 min-h-3.5 w-0.5 flex-1 bg-border" />
-              )}
-            </div>
-            <div className="pb-4">
-              <div className="flex items-baseline justify-between gap-2.5">
-                <span className="text-[13px] font-semibold">{k.label}</span>
-                <span className="mono shrink-0 text-[11px] text-muted-foreground">
-                  {e.when === "now" ? "Just now" : `${e.date} · ${e.when}`}
-                </span>
-              </div>
-              {e.meta && (
-                <div className="mt-[3px] inline-block rounded-md bg-muted/60 px-2 py-0.5 text-xs">
-                  {e.meta}
-                </div>
-              )}
-              <div className="mt-1 text-[11.5px] text-muted-foreground">
-                by {e.by}
-              </div>
-            </div>
-          </div>
-        )
-      })}
-    </div>
+    <span
+      className={cn(
+        "inline-flex max-w-[150px] items-center gap-1.5 overflow-hidden rounded-full border bg-muted py-[3px] pr-[9px] pl-2 font-semibold whitespace-nowrap",
+        size === "sm" ? "text-[10.5px]" : "text-[11.5px]"
+      )}
+    >
+      <i
+        className="size-[7px] shrink-0 rounded-full"
+        style={roleDotStyle(paletteFor(name))}
+      />
+      <span className="truncate">{name}</span>
+    </span>
   )
-}
-
-const TONE_BADGE: Record<string, string> = {
-  success: "bg-success-subtle text-success-subtle-foreground",
-  info: "bg-info-subtle text-info-subtle-foreground",
-  warning: "bg-warning-subtle text-warning-subtle-foreground",
-  error: "bg-destructive-subtle text-destructive-subtle-foreground",
-  neutral: "bg-muted text-muted-foreground",
 }
 
 /* ------------------------------------------------------- role-pick card -- */
 
 function RolePick({
-  roleId,
+  role,
   on,
   onToggle,
   iconSize,
 }: {
-  roleId: string
+  role: Role
   on: boolean
   onToggle: () => void
   iconSize?: number
 }) {
-  const r = roleById(roleId)
-  if (!r) return null
+  const count = role.permissions.length
   return (
     <label
       className={cn(
@@ -185,20 +189,15 @@ function RolePick({
         on ? "border-primary/55 bg-primary/5" : "hover:border-primary/40"
       )}
     >
-      <input
-        type="checkbox"
-        checked={on}
-        onChange={onToggle}
-        className="hidden"
-      />
-      <RoleIcon color={r.color} size={iconSize ?? 30} iconSize={14} />
+      <input type="checkbox" checked={on} onChange={onToggle} className="hidden" />
+      <RoleIcon color={paletteFor(role.code, role.system)} size={iconSize ?? 30} iconSize={14} />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5 text-[13px] font-semibold">
-          {r.name}
-          {r.system && <SysChip />}
+          {role.name}
+          {role.system && <SysChip />}
         </div>
         <div className="text-[11.5px] text-muted-foreground">
-          {rolePermCount(r)} of {PERM_TOTAL} permissions
+          {count} {count === 1 ? "permission" : "permissions"}
         </div>
       </div>
       <CheckSquare on={on} />
@@ -210,40 +209,40 @@ function RolePick({
 
 function InviteDrawer({
   existing,
+  roles,
+  saving,
   onClose,
   onInvite,
 }: {
-  existing: AccessUser[]
+  existing: Member[]
+  roles: Role[]
+  saving: boolean
   onClose: () => void
-  onInvite: (p: { name: string; email: string; roles: string[] }) => void
+  onInvite: (p: { name: string; email: string; roleIds: number[]; expiryDays: number }) => void
 }) {
   const [name, setName] = React.useState("")
   const [email, setEmail] = React.useState("")
-  const [roles, setRoles] = React.useState<Set<string>>(new Set())
+  const [picked, setPicked] = React.useState<Set<number>>(new Set())
   const [expiry, setExpiry] = React.useState("7 days")
   const emailOk = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())
   const dupe = existing.some(
     (u) => u.email.toLowerCase() === email.trim().toLowerCase()
   )
-  const valid = !!name.trim() && emailOk && !dupe && roles.size > 0
+  const valid = !!name.trim() && emailOk && !dupe && picked.size > 0
   const emailErr = !!email && (!emailOk || dupe)
 
-  const toggle = (id: string) =>
-    setRoles((s) => {
+  const toggle = (id: number) =>
+    setPicked((s) => {
       const n = new Set(s)
       if (n.has(id)) n.delete(id)
       else n.add(id)
       return n
     })
 
-  const sumPerms = new Set<string>()
-  ;[...roles].forEach((id) => {
-    const r = roleById(id)
-    if (!r) return
-    ;(r.perms.includes("*") ? ALL_PERMS : r.perms).forEach((p) =>
-      sumPerms.add(p)
-    )
-  })
+  const permUnion = new Set<string>()
+  roles
+    .filter((r) => picked.has(r.id))
+    .forEach((r) => r.permissionCodes.forEach((c) => permUnion.add(c)))
 
   return (
     <Sheet open onOpenChange={(o) => !o && onClose()}>
@@ -259,9 +258,7 @@ function InviteDrawer({
               <UserPlusIcon />
             </span>
             <div>
-              <SheetTitle className="text-base font-bold">
-                Invite user
-              </SheetTitle>
+              <SheetTitle className="text-base font-bold">Invite user</SheetTitle>
               <SheetDescription className="mt-0.5 text-xs">
                 Send a secure invitation to a Ginja staff member.
               </SheetDescription>
@@ -308,28 +305,28 @@ function InviteDrawer({
               Assign roles<span className="text-destructive">*</span>
             </div>
             <p className="mb-2.5 text-xs text-muted-foreground">
-              A user can hold multiple roles — permissions are the union of all
+              A user can hold multiple roles — access is the union of all
               assigned roles.
             </p>
             <div className="flex flex-col gap-[7px]">
-              {ACCESS_ROLES.map((r) => (
+              {roles.map((r) => (
                 <RolePick
                   key={r.id}
-                  roleId={r.id}
-                  on={roles.has(r.id)}
+                  role={r}
+                  on={picked.has(r.id)}
                   onToggle={() => toggle(r.id)}
                 />
               ))}
             </div>
           </div>
 
-          {roles.size > 0 && (
-            <Note tone="info" icon={<ShieldIcon />}>
+          {picked.size > 0 && (
+            <Note tone="info" icon={<LayersIcon />}>
               This user will receive{" "}
               <b>
-                {sumPerms.size} permission{sumPerms.size === 1 ? "" : "s"}
+                {permUnion.size} permission{permUnion.size === 1 ? "" : "s"}
               </b>{" "}
-              across {roles.size} role{roles.size === 1 ? "" : "s"}.
+              across {picked.size} role{picked.size === 1 ? "" : "s"}.
             </Note>
           )}
 
@@ -347,21 +344,22 @@ function InviteDrawer({
           <span className="flex-1 text-[11.5px] text-muted-foreground">
             An email with a secure setup link will be sent.
           </span>
-          <Button variant="ghost" onClick={onClose}>
+          <Button variant="ghost" onClick={onClose} disabled={saving}>
             Cancel
           </Button>
           <Button
-            disabled={!valid}
+            disabled={!valid || saving}
             onClick={() =>
               onInvite({
                 name: name.trim(),
                 email: email.trim(),
-                roles: [...roles],
+                roleIds: [...picked],
+                expiryDays: parseInt(expiry, 10) || 7,
               })
             }
           >
             <MailIcon data-icon="inline-start" />
-            Send invitation
+            {saving ? "Sending…" : "Send invitation"}
           </Button>
         </div>
       </SheetContent>
@@ -374,39 +372,43 @@ function InviteDrawer({
 const SUB_TABS: [string, string][] = [
   ["overview", "Overview"],
   ["access", "Access"],
-  ["timeline", "Activity timeline"],
+  ["activity", "Activity timeline"],
 ]
 
 function UserDrawer({
-  u,
+  m,
+  roles,
+  rolesById,
   canManage,
+  busy,
   onClose,
   onResend,
   onReactivate,
   onSetRoles,
   onModal,
 }: {
-  u: AccessUser
+  m: Member
+  roles: Role[]
+  rolesById: Map<number, Role>
   canManage: boolean
+  busy: boolean
   onClose: () => void
-  onResend: (u: AccessUser) => void
-  onReactivate: (u: AccessUser) => void
-  onSetRoles: (
-    u: AccessUser,
-    roles: string[],
-    ev: { kind: string; meta: string } | null
-  ) => void
+  onResend: (m: Member) => void
+  onReactivate: (m: Member) => void
+  onSetRoles: (m: Member, roleIds: number[]) => void
   onModal: (type: ModalType) => void
 }) {
   const navigate = useNavigate()
   const [tab, setTab] = React.useState("overview")
   const [editRoles, setEditRoles] = React.useState(false)
-  const [expandedRole, setExpandedRole] = React.useState<string | null>(null)
-  const [draft, setDraft] = React.useState<Set<string>>(new Set(u.roles))
-  const isInvited = u.status === "Invited"
-  const isSuspended = u.status === "Suspended"
+  const [expandedRole, setExpandedRole] = React.useState<number | null>(null)
+  const [draft, setDraft] = React.useState<Set<number>>(new Set(m.roleIds))
+  const isInvited = m.status === "INVITED"
+  const isSuspended = m.status === "SUSPENDED"
+  // Activity is fetched lazily — only once the Activity tab is opened.
+  const activityQuery = useMemberActivity(m.id, tab === "activity")
 
-  const toggle = (id: string) =>
+  const toggle = (id: number) =>
     setDraft((s) => {
       const n = new Set(s)
       if (n.has(id)) n.delete(id)
@@ -414,36 +416,13 @@ function UserDrawer({
       return n
     })
 
-  const saveRoles = () => {
-    const added = [...draft].filter((r) => !u.roles.includes(r))
-    const removed = u.roles.filter((r) => !draft.has(r))
-    let ev: { kind: string; meta: string } | null = null
-    if (added.length)
-      ev = {
-        kind: "role_added",
-        meta: added
-          .map((r) => roleById(r)?.name)
-          .filter(Boolean)
-          .join(", "),
-      }
-    else if (removed.length)
-      ev = {
-        kind: "role_removed",
-        meta: removed
-          .map((r) => roleById(r)?.name)
-          .filter(Boolean)
-          .join(", "),
-      }
-    onSetRoles(u, [...draft], ev)
-    setEditRoles(false)
-  }
-
-  const perms = new Set<string>()
-  u.roles.forEach((id) => {
-    const r = roleById(id)
-    if (!r) return
-    ;(r.perms.includes("*") ? ALL_PERMS : r.perms).forEach((p) => perms.add(p))
-  })
+  // Effective permissions = the member's union across roles — from the API's
+  // accessible_permissions when present, else derived from the assigned roles.
+  const effectivePerms = new Set<string>(
+    m.accessiblePermissions.length
+      ? m.accessiblePermissions
+      : m.roleIds.flatMap((id) => rolesById.get(id)?.permissionCodes ?? [])
+  )
 
   return (
     <Sheet open onOpenChange={(o) => !o && onClose()}>
@@ -456,26 +435,24 @@ function UserDrawer({
         <div className="border-b p-[18px]">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start gap-[13px]">
-              <UserAvatar u={u} lg />
+              <MemberAvatar m={m} lg />
               <div>
-                <SheetTitle className="text-[17px] font-bold">
-                  {u.name}
-                </SheetTitle>
+                <SheetTitle className="text-[17px] font-bold">{m.name}</SheetTitle>
                 <SheetDescription className="mono mt-px text-xs">
-                  {u.email}
+                  {m.email}
                 </SheetDescription>
                 <div className="mt-[7px] flex items-center gap-[7px]">
-                  <MiniBadge tone={USER_STATUS_TONE[u.status]}>
-                    {u.status}
+                  <MiniBadge tone={STATUS_TONE[m.status]}>
+                    {STATUS_LABEL[m.status]}
                   </MiniBadge>
-                  {u.mfa && (
-                    <Tagpill className="text-[10.5px]">
-                      <ShieldIcon />
+                  {m.mfaEnabled && (
+                    <span className="inline-flex items-center gap-1 rounded-full border bg-muted px-2 py-[2px] text-[10.5px] font-semibold text-muted-foreground [&>svg]:size-2.5">
+                      <ShieldCheckIcon />
                       MFA on
-                    </Tagpill>
+                    </span>
                   )}
                   <span className="text-[11.5px] text-muted-foreground">
-                    {u.id}
+                    {m.code}
                   </span>
                 </div>
               </div>
@@ -486,7 +463,7 @@ function UserDrawer({
               </Button>
             </SheetClose>
           </div>
-          <div className="mt-4 -mb-px flex gap-0.5 border-b-0">
+          <div className="mt-4 -mb-px flex gap-0.5">
             {SUB_TABS.map(([k, l]) => (
               <button
                 key={k}
@@ -508,14 +485,28 @@ function UserDrawer({
           {isSuspended && (
             <Note tone="warn" icon={<PauseIcon />}>
               <b>Suspended.</b>{" "}
-              {u.suspendReason ? `Reason: ${u.suspendReason}.` : ""} Sessions
-              are revoked until reactivated.
+              {m.statusReason ? `Reason: ${m.statusReason}. ` : ""}Sessions are
+              revoked until reactivated.
             </Note>
           )}
           {isInvited && (
-            <Note tone="info" icon={<MailIcon />}>
-              <b>Invitation pending.</b> Sent {u.invitedAgo}, expires in{" "}
-              {u.expiresIn}. Awaiting acceptance.
+            <Note tone={m.inviteExpired ? "warn" : "info"} icon={<MailIcon />}>
+              {m.inviteExpired ? (
+                <>
+                  <b>Invitation expired.</b> The setup link is no longer valid —
+                  resend it to invite this user again.
+                </>
+              ) : (
+                <>
+                  <b>Invitation pending.</b> Awaiting acceptance of the setup link.
+                  {m.inviteExpiresAt && (
+                    <span className="mt-1.5 flex items-center gap-1.5 text-[11.5px] text-muted-foreground">
+                      <ClockIcon className="size-3 shrink-0" />
+                      Expires {fmtExpiry(m.inviteExpiresAt)}.
+                    </span>
+                  )}
+                </>
+              )}
             </Note>
           )}
 
@@ -525,17 +516,17 @@ function UserDrawer({
                 <StatCard
                   icon={<ClockIcon />}
                   k="Last active"
-                  v={u.lastActive === "—" ? "Never" : u.lastActive}
+                  v={fmtLastActive(m.lastActive)}
                 />
                 <StatCard
                   icon={<CalendarIcon />}
                   k="Member since"
-                  v={u.joined === "—" ? "Pending" : u.joined}
+                  v={fmtSince(m.memberSince)}
                 />
                 <StatCard
                   icon={<ShieldCheckIcon />}
                   k="Two-factor"
-                  v={u.mfa ? "Enabled" : "Not set up"}
+                  v={m.mfaEnabled ? "Enabled" : "Not set up"}
                 />
               </div>
 
@@ -543,18 +534,18 @@ function UserDrawer({
                 <Eyebrow className="mb-2">Account details</Eyebrow>
                 <div className="overflow-hidden rounded-xl border">
                   <DetailRow icon={<InfoIcon />} k="Account status">
-                    <MiniBadge tone={USER_STATUS_TONE[u.status]}>
-                      {u.inviteExpired ? "Expired" : u.status}
+                    <MiniBadge tone={STATUS_TONE[m.status]}>
+                      {STATUS_LABEL[m.status]}
                     </MiniBadge>
                   </DetailRow>
                   <DetailRow icon={<MailIcon />} k="Email">
-                    <span className="mono">{u.email}</span>
+                    <span className="mono">{m.email}</span>
                   </DetailRow>
                   <DetailRow icon={<KeyRoundIcon />} k="User ID">
-                    <span className="mono">{u.id}</span>
+                    <span className="mono">{m.code}</span>
                   </DetailRow>
                   <DetailRow icon={<UserPlusIcon />} k="Invited / added by">
-                    {u.addedBy}
+                    {m.invitedBy ?? "—"}
                   </DetailRow>
                 </div>
               </div>
@@ -563,41 +554,42 @@ function UserDrawer({
                 <div className="mb-2 flex items-baseline justify-between">
                   <Eyebrow>Roles &amp; access</Eyebrow>
                   <span className="text-[11.5px] text-muted-foreground">
-                    {u.roles.length} {u.roles.length === 1 ? "role" : "roles"} ·{" "}
-                    {perms.size}{" "}
-                    {perms.size === 1 ? "permission" : "permissions"}
+                    {m.roles.length} {m.roles.length === 1 ? "role" : "roles"} ·{" "}
+                    {effectivePerms.size}{" "}
+                    {effectivePerms.size === 1 ? "permission" : "permissions"}
                   </span>
                 </div>
-                {u.roles.length === 0 ? (
+                {m.roles.length === 0 ? (
                   <p className="text-[12.5px] text-muted-foreground">
                     No roles assigned — this user can sign in but see nothing.
                   </p>
                 ) : (
                   <div className="flex flex-col gap-[9px]">
-                    {u.roles.map((id) => {
-                      const r = roleById(id)
-                      if (!r) return null
-                      const open = expandedRole === id
-                      const rperms = r.perms.includes("*") ? ALL_PERMS : r.perms
+                    {m.roles.map((ref) => {
+                      const r = rolesById.get(ref.id)
+                      const open = expandedRole === ref.id
+                      const perms = r?.permissions ?? []
                       return (
                         <div
-                          key={id}
+                          key={ref.id}
                           className={cn(
                             "overflow-hidden rounded-xl border bg-card",
                             open && "border-primary/40"
                           )}
                         >
                           <button
-                            onClick={() => setExpandedRole(open ? null : id)}
+                            onClick={() => setExpandedRole(open ? null : ref.id)}
                             className="flex w-full items-center gap-3 p-[13px_14px] text-left transition-colors hover:bg-muted/40"
                           >
-                            <RoleIcon color={r.color} iconSize={15} />
+                            <RoleIcon
+                              color={paletteFor(r?.code ?? ref.name, r?.system)}
+                              iconSize={15}
+                            />
                             <div className="min-w-0 flex-1">
-                              <div className="text-sm font-semibold">
-                                {r.name}
-                              </div>
+                              <div className="text-sm font-semibold">{ref.name}</div>
                               <div className="text-[11.5px] text-muted-foreground">
-                                {rolePermCount(r)} of {PERM_TOTAL} permissions
+                                {perms.length}{" "}
+                                {perms.length === 1 ? "permission" : "permissions"}
                               </div>
                             </div>
                             <ChevronDownIcon
@@ -610,26 +602,34 @@ function UserDrawer({
                           {open && (
                             <div className="border-t p-[12px_14px_14px]">
                               <div className="flex flex-wrap gap-1.5 pt-3">
-                                {rperms.map((p) => (
-                                  <span
-                                    key={p}
-                                    className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-2.5 py-[3px] text-[11.5px] font-medium text-success [&>svg]:size-[11px]"
-                                  >
-                                    <CheckIcon />
-                                    {permLabel(p)}
+                                {perms.length === 0 ? (
+                                  <span className="text-[12px] text-muted-foreground">
+                                    No permissions granted.
                                   </span>
-                                ))}
+                                ) : (
+                                  perms.map((p) => (
+                                    <span
+                                      key={p.code}
+                                      className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-2.5 py-[3px] text-[11.5px] font-medium text-success [&>svg]:size-[11px]"
+                                    >
+                                      <CheckIcon />
+                                      {p.name}
+                                    </span>
+                                  ))
+                                )}
                               </div>
-                              <button
-                                onClick={() => {
-                                  onClose()
-                                  navigate(`/access-roles?edit=${r.id}`)
-                                }}
-                                className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-input bg-card px-3 py-[7px] text-[12.5px] font-semibold text-primary transition-colors hover:border-primary hover:bg-primary/5 [&>svg]:size-[13px]"
-                              >
-                                Open role page
-                                <ExternalLinkIcon />
-                              </button>
+                              {r && (
+                                <button
+                                  onClick={() => {
+                                    onClose()
+                                    navigate(`/access-roles?edit=${r.code}`)
+                                  }}
+                                  className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-input bg-card px-3 py-[7px] text-[12.5px] font-semibold text-primary transition-colors hover:border-primary hover:bg-primary/5 [&>svg]:size-[13px]"
+                                >
+                                  Open role page
+                                  <ExternalLinkIcon />
+                                </button>
+                              )}
                             </div>
                           )}
                         </div>
@@ -651,7 +651,7 @@ function UserDrawer({
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        setDraft(new Set(u.roles))
+                        setDraft(new Set(m.roleIds))
                         setEditRoles(true)
                       }}
                     >
@@ -662,40 +662,41 @@ function UserDrawer({
                 </div>
                 {!editRoles ? (
                   <div className="flex flex-col gap-[7px]">
-                    {u.roles.map((id) => {
-                      const r = roleById(id)
-                      if (!r) return null
+                    {m.roles.map((ref) => {
+                      const r = rolesById.get(ref.id)
+                      const count = r?.permissions.length ?? 0
                       return (
                         <div
-                          key={id}
+                          key={ref.id}
                           className="flex items-center gap-2.5 rounded-[10px] border p-[8px_11px]"
                         >
-                          <RoleIcon color={r.color} size={28} iconSize={13} />
+                          <RoleIcon
+                            color={paletteFor(r?.code ?? ref.name, r?.system)}
+                            size={28}
+                            iconSize={13}
+                          />
                           <div className="flex-1">
-                            <div className="text-[13px] font-semibold">
-                              {r.name}
-                            </div>
+                            <div className="text-[13px] font-semibold">{ref.name}</div>
                             <div className="text-[11px] text-muted-foreground">
-                              {rolePermCount(r)} of {PERM_TOTAL} permissions
+                              {count} {count === 1 ? "permission" : "permissions"}
                             </div>
                           </div>
                         </div>
                       )
                     })}
-                    {u.roles.length === 0 && (
+                    {m.roles.length === 0 && (
                       <p className="text-[12.5px] text-muted-foreground">
-                        No roles assigned — this user can sign in but see
-                        nothing.
+                        No roles assigned — this user can sign in but see nothing.
                       </p>
                     )}
                   </div>
                 ) : (
                   <>
                     <div className="flex flex-col gap-[7px]">
-                      {ACCESS_ROLES.map((r) => (
+                      {roles.map((r) => (
                         <RolePick
                           key={r.id}
-                          roleId={r.id}
+                          role={r}
                           on={draft.has(r.id)}
                           onToggle={() => toggle(r.id)}
                           iconSize={28}
@@ -708,10 +709,18 @@ function UserDrawer({
                         variant="ghost"
                         size="sm"
                         onClick={() => setEditRoles(false)}
+                        disabled={busy}
                       >
                         Cancel
                       </Button>
-                      <Button size="sm" onClick={saveRoles}>
+                      <Button
+                        size="sm"
+                        disabled={busy}
+                        onClick={() => {
+                          onSetRoles(m, [...draft])
+                          setEditRoles(false)
+                        }}
+                      >
                         <CheckIcon data-icon="inline-start" />
                         Save roles
                       </Button>
@@ -729,16 +738,14 @@ function UserDrawer({
                     </span>
                   </Eyebrow>
                   <div className="flex flex-wrap gap-1.5">
-                    {[...perms].map((p) => (
-                      <Tagpill key={p} className="text-[11px]">
+                    {[...effectivePerms].map((c) => (
+                      <Tagpill key={c} className="text-[11px]">
                         <CheckIcon className="size-2.5" />
-                        {permLabel(p)}
+                        {c}
                       </Tagpill>
                     ))}
-                    {perms.size === 0 && (
-                      <span className="text-[12.5px] text-muted-foreground">
-                        None
-                      </span>
+                    {effectivePerms.size === 0 && (
+                      <span className="text-[12.5px] text-muted-foreground">None</span>
                     )}
                   </div>
                 </div>
@@ -746,59 +753,66 @@ function UserDrawer({
             </>
           )}
 
-          {tab === "timeline" && <Timeline events={u.timeline} />}
+          {tab === "activity" &&
+            (activityQuery.isLoading ? (
+              <div className="flex items-center justify-center py-12 text-muted-foreground">
+                <LoadingSpinner />
+              </div>
+            ) : activityQuery.isError ? (
+              <Note tone="err" icon={<TriangleAlertIcon />}>
+                Couldn’t load this user’s activity.{" "}
+                <button
+                  className="font-semibold underline underline-offset-2"
+                  onClick={() => activityQuery.refetch()}
+                >
+                  Try again
+                </button>
+                .
+              </Note>
+            ) : (activityQuery.data?.length ?? 0) === 0 ? (
+              <div className="flex flex-col items-center gap-2 rounded-[14px] border border-dashed bg-muted/30 px-6 py-12 text-center text-muted-foreground">
+                <HistoryIcon className="size-[22px]" />
+                <p className="text-[13px]">No recorded activity for this user yet.</p>
+              </div>
+            ) : (
+              <MemberTimeline events={activityQuery.data ?? []} />
+            ))}
         </div>
 
         {canManage && (
           <div className="flex flex-wrap items-center gap-2 border-t p-3.5">
             {isInvited ? (
               <>
-                <Button variant="outline" size="sm" onClick={() => onResend(u)}>
+                <Button variant="outline" size="sm" onClick={() => onResend(m)} disabled={busy}>
                   <RotateCcwIcon data-icon="inline-start" />
                   Resend invite
                 </Button>
                 <span className="flex-1" />
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => onModal("revoke")}
-                >
+                <Button variant="destructive" size="sm" onClick={() => onModal("revoke")}>
                   <BanIcon data-icon="inline-start" />
                   Revoke invite
                 </Button>
               </>
             ) : isSuspended ? (
               <>
-                <Button size="sm" onClick={() => onReactivate(u)}>
+                <Button size="sm" onClick={() => onReactivate(m)} disabled={busy}>
                   <PlayIcon data-icon="inline-start" />
                   Reactivate
                 </Button>
                 <span className="flex-1" />
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => onModal("delete")}
-                >
+                <Button variant="destructive" size="sm" onClick={() => onModal("delete")}>
                   <Trash2Icon data-icon="inline-start" />
                   Delete user
                 </Button>
               </>
             ) : (
               <>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onModal("suspend")}
-                >
+                <Button variant="outline" size="sm" onClick={() => onModal("suspend")}>
                   <PauseIcon data-icon="inline-start" />
                   Suspend
                 </Button>
                 <span className="flex-1" />
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => onModal("delete")}
-                >
+                <Button variant="destructive" size="sm" onClick={() => onModal("delete")}>
                   <Trash2Icon data-icon="inline-start" />
                   Delete user
                 </Button>
@@ -837,7 +851,7 @@ function StatCard({
 }: {
   icon: React.ReactNode
   k: string
-  v: string
+  v: React.ReactNode
 }) {
   return (
     <div className="rounded-xl border bg-card p-3.5">
@@ -847,7 +861,7 @@ function StatCard({
       <div className="text-[10px] font-semibold tracking-[0.06em] text-muted-foreground uppercase">
         {k}
       </div>
-      <div className="mt-px text-[15px] font-bold">{v}</div>
+      <div className="mt-1 text-[15px] font-bold">{v}</div>
     </div>
   )
 }
@@ -865,337 +879,412 @@ function DetailRow({
     <div className="flex items-center gap-[11px] border-b p-[13px_15px] last:border-0 [&>svg]:size-[15px] [&>svg]:shrink-0 [&>svg]:text-muted-foreground">
       {icon}
       <span className="text-[13px] text-muted-foreground">{k}</span>
-      <span className="ml-auto text-right text-[13px] font-semibold">
-        {children}
-      </span>
+      <span className="ml-auto text-right text-[13px] font-semibold">{children}</span>
+    </div>
+  )
+}
+
+/* ---------------------------------------------------- activity timeline -- */
+
+/** Map the API's activity `kind` to a glyph + tinted dot (presentation only). */
+const KIND_GLYPH: Record<string, { glyph: string; cls: string }> = {
+  create: { glyph: "plus", cls: "bg-primary/12 text-primary" },
+  approve: { glyph: "userCheck", cls: "bg-success/15 text-success" },
+  edit: { glyph: "sparkles", cls: "bg-info/15 text-info-subtle-foreground" },
+  danger: { glyph: "ban", cls: "bg-destructive/12 text-destructive" },
+  warn: { glyph: "pause", cls: "bg-warning/18 text-warning-subtle-foreground" },
+  login: { glyph: "logIn", cls: "bg-muted text-muted-foreground" },
+  system: { glyph: "history", cls: "bg-muted text-muted-foreground" },
+}
+
+function MemberTimeline({ events }: { events: MemberActivity[] }) {
+  return (
+    <div className="flex flex-col">
+      {events.map((e, i) => {
+        const g = KIND_GLYPH[e.kind] ?? KIND_GLYPH.system
+        return (
+          <div key={e.id} className="flex gap-3">
+            <div className="flex flex-col items-center">
+              <span
+                className={cn(
+                  "grid size-[26px] shrink-0 place-items-center rounded-full [&>svg]:size-3",
+                  g.cls
+                )}
+              >
+                <AccessGlyph name={g.glyph} />
+              </span>
+              {i < events.length - 1 && <span className="w-px flex-1 bg-border" />}
+            </div>
+            <div className="min-w-0 flex-1 pb-4">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[13px] font-semibold">{e.label}</span>
+                <span className="shrink-0 text-[11px] text-muted-foreground">
+                  {fmtLastActive(e.at)}
+                </span>
+              </div>
+              {e.reason && (
+                <div className="mt-0.5 text-[12px] text-muted-foreground">
+                  {e.reason}
+                </div>
+              )}
+              <div className="mt-0.5 text-[11px] text-muted-foreground">
+                by {e.actor}
+              </div>
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }
 
 /* ============================================================ users page === */
 
+const FILTER_TABS: { label: string; status: MemberStatus | "All" }[] = [
+  { label: "All", status: "All" },
+  { label: "Active", status: "ACTIVE" },
+  { label: "Invited", status: "INVITED" },
+  { label: "Suspended", status: "SUSPENDED" },
+]
+
 export function AccessUsersPage() {
-  const { user, hasPermission } = useAccess()
+  const { hasPermission } = useAccess()
   const canManage = hasPermission("access-users")
-  const actor = user.fullName || "You"
 
-  const [users, setUsers] = React.useState<AccessUser[]>(ACCESS_USERS)
+  const membersQuery = useMembers({})
+  const rolesQuery = useRoles()
+  const members = React.useMemo(() => membersQuery.data?.items ?? [], [membersQuery.data])
+  const roles = React.useMemo(() => rolesQuery.data ?? [], [rolesQuery.data])
+  const rolesById = React.useMemo(
+    () => new Map(roles.map((r) => [r.id, r])),
+    [roles]
+  )
+
+  const inviteMut = useInviteMember()
+  const statusMut = useSetMemberStatus()
+  const rolesMut = useUpdateMemberRoles()
+  const resendMut = useResendInvite()
+  const revokeMut = useRevokeInvite()
+  const deleteMut = useDeleteMember()
+  const busy = statusMut.isPending || rolesMut.isPending || resendMut.isPending
+
   const [q, setQ] = React.useState("")
-  const [filter, setFilter] = React.useState("All")
-  const [openId, setOpenId] = React.useState<string | null>(null)
+  const [filter, setFilter] = React.useState<MemberStatus | "All">("All")
+  const [openId, setOpenId] = React.useState<number | null>(null)
   const [invite, setInvite] = React.useState(false)
-  const [modal, setModal] = React.useState<{
-    type: ModalType
-    user: AccessUser
-  } | null>(null)
+  const [bulk, setBulk] = React.useState(false)
+  const [modal, setModal] = React.useState<{ type: ModalType; member: Member } | null>(null)
 
-  const counts: Record<string, number> = { All: users.length }
-  ;["Active", "Invited", "Suspended"].forEach(
-    (s) => (counts[s] = users.filter((u) => u.status === s).length)
+  // Opening a row fetches that member's full detail from GET /members/{id};
+  // the already-loaded list row seeds the drawer while the request is in flight.
+  const detailQuery = useMember(openId)
+
+  const counts: Record<string, number> = { All: members.length }
+  ;(["ACTIVE", "INVITED", "SUSPENDED"] as MemberStatus[]).forEach(
+    (s) => (counts[s] = members.filter((m) => m.status === s).length)
   )
-  const list = users.filter(
-    (u) =>
-      (filter === "All" || u.status === filter) &&
-      (u.name.toLowerCase().includes(q.toLowerCase()) ||
-        u.email.toLowerCase().includes(q.toLowerCase()))
+  const list = members.filter(
+    (m) =>
+      (filter === "All" || m.status === filter) &&
+      (m.name.toLowerCase().includes(q.toLowerCase()) ||
+        m.email.toLowerCase().includes(q.toLowerCase()))
   )
-  const open = openId ? users.find((u) => u.id === openId) : null
+  const open =
+    openId == null
+      ? null
+      : detailQuery.data ?? members.find((m) => m.id === openId) ?? null
 
-  /* --- mutations (optimistic; also push an audit toast) --- */
-  const patch = (id: string, fn: (u: AccessUser) => AccessUser) =>
-    setUsers((us) => us.map((u) => (u.id === id ? fn(u) : u)))
-  const addEvent = (
-    u: AccessUser,
-    kind: string,
-    meta?: string
-  ): AccessUser => ({
-    ...u,
-    timeline: [
-      { kind, when: "now", date: "Today", by: actor, meta },
-      ...u.timeline,
-    ],
-  })
+  const errToast = (e: unknown, fallback: string) =>
+    toast.error(e instanceof Error ? e.message : fallback)
 
-  const doInvite = (payload: {
-    name: string
-    email: string
-    roles: string[]
-  }) => {
-    const u: AccessUser = {
-      id: "USR-" + Math.random().toString(36).slice(2, 6).toUpperCase(),
-      name: payload.name,
-      email: payload.email,
-      initials: payload.name
-        .split(" ")
-        .map((s) => s[0])
-        .join("")
-        .slice(0, 2)
-        .toUpperCase(),
-      status: "Invited",
-      roles: payload.roles,
-      lastActive: "—",
-      addedBy: actor,
-      joined: "—",
-      mfa: false,
-      invitedAgo: "just now",
-      expiresIn: "7 days",
-      timeline: [
-        {
-          kind: "invited",
-          when: "now",
-          date: "Today",
-          by: actor,
-          meta: payload.roles
-            .map((r) => roleById(r)?.name)
-            .filter(Boolean)
-            .join(", "),
-        },
-      ],
-    }
-    setUsers((us) => [u, ...us])
-    toast.success(`Invitation sent to ${payload.email}.`)
-    setInvite(false)
-  }
-  const resend = (u: AccessUser) => {
-    patch(u.id, (x) => ({
-      ...addEvent(x, "resent"),
-      invitedAgo: "just now",
-      expiresIn: "7 days",
-    }))
-    toast.success(`Invitation resent to ${u.email}.`)
-  }
-  const revoke = (u: AccessUser) => {
-    setUsers((us) => us.filter((x) => x.id !== u.id))
-    toast.success(`Invitation to ${u.email} revoked.`)
-    setModal(null)
-    setOpenId(null)
-  }
-  const suspend = (u: AccessUser, reason: string) => {
-    patch(u.id, (x) => ({
-      ...addEvent(x, "suspended", reason),
-      status: "Suspended",
-      suspendReason: reason,
-    }))
-    toast.success(`${u.name} suspended.`)
-    setModal(null)
-  }
-  const reactivate = (u: AccessUser) => {
-    patch(u.id, (x) => ({
-      ...addEvent(x, "reactivated"),
-      status: "Active",
-      suspendReason: null,
-    }))
-    toast.success(`${u.name} reactivated.`)
-  }
-  const remove = (u: AccessUser) => {
-    setUsers((us) => us.filter((x) => x.id !== u.id))
-    toast.success(`${u.name} deleted.`)
-    setModal(null)
-    setOpenId(null)
-  }
-  const setRoles = (
-    u: AccessUser,
-    roles: string[],
-    ev: { kind: string; meta: string } | null
-  ) =>
-    patch(u.id, (x) => {
-      let nx: AccessUser = { ...x, roles }
-      if (ev) nx = addEvent(nx, ev.kind, ev.meta)
-      return nx
+  const doInvite = (p: { name: string; email: string; roleIds: number[]; expiryDays: number }) =>
+    inviteMut.mutate(p, {
+      onSuccess: () => {
+        toast.success(`Invitation sent to ${p.email}.`)
+        setInvite(false)
+      },
+      onError: (e) => errToast(e, "Could not send the invitation."),
     })
+
+  const resend = (m: Member) =>
+    resendMut.mutate(m.id, {
+      onSuccess: () => toast.success(`Invitation resent to ${m.email}.`),
+      onError: (e) => errToast(e, "Could not resend the invite."),
+    })
+
+  const revoke = (m: Member) =>
+    revokeMut.mutate(m.id, {
+      onSuccess: () => {
+        toast.success(`Invitation to ${m.email} revoked.`)
+        setModal(null)
+        setOpenId(null)
+      },
+      onError: (e) => errToast(e, "Could not revoke the invite."),
+    })
+
+  const suspend = (m: Member, reason: string) =>
+    statusMut.mutate(
+      { id: m.id, status: "SUSPENDED", reason },
+      {
+        onSuccess: () => {
+          toast.success(`${m.name} suspended.`)
+          setModal(null)
+        },
+        onError: (e) => errToast(e, "Could not suspend the user."),
+      }
+    )
+
+  const reactivate = (m: Member) =>
+    statusMut.mutate(
+      { id: m.id, status: "ACTIVE" },
+      {
+        onSuccess: () => toast.success(`${m.name} reactivated.`),
+        onError: (e) => errToast(e, "Could not reactivate the user."),
+      }
+    )
+
+  const remove = (m: Member) =>
+    deleteMut.mutate(m.id, {
+      onSuccess: () => {
+        toast.success(`${m.name} deleted.`)
+        setModal(null)
+        setOpenId(null)
+      },
+      onError: (e) => errToast(e, "Could not delete the user."),
+    })
+
+  const setRoles = (m: Member, roleIds: number[]) =>
+    rolesMut.mutate(
+      { member: m, roleIds },
+      {
+        onSuccess: () => toast.success(`Roles updated for ${m.name}.`),
+        onError: (e) => errToast(e, "Could not update roles."),
+      }
+    )
 
   return (
     <div className="flex flex-col gap-5">
       <ConsolePageHeader
-        crumbs={["Access & security", "Users"]}
         title="Users"
         sub="Invite internal Ginja staff, assign them roles, and manage their access lifecycle."
         actions={
           canManage && (
-            <Button onClick={() => setInvite(true)}>
-              <UserPlusIcon data-icon="inline-start" />
-              Invite user
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={() => setBulk(true)}>
+                <UsersIcon data-icon="inline-start" />
+                Bulk upload
+              </Button>
+              <Button onClick={() => setInvite(true)}>
+                <UserPlusIcon data-icon="inline-start" />
+                Invite user
+              </Button>
+            </div>
           )
         }
       />
 
       <AccessTabs active="users" />
 
-      <div className="flex flex-wrap items-center gap-2.5">
-        <InputGroup className="max-w-xs flex-1">
-          <InputGroupAddon>
-            <SearchIcon />
-          </InputGroupAddon>
-          <InputGroupInput
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search by name or email…"
-          />
-        </InputGroup>
-        <div className="inline-flex gap-[3px] rounded-[9px] bg-muted p-[3px]">
-          {["All", "Active", "Invited", "Suspended"].map((s) => (
-            <button
-              key={s}
-              onClick={() => setFilter(s)}
-              className={cn(
-                "inline-flex h-[30px] items-center gap-1.5 rounded-md px-2.5 text-[12.5px] font-semibold transition-colors",
-                filter === s
-                  ? "bg-card text-foreground shadow-xs"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {s}
-              <span
-                className={cn(
-                  "mono rounded-full px-1.5 py-px text-[10.5px] font-semibold",
-                  filter === s
-                    ? "bg-primary/14 text-primary"
-                    : "bg-border text-muted-foreground"
-                )}
-              >
-                {counts[s] || 0}
-              </span>
-            </button>
-          ))}
+      {membersQuery.isLoading ? (
+        <div className="flex items-center justify-center py-20 text-muted-foreground">
+          <LoadingSpinner />
         </div>
-      </div>
-
-      <Panel className="overflow-hidden">
-        <Table>
-          <TableHeader className={hifiTableHead}>
-            <TableRow className="hover:bg-transparent">
-              <TableHead>User</TableHead>
-              <TableHead>Roles</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Last active</TableHead>
-              <TableHead>Added by</TableHead>
-              <TableHead className="w-11" />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {list.map((u) => (
-              <TableRow
-                key={u.id}
-                onClick={() => setOpenId(u.id)}
-                className="cursor-pointer"
-              >
-                <TableCell>
-                  <div className="flex items-center gap-[11px]">
-                    <UserAvatar u={u} />
-                    <div>
-                      <div className="text-[13px] font-semibold">{u.name}</div>
-                      <div className="mono text-[11.5px] text-muted-foreground">
-                        {u.email}
-                      </div>
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-1.5">
-                    {u.roles.length === 0 ? (
-                      <span className="text-xs text-muted-foreground">
-                        No roles
-                      </span>
-                    ) : (
-                      <>
-                        {u.roles.slice(0, 2).map((r) => (
-                          <RoleBadge key={r} role={roleById(r)} size="sm" />
-                        ))}
-                        {u.roles.length > 2 && (
-                          <span
-                            title={u.roles
-                              .slice(2)
-                              .map((r) => roleById(r)?.name)
-                              .filter(Boolean)
-                              .join(", ")}
-                            className="shrink-0 rounded-full border bg-muted px-2 py-[3px] text-[10.5px] font-semibold whitespace-nowrap text-muted-foreground"
-                          >
-                            +{u.roles.length - 2} more
-                          </span>
-                        )}
-                      </>
+      ) : membersQuery.isError ? (
+        <Note tone="err" icon={<TriangleAlertIcon />}>
+          Couldn’t load users.{" "}
+          <button
+            className="font-semibold underline underline-offset-2"
+            onClick={() => membersQuery.refetch()}
+          >
+            Try again
+          </button>
+          .
+        </Note>
+      ) : (
+        <>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <InputGroup className="max-w-xs flex-1">
+              <InputGroupAddon>
+                <SearchIcon />
+              </InputGroupAddon>
+              <InputGroupInput
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Search by name or email…"
+              />
+            </InputGroup>
+            <div className="inline-flex gap-[3px] rounded-[9px] bg-muted p-[3px]">
+              {FILTER_TABS.map((t) => (
+                <button
+                  key={t.label}
+                  onClick={() => setFilter(t.status)}
+                  className={cn(
+                    "inline-flex h-[30px] items-center gap-1.5 rounded-md px-2.5 text-[12.5px] font-semibold transition-colors",
+                    filter === t.status
+                      ? "bg-card text-foreground shadow-xs"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {t.label}
+                  <span
+                    className={cn(
+                      "mono rounded-full px-1.5 py-px text-[10.5px] font-semibold",
+                      filter === t.status
+                        ? "bg-primary/14 text-primary"
+                        : "bg-border text-muted-foreground"
                     )}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  {u.status === "Invited" && u.inviteExpired ? (
-                    <div className="flex flex-col items-start gap-[3px]">
-                      <MiniBadge tone="error">Expired</MiniBadge>
-                      {canManage && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            resend(u)
-                          }}
-                          className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary [&>svg]:size-[11px]"
-                        >
-                          <RotateCcwIcon />
-                          Resend invitation
-                        </button>
-                      )}
-                    </div>
-                  ) : (
-                    <>
-                      <MiniBadge tone={USER_STATUS_TONE[u.status]}>
-                        {u.status}
-                      </MiniBadge>
-                      {u.status === "Invited" && (
-                        <div className="mt-[3px] text-[10.5px] text-muted-foreground">
-                          expires in {u.expiresIn}
+                  >
+                    {counts[t.status] || 0}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <Panel className="overflow-hidden">
+            <Table>
+              <TableHeader className={hifiTableHead}>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead>User</TableHead>
+                  <TableHead>Roles</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Last active</TableHead>
+                  <TableHead>Added by</TableHead>
+                  <TableHead className="w-11" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {list.map((m) => (
+                  <TableRow
+                    key={m.id}
+                    onClick={() => setOpenId(m.id)}
+                    className="cursor-pointer"
+                  >
+                    <TableCell>
+                      <div className="flex items-center gap-[11px]">
+                        <MemberAvatar m={m} />
+                        <div>
+                          <div className="text-[13px] font-semibold">{m.name}</div>
+                          <div className="mono text-[11.5px] text-muted-foreground">
+                            {m.email}
+                          </div>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1.5">
+                        {m.roles.length === 0 ? (
+                          <span className="text-xs text-muted-foreground">No roles</span>
+                        ) : (
+                          <>
+                            {m.roles.slice(0, 2).map((r) => (
+                              <RoleChip key={r.id} name={r.name} size="sm" />
+                            ))}
+                            {m.roles.length > 2 && (
+                              <span
+                                title={m.roles.slice(2).map((r) => r.name).join(", ")}
+                                className="shrink-0 rounded-full border bg-muted px-2 py-[3px] text-[10.5px] font-semibold whitespace-nowrap text-muted-foreground"
+                              >
+                                +{m.roles.length - 2} more
+                              </span>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {m.status === "INVITED" && m.inviteExpired ? (
+                        <div className="flex flex-col items-start gap-1">
+                          <MiniBadge tone="error">Expired</MiniBadge>
+                          {canManage && (
+                            <button
+                              className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary underline-offset-2 hover:underline [&>svg]:size-[11px]"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                resend(m)
+                              }}
+                            >
+                              <RotateCcwIcon />
+                              Resend invitation
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-start gap-0.5">
+                          <MiniBadge tone={STATUS_TONE[m.status]}>
+                            {STATUS_LABEL[m.status]}
+                          </MiniBadge>
+                          {m.status === "INVITED" && m.inviteExpiresAt && (
+                            <span className="text-[10.5px] text-muted-foreground">
+                              expires {fmtExpiry(m.inviteExpiresAt)}
+                            </span>
+                          )}
                         </div>
                       )}
-                    </>
-                  )}
-                </TableCell>
-                <TableCell className="text-xs text-muted-foreground">
-                  {u.lastActive}
-                </TableCell>
-                <TableCell className="text-xs text-muted-foreground">
-                  {u.addedBy}
-                </TableCell>
-                <TableCell>
-                  <Button
-                    variant="outline"
-                    size="icon-sm"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setOpenId(u.id)
-                    }}
-                  >
-                    <ChevronRightIcon />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Panel>
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {fmtLastActive(m.lastActive)}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {m.invitedBy ?? "—"}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="outline"
+                        size="icon-sm"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setOpenId(m.id)
+                        }}
+                      >
+                        <ChevronRightIcon />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Panel>
 
-      {list.length === 0 && (
-        <div className="flex flex-col items-center gap-2.5 rounded-[14px] border border-dashed bg-muted/30 px-6 py-10 text-center text-muted-foreground">
-          <UsersIcon className="size-[22px]" />
-          <p className="text-[13px]">No users match your filter.</p>
-        </div>
+          {list.length === 0 && (
+            <div className="flex flex-col items-center gap-2.5 rounded-[14px] border border-dashed bg-muted/30 px-6 py-10 text-center text-muted-foreground">
+              <UsersIcon className="size-[22px]" />
+              <p className="text-[13px]">No users match your filter.</p>
+            </div>
+          )}
+        </>
       )}
 
       {invite && (
         <InviteDrawer
-          existing={users}
+          existing={members}
+          roles={roles}
+          saving={inviteMut.isPending}
           onClose={() => setInvite(false)}
           onInvite={doInvite}
         />
       )}
 
+      {bulk && (
+        <BulkUploadDrawer
+          roles={roles}
+          existingEmails={members.map((m) => m.email)}
+          onClose={() => setBulk(false)}
+        />
+      )}
+
       {open && (
         <UserDrawer
-          u={open}
+          m={open}
+          roles={roles}
+          rolesById={rolesById}
           canManage={canManage}
+          busy={busy}
           onClose={() => setOpenId(null)}
           onResend={resend}
           onReactivate={reactivate}
           onSetRoles={setRoles}
-          onModal={(type) => setModal({ type, user: open })}
+          onModal={(type) => setModal({ type, member: open })}
         />
       )}
 
@@ -1203,31 +1292,21 @@ export function AccessUsersPage() {
         <ConfirmDialog
           icon={<PauseIcon />}
           tone="warn"
-          title={`Suspend ${modal.user.name}?`}
+          title={`Suspend ${modal.member.name}?`}
           confirmLabel="Suspend user"
           reasonRequired
           reasonLabel="Reason for suspension"
-          onConfirm={(r) => suspend(modal.user, r)}
+          onConfirm={(r) => suspend(modal.member, r)}
           onCancel={() => setModal(null)}
           body={
             <>
               <p>
-                The user is signed out of all sessions immediately and cannot
-                sign back in until reactivated. Their roles and history are
-                preserved.
+                The user is signed out of all sessions immediately and cannot sign
+                back in until reactivated. Their roles are preserved.
               </p>
               <ImpactBox tone="warn" heading="What happens">
-                <li>
-                  All active sessions end and API tokens stop working at once.
-                </li>
-                <li>
-                  {modal.user.roles.length} role(s) and the full timeline are
-                  retained for reactivation.
-                </li>
-                <li>
-                  Any onboarding sections owned by this user keep their
-                  assignment but stall until reassigned.
-                </li>
+                <li>All active sessions end and API tokens stop working at once.</li>
+                <li>{modal.member.roles.length} role(s) are retained for reactivation.</li>
               </ImpactBox>
             </>
           }
@@ -1240,23 +1319,17 @@ export function AccessUsersPage() {
           tone="danger"
           title="Revoke invitation?"
           confirmLabel="Revoke invitation"
-          onConfirm={() => revoke(modal.user)}
+          onConfirm={() => revoke(modal.member)}
           onCancel={() => setModal(null)}
           body={
             <>
               <p>
-                The pending invitation to <b>{modal.user.email}</b> is
-                cancelled. The secure link stops working immediately.
+                The pending invitation to <b>{modal.member.email}</b> is cancelled.
+                The secure link stops working immediately.
               </p>
               <ImpactBox tone="warn" heading="What happens">
-                <li>
-                  The invite link is invalidated — the recipient can no longer
-                  accept.
-                </li>
-                <li>
-                  The user record is removed. You can re-invite them later.
-                </li>
-                <li>Recorded in the audit log.</li>
+                <li>The invite link is invalidated — the recipient can no longer accept.</li>
+                <li>The user record is removed. You can re-invite them later.</li>
               </ImpactBox>
             </>
           }
@@ -1267,32 +1340,21 @@ export function AccessUsersPage() {
         <ConfirmDialog
           icon={<Trash2Icon />}
           tone="danger"
-          title={`Delete ${modal.user.name}?`}
+          title={`Delete ${modal.member.name}?`}
           confirmLabel="Delete user"
-          confirmWord={modal.user.name}
-          reasonRequired
-          reasonLabel="Reason for deletion"
-          onConfirm={() => remove(modal.user)}
+          confirmWord={modal.member.name}
+          onConfirm={() => remove(modal.member)}
           onCancel={() => setModal(null)}
           body={
             <>
               <p>
-                <b>This is permanent.</b> The user and their access are removed
-                from the platform. For compliance, their audit-log entries are
-                retained but anonymised links remain.
+                <b>This is permanent.</b> The user and their access are removed from
+                the platform.
               </p>
               <ImpactBox tone="danger" heading="Downstream impact">
                 <li>
-                  All {modal.user.roles.length} role assignment(s) and active
+                  All {modal.member.roles.length} role assignment(s) and active
                   sessions are removed immediately.
-                </li>
-                <li>
-                  Any onboarding sections owned by this user become{" "}
-                  <b>unassigned</b> and must be reassigned.
-                </li>
-                <li>
-                  Maker-checker requests submitted by this user remain valid and
-                  attributed.
                 </li>
                 <li>
                   Prefer <b>Suspend</b> if access may be needed again — deletion

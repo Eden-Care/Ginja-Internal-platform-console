@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router-dom"
+import { Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom"
 import { BellDotIcon, MoonIcon, SunIcon } from "lucide-react"
 
 import { AppSidebar } from "@/components/app-sidebar"
@@ -10,20 +10,26 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
+import { useAuth } from "@/contexts/auth-context"
 import { LoginPage } from "@/pages/login"
 import { ConsoleDashboardPage } from "@/pages/platform-dashboard"
 import { ApprovalsPage } from "@/pages/approvals"
+import { ApprovalReviewPage } from "@/pages/approvals/review"
 import { TenantAccountsPage } from "@/pages/tenant-accounts"
 import { OnboardTenantPage } from "@/pages/tenant-accounts/onboard"
+import { PayerRecordPage } from "@/pages/tenant-accounts/record"
 import { TenantProvisioningPage } from "@/pages/tenant-provisioning"
+import { ProvisioningDetailPage } from "@/pages/tenant-provisioning/detail"
 import { ModuleRegistryPage } from "@/pages/module-registry"
 import { DocumentTemplatesPage } from "@/pages/document-templates"
 import { EmailTemplatesPage } from "@/pages/email-templates"
+import { SmsTemplatesPage } from "@/pages/sms-templates"
 import { PricingPage } from "@/pages/pricing"
 import { AccessUsersPage } from "@/pages/access/users"
 import { AccessRolesPage } from "@/pages/access/roles"
 import { PlatformSettingsPage } from "@/pages/platform-settings"
 import { AuditLogPage } from "@/pages/audit-log"
+import { MyAccountPage } from "@/pages/my-account"
 
 function ThemeToggle() {
   const { theme, setTheme } = useTheme()
@@ -66,10 +72,22 @@ function AppShell() {
               path="tenant-accounts/onboard"
               element={<OnboardTenantPage />}
             />
+            <Route
+              path="tenant-accounts/:payerId"
+              element={<PayerRecordPage />}
+            />
             <Route path="approvals" element={<ApprovalsPage />} />
+            <Route
+              path="approvals/:payerId"
+              element={<ApprovalReviewPage />}
+            />
             <Route
               path="tenant-provisioning"
               element={<TenantProvisioningPage />}
+            />
+            <Route
+              path="tenant-provisioning/:tenantId"
+              element={<ProvisioningDetailPage />}
             />
             <Route path="module-registry" element={<ModuleRegistryPage />} />
             <Route
@@ -77,11 +95,16 @@ function AppShell() {
               element={<DocumentTemplatesPage />}
             />
             <Route path="email-templates" element={<EmailTemplatesPage />} />
+            <Route path="sms-templates" element={<SmsTemplatesPage />} />
             <Route path="pricing" element={<PricingPage />} />
             <Route path="access-users" element={<AccessUsersPage />} />
             <Route path="access-roles" element={<AccessRolesPage />} />
-            <Route path="platform-settings" element={<PlatformSettingsPage />} />
+            <Route
+              path="platform-settings"
+              element={<PlatformSettingsPage />}
+            />
             <Route path="audit-log" element={<AuditLogPage />} />
+            <Route path="my-account" element={<MyAccountPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
@@ -90,11 +113,25 @@ function AppShell() {
   )
 }
 
+/** Gate for the authenticated shell — bounces to /login (remembering where the
+   user was headed) when there's no live session. */
+function RequireAuth() {
+  const { isAuthenticated } = useAuth()
+  const location = useLocation()
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />
+  }
+  return <Outlet />
+}
+
 export function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/*" element={<AppShell />} />
+      <Route element={<RequireAuth />}>
+        <Route path="/*" element={<AppShell />} />
+      </Route>
     </Routes>
   )
 }

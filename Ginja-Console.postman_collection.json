@@ -1,0 +1,4832 @@
+{
+  "info": {
+    "name": "Ginja Console — Platform API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Generated from controller classes (verified). 80 endpoints across 15 controllers."
+  },
+  "item": [
+    {
+      "name": "Dev (token helper)",
+      "item": [
+        {
+          "name": "POST /dev/token  · handler",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/dev/token?subject=alice&roles=PLATFORM_ADMIN",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dev",
+                "token"
+              ],
+              "query": [
+                {
+                  "key": "subject",
+                  "value": "alice",
+                  "disabled": false
+                },
+                {
+                  "key": "roles",
+                  "value": "PLATFORM_ADMIN",
+                  "disabled": false
+                },
+                {
+                  "key": "tenant",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "POST /platform/organization/auth/accept-invite  · acceptInvite",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/auth/accept-invite",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "auth",
+                "accept-invite"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{inviteToken}}\",\n  \"password\": \"NewPass@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /platform/organization/auth/login  · login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "auth",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@ginja.ai\",\n  \"password\": \"Admin@12345\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /platform/organization/auth/logout  · logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "auth",
+                "logout"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /platform/organization/auth/me/sessions  · mySessions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/auth/me/sessions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "auth",
+                "me",
+                "sessions"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /platform/organization/auth/mfa/login-verify  · loginVerify (public)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/auth/mfa/login-verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "auth",
+                "mfa",
+                "login-verify"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"challenge_token\": \"{{challengeToken}}\",\n  \"code\": \"123456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /platform/organization/auth/mfa/totp/enroll  · enrollTotp (bearer)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/auth/mfa/totp/enroll",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "auth",
+                "mfa",
+                "totp",
+                "enroll"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /platform/organization/auth/mfa/totp/verify  · verifyTotp (bearer)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/auth/mfa/totp/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "auth",
+                "mfa",
+                "totp",
+                "verify"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"123456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /platform/organization/auth/mfa/sms/enroll  · enrollSms (bearer)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/auth/mfa/sms/enroll",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "auth",
+                "mfa",
+                "sms",
+                "enroll"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"+254712345678\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /platform/organization/auth/mfa/sms/verify  · verifySms (bearer)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/auth/mfa/sms/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "auth",
+                "mfa",
+                "sms",
+                "verify"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"123456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /platform/organization/auth/mfa/webauthn/register-start  · webauthnRegisterStart (bearer)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/auth/mfa/webauthn/register-start",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "auth",
+                "mfa",
+                "webauthn",
+                "register-start"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /platform/organization/auth/mfa/webauthn/register-finish  · webauthnRegisterFinish (bearer)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/auth/mfa/webauthn/register-finish",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "auth",
+                "mfa",
+                "webauthn",
+                "register-finish"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"response_json\": \"<navigator.credentials.create() result JSON>\",\n  \"label\": \"YubiKey 5C\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /platform/organization/auth/mfa/webauthn/login-finish  · webauthnLoginFinish (public)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/auth/mfa/webauthn/login-finish",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "auth",
+                "mfa",
+                "webauthn",
+                "login-finish"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"challenge_token\": \"{{challengeToken}}\",\n  \"response_json\": \"<navigator.credentials.get() result JSON>\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /auth/mfa/backup-codes  · generateBackupCodes",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/auth/mfa/backup-codes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "auth",
+                "mfa",
+                "backup-codes"
+              ]
+            },
+            "description": "Generate 10 single-use MFA recovery codes (bearer). Returns plaintext ONCE; invalidates previous set."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /auth/mfa/backup-codes  · remainingBackupCodes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/auth/mfa/backup-codes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "auth",
+                "mfa",
+                "backup-codes"
+              ]
+            },
+            "description": "Remaining unused backup codes (count only; codes never returned again)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "description": "Console home — one aggregate read (KPIs, tenant status, onboarding funnel, approvals, recent activity, health).",
+      "item": [
+        {
+          "name": "GET /platform/dashboard  · overview",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/dashboard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "dashboard"
+              ]
+            },
+            "description": "Aggregated console overview. Roles: PLATFORM_ADMIN/SUPPORT/PLATFORM_APPROVER/PLATFORM_ENGINEER."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Tenant Auth",
+      "item": [
+        {
+          "name": "POST /tenant/auth/login  · login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tenant/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tenant",
+                "auth",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subdomain\": \"globex-za\",\n  \"email\": \"admin@globex.io\",\n  \"password\": \"Pass@1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Members",
+      "item": [
+        {
+          "name": "POST /platform/organization/members  · inviteUser",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/members",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "members"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ops@ginja.ai\",\n  \"full_name\": \"Ops User\",\n  \"role_ids\": [\n    2,\n    3\n  ],\n  \"expiry_days\": 7\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /platform/organization/members  · listMembers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/members?page=0&size=20&sort=createdAt,desc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "members"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "ACTIVE",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "0",
+                  "disabled": false
+                },
+                {
+                  "key": "size",
+                  "value": "20",
+                  "disabled": false
+                },
+                {
+                  "key": "sort",
+                  "value": "createdAt,desc",
+                  "disabled": false
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /platform/organization/members/{memberId}  · getMember",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/members/{{memberId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "members",
+                "{{memberId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "PUT /platform/organization/members/{memberId}/status  · setStatus",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/members/{{memberId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "members",
+                "{{memberId}}",
+                "status"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"SUSPENDED\",\n  \"reason\": \"Policy violation\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "PUT /platform/organization/members/{memberId}/password  · setPassword",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/members/{{memberId}}/password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "members",
+                "{{memberId}}",
+                "password"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"password\": \"NewPass@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /platform/organization/members/{memberId}/roles  · assignRoles",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/members/{{memberId}}/roles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "members",
+                "{{memberId}}",
+                "roles"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role_ids\": [\n    2\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /platform/organization/members/{memberId}/resend-invite  · resendInvite",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/members/{{memberId}}/resend-invite",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "members",
+                "{{memberId}}",
+                "resend-invite"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /platform/organization/members/{memberId}/revoke-invite  · revokeInvite",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/members/{{memberId}}/revoke-invite",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "members",
+                "{{memberId}}",
+                "revoke-invite"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /platform/organization/members/{memberId}/sessions  · listSessions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/members/{{memberId}}/sessions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "members",
+                "{{memberId}}",
+                "sessions"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /platform/organization/members/{memberId}/sessions/revoke  · revokeSessions",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/members/{{memberId}}/sessions/revoke",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "members",
+                "{{memberId}}",
+                "sessions",
+                "revoke"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /platform/organization/members/{memberId}  · deleteMember",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/members/{{memberId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "members",
+                "{{memberId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /platform/organization/members/{memberId}/roles/{roleId}  · unassignRole",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/members/{{memberId}}/roles/{{roleId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "members",
+                "{{memberId}}",
+                "roles",
+                "{{roleId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /platform/organization/members/{memberId}/activity  · activity",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/members/{{memberId}}/activity",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "members",
+                "{{memberId}}",
+                "activity"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Roles",
+      "item": [
+        {
+          "name": "POST /platform/organization/roles  · createRole",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/roles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "roles"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Onboarding Specialist\",\n  \"description\": \"Owns tenant onboarding end-to-end\",\n  \"hex_color\": \"#6741D9\",\n  \"permission_codes\": [\n    \"TENANT_VIEW\",\n    \"TENANT_ONBOARD\",\n    \"TENANT_EDIT\",\n    \"CONFIG_TEMPLATES\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /platform/organization/roles  · listRoles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/roles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "roles"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /platform/organization/roles/{roleId}  · getRole",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/roles/{{roleId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "roles",
+                "{{roleId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH /platform/organization/roles/{roleId}  · updateRole",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/roles/{{roleId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "roles",
+                "{{roleId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Claims Reviewer\",\n  \"description\": \"Reviews submitted claims\",\n  \"hex_color\": \"#E03131\",\n  \"permission_codes\": [\n    \"APPROVAL_VIEW\",\n    \"APPROVAL_DECIDE\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "DELETE /platform/organization/roles/{roleId}  · deleteRole",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/roles/{{roleId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "roles",
+                "{{roleId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /platform/organization/roles/{roleId}/permissions  · assignPermissions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/roles/{{roleId}}/permissions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "roles",
+                "{{roleId}}",
+                "permissions"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"permission_codes\": [\n    \"CLAIMS_APPROVE\",\n    \"CLAIMS_VIEW\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "DELETE /platform/organization/roles/{roleId}/permissions/{permissionCode}  · unassignPermission",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/roles/{{roleId}}/permissions/{{permissionCode}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "roles",
+                "{{roleId}}",
+                "permissions",
+                "{{permissionCode}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "PUT /platform/organization/roles/{roleId}/region-scopes  · setRegionScopes",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"regions\": [\n    \"af-west-1\",\n    \"af-east-1\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/roles/{{roleId}}/region-scopes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "roles",
+                "{{roleId}}",
+                "region-scopes"
+              ]
+            },
+            "description": "Replace a role's data-residency region scopes (empty/omitted = no restriction). Regions come from /platform/settings/data-residency."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Permissions",
+      "item": [
+        {
+          "name": "POST /platform/organization/permissions  · create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/permissions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "permissions"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"REPORTS_EXPORT\",\n  \"name\": \"Export Reports\",\n  \"description\": \"Allows exporting directories, logs and reports\",\n  \"group_code\": \"OBSERVABILITY\",\n  \"group_label\": \"Observability\",\n  \"sensitive\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /platform/organization/permissions  · list (filter)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/permissions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "permissions"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "ACTIVE",
+                  "disabled": true
+                },
+                {
+                  "key": "groupCode",
+                  "value": "TENANT_MANAGEMENT",
+                  "disabled": true
+                },
+                {
+                  "key": "sensitive",
+                  "value": "true",
+                  "disabled": true
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /platform/organization/permissions/search  · search",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/permissions/search?q=pricing",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "permissions",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "pricing",
+                  "disabled": false
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /platform/organization/permissions/{id}  · get",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/permissions/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "permissions",
+                "{{id}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /platform/organization/permissions/{id}/activate  · activate",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/permissions/{{id}}/activate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "permissions",
+                "{{id}}",
+                "activate"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /platform/organization/permissions/{id}/suspend  · suspend",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/permissions/{{id}}/suspend",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "permissions",
+                "{{id}}",
+                "suspend"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /platform/organization/permissions/{id}  · delete",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/permissions/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "permissions",
+                "{{id}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Platform Settings",
+      "item": [
+        {
+          "name": "GET /platform/settings/security-policy  · getSecurityPolicy",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/security-policy",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "security-policy"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH /platform/settings/security-policy  · updateSecurityPolicy",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/security-policy",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "security-policy"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Multi-factor authentication\": {\n    \"mfa_required\": true,\n    \"mfa_totp_enabled\": true,\n    \"mfa_sms_enabled\": false,\n    \"mfa_webauthn_enabled\": true\n  },\n  \"Password policy\": {\n    \"password_min_length\": 12,\n    \"password_require_upper\": true,\n    \"password_require_lower\": true,\n    \"password_require_number\": true,\n    \"password_require_special\": true,\n    \"password_expiry_days\": 90,\n    \"password_history_count\": 5\n  },\n  \"Lockout\": {\n    \"lockout_max_attempts\": 5,\n    \"lockout_duration_minutes\": 30\n  },\n  \"Sessions\": {\n    \"session_timeout_minutes\": 480,\n    \"idle_timeout_minutes\": 30,\n    \"max_concurrent_sessions\": 3\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /platform/settings/data-residency  · listRegions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/data-residency",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "data-residency"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /platform/settings/data-residency  · createRegion",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/data-residency",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "data-residency"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"af-west-2\",\n  \"city\": \"Accra\",\n  \"country\": \"Ghana\",\n  \"status\": \"ACTIVE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /platform/settings/data-residency/{code}  · getRegion",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/data-residency/af-east-1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "data-residency",
+                "af-east-1"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH /platform/settings/data-residency/{code}  · updateRegion",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/data-residency/af-west-1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "data-residency",
+                "af-west-1"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ACTIVE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "DELETE /platform/settings/data-residency/{code}  · deleteRegion",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/data-residency/af-west-2",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "data-residency",
+                "af-west-2"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /platform/settings/provisioning-tiers  · listTiers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/provisioning-tiers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "provisioning-tiers"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /platform/settings/provisioning-tiers  · createTier",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/provisioning-tiers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "provisioning-tiers"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"DEDICATED\",\n  \"name\": \"Dedicated database\",\n  \"description\": \"Tenant gets its own database.\",\n  \"enabled\": true,\n  \"sort_order\": 4\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /platform/settings/provisioning-tiers/{code}  · getTier",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/provisioning-tiers/ISOLATED",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "provisioning-tiers",
+                "ISOLATED"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH /platform/settings/provisioning-tiers/{code}  · updateTier",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/provisioning-tiers/ISOLATED",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "provisioning-tiers",
+                "ISOLATED"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"enabled\": true,\n  \"description\": \"Every tenant in its own isolated schema.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "DELETE /platform/settings/provisioning-tiers/{code}  · deleteTier",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/provisioning-tiers/DEDICATED",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "provisioning-tiers",
+                "DEDICATED"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /platform/settings/sessions  · listSessions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/sessions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "sessions"
+              ]
+            },
+            "description": "All active sessions across users (admin/support). Enriched with account/user/browser/os/device + current flag."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /platform/settings/sessions/{sessionId}/revoke  · revokeSession",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/sessions/{{sessionId}}/revoke",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "sessions",
+                "{{sessionId}}",
+                "revoke"
+              ]
+            },
+            "description": "Revoke a single session by id (PLATFORM_ADMIN)."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /platform/settings/sessions/revoke-all  · revokeAllForUser",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/sessions/revoke-all?member_id=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "sessions",
+                "revoke-all"
+              ],
+              "query": [
+                {
+                  "key": "member_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Revoke all active sessions of a member (PLATFORM_ADMIN). Returns {revoked:n}."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /platform/settings/mfa-status  · mfaStatus",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/mfa-status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "mfa-status"
+              ]
+            },
+            "description": "MFA adoption summary + per-user enrolment (admin/support). methods=totp/sms/webauthn; backup_codes/enabled_on null (not modeled)."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /platform/settings/mfa-status/{memberId}  · mfaDetail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/mfa-status/{{memberId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "mfa-status",
+                "{{memberId}}"
+              ]
+            },
+            "description": "One user's MFA detail (admin/support)."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /platform/settings/mfa-status/{memberId}/remind  · sendMfaReminder",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/mfa-status/{{memberId}}/remind",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "mfa-status",
+                "{{memberId}}",
+                "remind"
+              ]
+            },
+            "description": "Send an MFA-enrolment reminder to a user (PLATFORM_ADMIN). Audit-logged."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /platform/settings/password-status  · passwordStatus",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/password-status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "password-status"
+              ]
+            },
+            "description": "Password-expiry summary + per-user status (admin/support). status=ok/soon/expired/pending from passwordChangedAt + policy."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /platform/settings/password-status/{memberId}  · passwordDetail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/password-status/{{memberId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "password-status",
+                "{{memberId}}"
+              ]
+            },
+            "description": "One user's password status (admin/support)."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /platform/settings/password-status/{memberId}/force-reset  · forcePasswordReset",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/password-status/{{memberId}}/force-reset",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "password-status",
+                "{{memberId}}",
+                "force-reset"
+              ]
+            },
+            "description": "Force a password reset (PLATFORM_ADMIN): revokes sessions + reset notification. Audit-logged."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /platform/settings/localization  · getLocalization",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/localization",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "localization"
+              ]
+            },
+            "description": "Platform-default locale/formatting (admin/support)."
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /platform/settings/localization  · updateLocalization",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"date_format\": \"YYYY-MM-DD\",\n  \"default_language\": \"Swahili\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/localization",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "localization"
+              ]
+            },
+            "description": "Partial update of localization settings (admin)."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /platform/settings/validation-rules  · currentRuleset",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/validation-rules",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "validation-rules"
+              ]
+            },
+            "description": "Current published validation ruleset + grouped rules (admin/support)."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /platform/settings/validation-rules/versions  · rulesetVersions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/validation-rules/versions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "validation-rules",
+                "versions"
+              ]
+            },
+            "description": "Ruleset version history (admin/support)."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /platform/settings/validation-rules/draft  · createDraft",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/validation-rules/draft",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "validation-rules",
+                "draft"
+              ]
+            },
+            "description": "Create/return an editable DRAFT cloning current rules (admin)."
+          },
+          "response": []
+        },
+        {
+          "name": "PUT /platform/settings/validation-rules/draft  · saveDraft",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rules\": [\n    {\n      \"group\": \"Contact\",\n      \"icon\": \"mail\",\n      \"rules\": [\n        {\n          \"id\": \"email\",\n          \"field\": \"Email\",\n          \"pattern\": \"^.+@.+$\",\n          \"example\": \"a@b.com\",\n          \"error\": \"Invalid email\",\n          \"normalize\": [\n            \"Lowercase\"\n          ],\n          \"required\": true,\n          \"status\": \"Active\",\n          \"variants\": []\n        }\n      ]\n    }\n  ],\n  \"note\": \"Add email rule\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/validation-rules/draft",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "validation-rules",
+                "draft"
+              ]
+            },
+            "description": "Save the draft's grouped rules (admin)."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /platform/settings/validation-rules/draft/publish  · publishDraft",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/validation-rules/draft/publish",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "validation-rules",
+                "draft",
+                "publish"
+              ]
+            },
+            "description": "Publish the draft (archives prior published) (admin)."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /platform/settings/validation-rules/versions/{version}/rollback  · rollbackRuleset",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/validation-rules/versions/1/rollback",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "validation-rules",
+                "versions",
+                "1",
+                "rollback"
+              ]
+            },
+            "description": "Restore a prior version as a new published version (admin)."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /platform/settings/validation-rules/test  · liveTestRule",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pattern\": \"^\\\\d{8}$\",\n  \"value\": \" 23456789 \",\n  \"normalize\": [\n    \"Trim spaces\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/validation-rules/test",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "settings",
+                "validation-rules",
+                "test"
+              ]
+            },
+            "description": "Live-test a value against a rule pattern + normalize steps (admin/support)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Module Registry",
+      "item": [
+        {
+          "name": "POST /platform/organization/modules  · registerModule",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/modules",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "modules"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"REINSURANCE\",\n  \"name\": \"Reinsurance\",\n  \"description\": \"Treaties, cessions and recoveries.\",\n  \"icon\": \"reinsurance\",\n  \"url\": \"/reinsurance\",\n  \"version\": \"1.6.0\",\n  \"owner_team\": \"Risk Platform\",\n  \"status\": \"BETA\",\n  \"sub_modules\": [\n    {\n      \"code\": \"TREATIES\",\n      \"name\": \"Treaties\",\n      \"description\": \"Treaty configuration\"\n    },\n    {\n      \"code\": \"CESSIONS\",\n      \"name\": \"Cessions\",\n      \"description\": \"Risk cession ledger\",\n      \"requires\": \"TREATIES\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /platform/organization/modules  · listModules",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/modules?page=0&size=20&sort=code,asc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "modules"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "PUBLISHED",
+                  "disabled": true
+                },
+                {
+                  "key": "owner_team",
+                  "value": "Claims Platform",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "0",
+                  "disabled": false
+                },
+                {
+                  "key": "size",
+                  "value": "20",
+                  "disabled": false
+                },
+                {
+                  "key": "sort",
+                  "value": "code,asc",
+                  "disabled": false
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /platform/organization/modules/search  · searchModules",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/modules/search?q=claim",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "modules",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "claim",
+                  "disabled": false
+                },
+                {
+                  "key": "page",
+                  "value": "0",
+                  "disabled": true
+                },
+                {
+                  "key": "size",
+                  "value": "20",
+                  "disabled": true
+                },
+                {
+                  "key": "sort",
+                  "value": "code,asc",
+                  "disabled": true
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /platform/organization/modules/{moduleId}  · getModule",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/modules/{{moduleId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "modules",
+                "{{moduleId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH /platform/organization/modules/{moduleId}  · updateModule (publish/unpublish)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/modules/{{moduleId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "modules",
+                "{{moduleId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"PUBLISHED\",\n  \"version\": \"1.7.0\",\n  \"owner_team\": \"Risk Platform\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /platform/organization/modules/{moduleId}/activity  · moduleActivity",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/modules/{{moduleId}}/activity?page=0&size=20&sort=createdAt,desc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "modules",
+                "{{moduleId}}",
+                "activity"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0",
+                  "disabled": false
+                },
+                {
+                  "key": "size",
+                  "value": "20",
+                  "disabled": false
+                },
+                {
+                  "key": "sort",
+                  "value": "createdAt,desc",
+                  "disabled": false
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Audit Log",
+      "item": [
+        {
+          "name": "GET /platform/organization/audit-logs  · listAuditLogs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/audit-logs?entity_type=OrgMember&entity_id=MBR000001&page=0&size=20&sort=createdAt,desc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "audit-logs"
+              ],
+              "query": [
+                {
+                  "key": "module",
+                  "value": "MEMBER_INVITATION",
+                  "disabled": true
+                },
+                {
+                  "key": "entity_type",
+                  "value": "OrgMember",
+                  "disabled": false
+                },
+                {
+                  "key": "entity_id",
+                  "value": "MBR000001",
+                  "disabled": false
+                },
+                {
+                  "key": "action",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "actor",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "0",
+                  "disabled": false
+                },
+                {
+                  "key": "size",
+                  "value": "20",
+                  "disabled": false
+                },
+                {
+                  "key": "sort",
+                  "value": "createdAt,desc",
+                  "disabled": false
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /platform/organization/audit-logs/modules  · listModules",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/audit-logs/modules",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "audit-logs",
+                "modules"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /platform/organization/audit-logs/export  · export",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/audit-logs/export?format=csv",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "audit-logs",
+                "export?format=csv"
+              ]
+            },
+            "description": "Stream the filtered audit trail as CSV (default) or JSON (?format=json). Roles: PLATFORM_ADMIN/SUPPORT."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Pricing Structures",
+      "item": [
+        {
+          "name": "POST /platform/pricing-structures  · create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/pricing-structures",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "pricing-structures"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Custom PMPM\",\n  \"description\": \"custom\",\n  \"model\": \"TRANSACTION_BASED\",\n  \"currency\": \"USD\",\n  \"implementation_fee\": 250000,\n  \"platform_fee_annual\": 0,\n  \"savings_capture_pct\": 12.5,\n  \"components\": [\n    {\n      \"component_type\": \"CORE_PLATFORM_PMPM\",\n      \"unit\": \"PER_MEMBER_MONTH\",\n      \"sort_order\": 1,\n      \"tiers\": [\n        {\n          \"tier_number\": 1,\n          \"volume_threshold_min\": 0,\n          \"rate\": 0.55,\n          \"discount_pct\": 0\n        }\n      ]\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /platform/pricing-structures  · list",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/pricing-structures",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "pricing-structures"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "ACTIVE",
+                  "disabled": true
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /platform/pricing-structures/{id}  · get",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/pricing-structures/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "pricing-structures",
+                "{{id}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH /platform/pricing-structures/{id}  · update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/pricing-structures/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "pricing-structures",
+                "{{id}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Transaction-Based v2\",\n  \"savings_capture_pct\": 15.0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /platform/pricing-structures/{id}/activate  · activate",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/pricing-structures/{{id}}/activate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "pricing-structures",
+                "{{id}}",
+                "activate"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /platform/pricing-structures/{id}/archive  · archive",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/pricing-structures/{{id}}/archive",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "pricing-structures",
+                "{{id}}",
+                "archive"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /platform/pricing-structures/{id}/activity  · activity",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/platform/pricing-structures/{{id}}/activity",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "pricing-structures",
+                "{{id}}",
+                "activity"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /platform/pricing-structures/tenant  · pickerOptions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/pricing-structures/tenant",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "pricing-structures",
+                "tenant"
+              ]
+            },
+            "description": "Minimal ACTIVE pricing structures for the onboarding subscription-model picker (no components/tiers). PLATFORM_ADMIN."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Payers (onboarding)",
+      "item": [
+        {
+          "name": "POST /platform/payers  · createPayer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "payers"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"payer_type\": \"INSURER\",\n  \"primary_tenant\": {\n    \"legal_entity_name\": \"Globex Insurance Ltd\",\n    \"trading_name\": \"Globex\",\n    \"primary_contact_name\": \"Gil\",\n    \"primary_contact_email\": \"gil@globex.io\",\n    \"country\": \"ZA\",\n    \"tenant_admin_name\": \"Gil Admin\",\n    \"tenant_admin_email\": \"admin@globex.io\",\n    \"tax_vat_number\": \"VAT9\",\n    \"operating_regions\": [\n      \"af-south-1\"\n    ],\n    \"contacts\": [\n      {\n        \"name\": \"Gil\",\n        \"email\": \"gil@globex.io\",\n        \"role_title\": \"Ops Lead\",\n        \"receives_invite\": false\n      },\n      {\n        \"name\": \"Ben\",\n        \"email\": \"ben@globex.io\",\n        \"role_title\": \"CTO\",\n        \"receives_invite\": true\n      }\n    ],\n    \"bank\": {\n      \"account_holder\": \"Globex\",\n      \"bank_name\": \"FNB\",\n      \"account_number\": \"123456\",\n      \"branch_code\": \"250655\",\n      \"swift_bic\": \"FIRNZAJJ\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /platform/payers  · listPayers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers?status=DRAFT&payer_type=INSURER&from_date=2026-01-01&to_date=2026-12-31&page=0&size=20&sort=createdAt,desc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "payers"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "DRAFT",
+                  "description": "DRAFT|ACTIVE|SUSPENDED|RETIRED"
+                },
+                {
+                  "key": "payer_type",
+                  "value": "INSURER",
+                  "description": "INSURER|TPA|SELF_MANAGED_SCHEME"
+                },
+                {
+                  "key": "from_date",
+                  "value": "2026-01-01",
+                  "description": "created on/after (ISO date)"
+                },
+                {
+                  "key": "to_date",
+                  "value": "2026-12-31",
+                  "description": "created on/before (ISO date)"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                },
+                {
+                  "key": "sort",
+                  "value": "createdAt,desc",
+                  "description": "createdAt|payerId|status|payerType"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "List payers with optional filters (status, payer_type, from_date/to_date), sorting and pagination. Returns a paged envelope {content,page,size,total_elements,total_pages}. PLATFORM_ADMIN."
+          }
+        },
+        {
+          "name": "GET /platform/payers/tenant-lookup  · tenantLookup",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers/tenant-lookup?legal_entity_name=Globex Insurance Ltd",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "payers",
+                "tenant-lookup"
+              ],
+              "query": [
+                {
+                  "key": "legal_entity_name",
+                  "value": "Globex Insurance Ltd",
+                  "disabled": false
+                },
+                {
+                  "key": "tax_vat_number",
+                  "value": "VAT9",
+                  "disabled": true
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /platform/payers/subdomain-check  · checkSubdomain",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers/subdomain-check?value=Acme Health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "payers",
+                "subdomain-check"
+              ],
+              "query": [
+                {
+                  "key": "value",
+                  "value": "Acme Health",
+                  "disabled": false
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /platform/payers/{payerId}  · getPayer",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers/{{payerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "payers",
+                "{{payerId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /platform/payers/{payerId}/tenants  · addSecondaryTenant",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers/{{payerId}}/tenants",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "payers",
+                "{{payerId}}",
+                "tenants"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"legal_entity_name\": \"Globex Branch KE\",\n  \"trading_name\": \"Globex KE\",\n  \"primary_contact_name\": \"Kip\",\n  \"primary_contact_email\": \"kip@globex.io\",\n  \"country\": \"KE\",\n  \"tenant_admin_name\": \"Kip Admin\",\n  \"tenant_admin_email\": \"admin@globex.ke\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "PUT /platform/payers/{payerId}/entitlements  · setEntitlements",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers/{{payerId}}/entitlements",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "payers",
+                "{{payerId}}",
+                "entitlements"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"entitlements\": [\n    {\n      \"module_code\": \"CLAIMS\"\n    },\n    {\n      \"module_code\": \"FINANCE\",\n      \"submodule_codes\": [\n        \"INVOICING\"\n      ]\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "PUT /platform/payers/{payerId}/subscription  · setSubscription",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers/{{payerId}}/subscription",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "payers",
+                "{{payerId}}",
+                "subscription"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pricing_structure_id\": 1,\n  \"subscription_model\": \"PER_CLAIM\",\n  \"billing_frequency\": \"MONTHLY\",\n  \"discount_pct\": 10,\n  \"free_trial_days\": 30,\n  \"promotional\": true,\n  \"contract_start\": \"2026-01-01\",\n  \"contract_end\": \"2031-01-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /platform/payers/{payerId}/tenants/{tenantId}/documents  · addDocument",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers/{{payerId}}/tenants/{{tenantId}}/documents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "payers",
+                "{{payerId}}",
+                "tenants",
+                "{{tenantId}}",
+                "documents"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "category",
+                  "value": "SIGNED_CONTRACT",
+                  "type": "text"
+                },
+                {
+                  "key": "expiry_date",
+                  "value": "2027-01-01",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Signed master agreement",
+                  "type": "text"
+                },
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "description": "Multipart upload. The `file` part carries the bytes (ops proxies them to ginja-ai-document-service); `category` is required, `description` and `expiry_date` are optional. Select a file for the `file` part before sending."
+          }
+        },
+        {
+          "name": "GET /platform/payers/{payerId}/tenants/{tenantId}/documents/{documentId}  · getDocument",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers/{{payerId}}/tenants/{{tenantId}}/documents/{{documentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "payers",
+                "{{payerId}}",
+                "tenants",
+                "{{tenantId}}",
+                "documents",
+                "{{documentId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Fetches a tenant document's metadata plus a freshly issued, time-limited pre-signed download URL from ginja-ai-document-service. `documentId` is the business id (DOC...) and must belong to the tenant under the payer. Returns 404 if the payer, tenant, or document is unknown."
+          }
+        },
+        {
+          "name": "POST /platform/payers/{payerId}/tenants/{tenantId}/activate  · activateTenant",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers/{{payerId}}/tenants/{{tenantId}}/activate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "payers",
+                "{{payerId}}",
+                "tenants",
+                "{{tenantId}}",
+                "activate"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /platform/payers/{payerId}/submit  · submit",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers/{{payerId}}/submit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "payers",
+                "{{payerId}}",
+                "submit"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /platform/payers/{payerId}/activity  · activity",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers/{{payerId}}/activity",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "payers",
+                "{{payerId}}",
+                "activity"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /platform/payers/{payerId}/tenants/{tenantId}/activity  · activity",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers/{{payerId}}/tenants/{{tenantId}}/activity",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "payers",
+                "{{payerId}}",
+                "tenants",
+                "{{tenantId}}",
+                "activity"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH /platform/payers/{payerId}/tenants/{tenantId}  · updateTenant",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"trading_name\": \"Globex Health\",\n  \"phone\": \"+254700000000\",\n  \"address\": \"CIC Plaza, Nairobi\",\n  \"website\": \"www.globex.io\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers/{{payerId}}/tenants/{{tenantId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "payers",
+                "{{payerId}}",
+                "tenants",
+                "{{tenantId}}"
+              ]
+            },
+            "description": "Partial update of a tenant on a DRAFT payer (only sent fields applied). 409 if not DRAFT / dup subdomain or (legal,country). Returns PayerResponse."
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /platform/payers/{payerId}/tenants/{tenantId}  · deleteSecondaryTenant",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers/{{payerId}}/tenants/{{tenantId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "payers",
+                "{{payerId}}",
+                "tenants",
+                "{{tenantId}}"
+              ]
+            },
+            "description": "Delete a SECONDARY tenant on a DRAFT payer. 409 if not DRAFT or deleting the primary. Returns refreshed PayerResponse."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Onboarding Steps",
+      "item": [
+        {
+          "name": "GET /platform/payers/onboarding-drafts  · draftsInProgress",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers/onboarding-drafts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "payers",
+                "onboarding-drafts"
+              ],
+              "query": [
+                {
+                  "key": "assignee",
+                  "value": "",
+                  "description": "optional: filter to a teammate's drafts",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "'Onboarding drafts in progress' directory panel. Returns a LIST where each item is the same OnboardingProgressResponse as GET /platform/payers/{payerId}/steps (completed/total/progress_pct/completed_steps/incomplete_steps/steps[]). Optional ?assignee= for 'By teammate'. PLATFORM_ADMIN."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /platform/payers/{payerId}/steps  · listSteps",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers/{{payerId}}/steps",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "payers",
+                "{{payerId}}",
+                "steps"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /platform/payers/{payerId}/steps/{stepKey}/assign  · assign",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers/{{payerId}}/steps/{{stepKey}}/assign",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "payers",
+                "{{payerId}}",
+                "steps",
+                "{{stepKey}}",
+                "assign"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assignee\": \"engineer@ginja.ai\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /platform/payers/{payerId}/steps/{stepKey}/complete  · complete",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers/{{payerId}}/steps/{{stepKey}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "payers",
+                "{{payerId}}",
+                "steps",
+                "{{stepKey}}",
+                "complete"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payer Approval",
+      "item": [
+        {
+          "name": "POST /platform/payers/{payerId}/approve  · approve",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers/{{payerId}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "payers",
+                "{{payerId}}",
+                "approve"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{approverToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"comment\": \"Verified \\u2014 approved\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /platform/payers/{payerId}/reject  · reject",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers/{{payerId}}/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "payers",
+                "{{payerId}}",
+                "reject"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{approverToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"comment\": \"Verified \\u2014 approved\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /platform/payers/{payerId}/request-info  · requestInfo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers/{{payerId}}/request-info",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "payers",
+                "{{payerId}}",
+                "request-info"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{approverToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"comment\": \"Verified \\u2014 approved\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /platform/payers/{payerId}/approval-activity  · activity",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{approverToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers/{{payerId}}/approval-activity",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "payers",
+                "{{payerId}}",
+                "approval-activity"
+              ]
+            }
+          }
+        }
+      ],
+      "description": "Final maker-checker gate. Only payers whose every tenant is READY_TO_ACTIVATE (provisioning complete, §Provisioning) appear in the queue / can be approved; approving earlier returns 409. Approve auto-activates (go-live); submitter != approver is enforced (403)."
+    },
+    {
+      "name": "Approval Queue",
+      "item": [
+        {
+          "name": "GET /platform/approvals  · approvalQueue",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/approvals?status=pending",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "approvals"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending",
+                  "description": "pending | approved | all (default all)"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{approverToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Maker-checker approval queue (lean rows). ?status=pending|approved|all. PLATFORM_APPROVER."
+          }
+        },
+        {
+          "name": "GET /platform/approvals/{payerId}  · approvalReview",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/approvals/{{payerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "approvals",
+                "{{payerId}}"
+              ]
+            },
+            "description": "Full review payload for one request: header + review meta (status, can_decide, sections, auto_activate_note) + full payer aggregate. PLATFORM_APPROVER."
+          },
+          "response": []
+        }
+      ],
+      "description": "Final maker-checker gate. Only payers whose every tenant is READY_TO_ACTIVATE (provisioning complete, §Provisioning) appear in the queue / can be approved; approving earlier returns 409. Approve auto-activates (go-live); submitter != approver is enforced (403)."
+    },
+    {
+      "name": "Payer Lifecycle",
+      "item": [
+        {
+          "name": "POST /platform/payers/{payerId}/suspend  · suspend",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers/{{payerId}}/suspend",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "payers",
+                "{{payerId}}",
+                "suspend"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"NON_PAYMENT\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /platform/payers/{payerId}/reactivate  · reactivate",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers/{{payerId}}/reactivate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "payers",
+                "{{payerId}}",
+                "reactivate"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /platform/payers/{payerId}/retire  · retire",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers/{{payerId}}/retire",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "payers",
+                "{{payerId}}",
+                "retire"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Customer offboarded\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Provisioning",
+      "item": [
+        {
+          "name": "GET /platform/provisioning  · queue",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/provisioning",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "provisioning"
+              ],
+              "query": [
+                {
+                  "key": "stage",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "assignee",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /platform/provisioning/mine  · mine",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/provisioning/mine",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "provisioning",
+                "mine"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{engineerToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /platform/provisioning/{tenantId}  · get",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/provisioning/{{tenantId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "provisioning",
+                "{{tenantId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /platform/provisioning/{tenantId}/assign  · assign",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/provisioning/{{tenantId}}/assign",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "provisioning",
+                "{{tenantId}}",
+                "assign"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assignee\": \"erin\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "PUT /platform/provisioning/{tenantId}/sections/{section}  · saveSection",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/provisioning/{{tenantId}}/sections/{{section}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "provisioning",
+                "{{tenantId}}",
+                "sections",
+                "{{section}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"config\": {\n    \"subdomain\": \"cic-health\",\n    \"custom_domain\": \"health.cic.co.ke\",\n    \"cname_verified\": true,\n    \"ssl\": \"verified\"\n  },\n  \"status\": \"CONFIGURED\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Save a config section. For DOMAINS_SSL, include `subdomain` (validated, unique — persisted onto the tenant) and optional `custom_domain`; other sections carry their own keys (provider, host, from_address, …). Set the `section` path var to one of DATABASE|DOMAINS_SSL|EMAIL|SMS|DATA_MIGRATION."
+          }
+        },
+        {
+          "name": "POST /platform/provisioning/{tenantId}/sections/{section}/test  · testSection",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/provisioning/{{tenantId}}/sections/{{section}}/test",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "provisioning",
+                "{{tenantId}}",
+                "sections",
+                "{{section}}",
+                "test"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /platform/provisioning/{tenantId}/stage  · setStage",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/provisioning/{{tenantId}}/stage",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "provisioning",
+                "{{tenantId}}",
+                "stage"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stage\": \"BLOCKED\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /platform/provisioning/{tenantId}/sections/{section}/remarks  · addRemark",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/provisioning/{{tenantId}}/sections/{{section}}/remarks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "provisioning",
+                "{{tenantId}}",
+                "sections",
+                "{{section}}",
+                "remarks"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{approverToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /platform/provisioning/{tenantId}/remarks  · listRemarks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/provisioning/{{tenantId}}/remarks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "provisioning",
+                "{{tenantId}}",
+                "remarks"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{approverToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /platform/provisioning/remarks/{remarkId}/resolve  · resolveRemark",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/provisioning/remarks/{{remarkId}}/resolve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "provisioning",
+                "remarks",
+                "{{remarkId}}",
+                "resolve"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /platform/provisioning/{tenantId}/sections/{section}/approve  · approveSection",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/provisioning/{{tenantId}}/sections/{{section}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "provisioning",
+                "{{tenantId}}",
+                "sections",
+                "{{section}}",
+                "approve"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{approverToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "description": "Tenant Provisioning (PRD step 6). Lifecycle: Onboarding (6 steps) -> Submit -> PROVISIONING (assign engineer; configure DATABASE/DOMAINS_SSL/SMS/EMAIL/DATA_MIGRATION; subdomain is set in DOMAINS_SSL) -> all sections DONE => READY_TO_ACTIVATE -> final maker-checker Approval -> auto-Activate. Approval is blocked (409) until every tenant is READY_TO_ACTIVATE."
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8082/api/v1"
+    },
+    {
+      "key": "adminToken",
+      "value": ""
+    },
+    {
+      "key": "approverToken",
+      "value": ""
+    },
+    {
+      "key": "engineerToken",
+      "value": ""
+    },
+    {
+      "key": "supportToken",
+      "value": ""
+    },
+    {
+      "key": "tenantToken",
+      "value": ""
+    },
+    {
+      "key": "inviteToken",
+      "value": ""
+    },
+    {
+      "key": "payerId",
+      "value": "1"
+    },
+    {
+      "key": "tenantId",
+      "value": "1"
+    },
+    {
+      "key": "memberId",
+      "value": "1"
+    },
+    {
+      "key": "roleId",
+      "value": "2"
+    },
+    {
+      "key": "id",
+      "value": "1"
+    },
+    {
+      "key": "stepKey",
+      "value": "technical"
+    },
+    {
+      "key": "section",
+      "value": "DATABASE"
+    },
+    {
+      "key": "permissionCode",
+      "value": "CLAIMS_VIEW"
+    },
+    {
+      "key": "functionalityCode",
+      "value": "CLAIMS"
+    },
+    {
+      "key": "remarkId",
+      "value": "RMK000001"
+    },
+    {
+      "key": "moduleId",
+      "value": "MRC000001"
+    },
+    {
+      "key": "challengeToken",
+      "value": ""
+    }
+  ]
+}

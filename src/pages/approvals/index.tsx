@@ -1,27 +1,23 @@
 import * as React from "react"
+import { useNavigate } from "react-router-dom"
+import { formatDistanceToNow } from "date-fns"
 import {
   ArrowRightIcon,
   Building2Icon,
-  CreditCardIcon,
-  FileTextIcon,
-  GitBranchIcon,
-  LayersIcon,
+  LockIcon,
   ShieldCheckIcon,
-  type LucideIcon,
+  TriangleAlertIcon,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { ApiError } from "@/lib/api/client"
 import { useAccess } from "@/contexts/access-context"
-import {
-  APPROVALS,
-  APPROVAL_KIND_ICON,
-  type Approval,
-} from "@/lib/console-data"
 import { ConsolePageHeader } from "@/components/console/page-header"
 import { Panel } from "@/components/console/panel"
 import { Note } from "@/components/console/note"
-import { MiniBadge, Tagpill } from "@/components/console/tagpill"
+import { MiniBadge } from "@/components/console/tagpill"
+import { LoadingSpinner } from "@/components/common/loading"
 import {
   Table,
   TableBody,
@@ -30,47 +26,55 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { ApprovalReview } from "./review"
-
-const KIND_LUCIDE: Record<string, LucideIcon> = {
-  building: Building2Icon,
-  layers: LayersIcon,
-  fileText: FileTextIcon,
-  gitBranch: GitBranchIcon,
-  creditCard: CreditCardIcon,
-  shieldCheck: ShieldCheckIcon,
-}
-
-export function kindIcon(kind: string): LucideIcon {
-  return KIND_LUCIDE[APPROVAL_KIND_ICON[kind] ?? "fileText"] ?? FileTextIcon
-}
-
-const priorityTone = (p: Approval["priority"]) =>
-  p === "High" ? "warning" : p === "Low" ? "neutral" : "info"
+import type { ApprovalQueueItem } from "@/features/approvals/types"
+import { useApprovals } from "@/features/approvals/use-approvals"
+import { LifecycleDecisionDialog } from "./lifecycle-decision-dialog"
 
 type Tab = "pending" | "approved" | "all"
 
-export function ApprovalsPage() {
-  const { role, isReadonly } = useAccess()
-  const readonly = isReadonly("approvals")
-  const [openId, setOpenId] = React.useState<string | null>(null)
-  const [tab, setTab] = React.useState<Tab>("pending")
+const fmtWhen = (iso: string | null) =>
+  iso ? formatDistanceToNow(new Date(iso), { addSuffix: true }) : "—"
 
-  const open = openId ? APPROVALS.find((a) => a.id === openId) : null
-  if (open) {
-    return <ApprovalReview approval={open} onBack={() => setOpenId(null)} />
+export function ApprovalsPage() {
+  const navigate = useNavigate()
+  const { role } = useAccess()
+  const { data, isLoading, isError, error, refetch } = useApprovals()
+  const rows = React.useMemo(() => data ?? [], [data])
+  const forbidden = error instanceof ApiError && error.status === 403
+
+  const [tab, setTab] = React.useState<Tab>("pending")
+  // The lifecycle row currently being decided (opens the decision dialog).
+  const [lcrItem, setLcrItem] = React.useState<ApprovalQueueItem | null>(null)
+
+  // Routing by row kind/status:
+  //  • lifecycle + pending → decide it in a dialog (approve/reject the request)
+  //  • approved (either kind) → the payer is live, open its Tenant account record
+  //  • onboarding + pending → the full decision review screen
+  const openReview = (p: ApprovalQueueItem) => {
+    if (p.status === "APPROVED") {
+      navigate(`/tenant-accounts/${p.id}`)
+      return
+    }
+    if (p.kind === "LIFECYCLE") {
+      setLcrItem(p)
+      return
+    }
+    navigate(`/approvals/${p.id}`, { state: { item: p } })
   }
 
   const counts = {
-    pending: APPROVALS.filter((a) => a.status === "pending").length,
-    approved: APPROVALS.filter((a) => a.status === "approved").length,
+    pending: rows.filter((r) => r.status === "PENDING").length,
+    approved: rows.filter((r) => r.status === "APPROVED").length,
   }
-  const rows = APPROVALS.filter((a) => (tab === "all" ? true : a.status === tab))
+  const visible =
+    tab === "all"
+      ? rows
+      : rows.filter((r) => r.status === (tab === "pending" ? "PENDING" : "APPROVED"))
 
   const TABS: { k: Tab; label: string; count?: number }[] = [
     { k: "pending", label: "Pending", count: counts.pending },
     { k: "approved", label: "Approved", count: counts.approved },
-    { k: "all", label: "All" },
+    { k: "all", label: "All", count: rows.length },
   ]
 
   return (
@@ -88,119 +92,149 @@ export function ApprovalsPage() {
         </Note>
       )}
 
-      <Panel className="overflow-hidden">
-        <div className="flex items-center gap-1.5 border-b p-3.5">
-          {TABS.map((t) => (
+      {isError ? (
+        forbidden ? (
+          <Note tone="warn" icon={<LockIcon />}>
+            <b>Approver access required.</b> The approval queue is restricted to
+            the <b>Platform Approver</b> role (separation of duties) — your
+            current role can&rsquo;t view it. Sign in as an approver to review
+            submissions.
+          </Note>
+        ) : (
+          <Note tone="err" icon={<TriangleAlertIcon />}>
+            Couldn&rsquo;t load the approval queue.{" "}
             <button
-              key={t.k}
-              type="button"
-              onClick={() => setTab(t.k)}
-              className={cn(
-                "inline-flex h-7 items-center gap-1.5 rounded-full border px-3 text-[13px] transition-colors",
-                tab === t.k
-                  ? "border-primary bg-primary/10 font-medium text-primary"
-                  : "border-transparent text-muted-foreground hover:bg-muted"
-              )}
+              className="font-semibold underline underline-offset-2"
+              onClick={() => refetch()}
             >
-              {t.label}
-              {typeof t.count === "number" && (
-                <span
-                  className={cn(
-                    "mono rounded-full px-1.5 text-[10.5px] font-semibold",
-                    tab === t.k
-                      ? "bg-primary/15 text-primary"
-                      : "bg-muted text-muted-foreground"
-                  )}
-                >
-                  {t.count}
-                </span>
-              )}
+              Try again
             </button>
-          ))}
-        </div>
+            .
+          </Note>
+        )
+      ) : (
+        <Panel className="overflow-hidden">
+          <div className="flex items-center gap-1.5 border-b p-3.5">
+            {TABS.map((t) => (
+              <button
+                key={t.k}
+                type="button"
+                onClick={() => setTab(t.k)}
+                className={cn(
+                  "inline-flex h-7 items-center gap-1.5 rounded-full border px-3 text-[13px] transition-colors",
+                  tab === t.k
+                    ? "border-primary bg-primary/10 font-medium text-primary"
+                    : "border-transparent text-muted-foreground hover:bg-muted"
+                )}
+              >
+                {t.label}
+                {typeof t.count === "number" && (
+                  <span
+                    className={cn(
+                      "mono rounded-full px-1.5 text-[10.5px] font-semibold",
+                      tab === t.k
+                        ? "bg-primary/15 text-primary"
+                        : "bg-muted text-muted-foreground"
+                    )}
+                  >
+                    {t.count}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
 
-        <Table>
-          <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              <TableHead>Request</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Tenant</TableHead>
-              <TableHead>Submitted by</TableHead>
-              <TableHead>When</TableHead>
-              <TableHead>Priority</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="w-24" />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.map((a) => {
-              const Ico = kindIcon(a.kind)
-              return (
-                <TableRow
-                  key={a.id}
-                  className="cursor-pointer"
-                  onClick={() => setOpenId(a.id)}
-                >
-                  <TableCell className="mono text-[12.5px] font-medium">
-                    {a.id}
-                  </TableCell>
-                  <TableCell>
-                    <span className="flex items-center gap-2 text-[12.5px]">
-                      <Ico className="size-[15px] text-muted-foreground" />
-                      {a.kind}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-[13px] font-semibold">
-                    {a.payer}
-                  </TableCell>
-                  <TableCell className="text-[12.5px] text-muted-foreground">
-                    {a.maker}
-                  </TableCell>
-                  <TableCell className="text-[12.5px] text-muted-foreground">
-                    {a.submitted}
-                  </TableCell>
-                  <TableCell>
-                    <MiniBadge tone={priorityTone(a.priority)}>
-                      {a.priority}
-                    </MiniBadge>
-                  </TableCell>
-                  <TableCell>
-                    <MiniBadge tone={a.status === "pending" ? "warning" : "success"}>
-                      {a.status === "pending" ? "Pending" : "Approved"}
-                    </MiniBadge>
-                  </TableCell>
-                  <TableCell onClick={(e) => e.stopPropagation()}>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setOpenId(a.id)}
+          {isLoading ? (
+            <div className="flex items-center justify-center py-20 text-muted-foreground">
+              <LoadingSpinner />
+            </div>
+          ) : (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead>Request</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Tenant</TableHead>
+                    <TableHead>Submitted by</TableHead>
+                    <TableHead>When</TableHead>
+                    <TableHead>Priority</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="w-24" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {visible.map((p) => (
+                    <TableRow
+                      key={p.id}
+                      className="cursor-pointer"
+                      onClick={() => openReview(p)}
                     >
-                      Review
-                      <ArrowRightIcon data-icon="inline-end" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              )
-            })}
-          </TableBody>
-        </Table>
+                      <TableCell className="mono text-[12.5px] font-medium">
+                        {p.requestId}
+                      </TableCell>
+                      <TableCell>
+                        <span className="flex items-center gap-2 text-[12.5px]">
+                          <Building2Icon className="size-[15px] text-muted-foreground" />
+                          {p.type}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-[13px] font-semibold">
+                        {p.tenant}
+                      </TableCell>
+                      <TableCell className="text-[12.5px] text-muted-foreground">
+                        {p.submittedBy ?? "—"}
+                      </TableCell>
+                      <TableCell className="text-[12.5px] text-muted-foreground">
+                        {fmtWhen(p.submittedAt)}
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-[11.5px] text-muted-foreground">
+                          {p.priority ?? "—"}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <MiniBadge
+                          tone={p.status === "APPROVED" ? "success" : "warning"}
+                        >
+                          {p.status === "APPROVED" ? "Approved" : "Pending"}
+                        </MiniBadge>
+                      </TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openReview(p)}
+                        >
+                          Review
+                          <ArrowRightIcon data-icon="inline-end" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
 
-        {rows.length === 0 && (
-          <div className="flex flex-col items-center gap-2 px-6 py-14 text-center">
-            <span className="grid size-12 place-items-center rounded-xl bg-muted text-muted-foreground">
-              <ShieldCheckIcon className="size-[22px]" />
-            </span>
-            <p className="text-sm text-muted-foreground">
-              Nothing {tab === "approved" ? "approved" : "pending"} right now.
-            </p>
-          </div>
-        )}
-        {readonly && (
-          <div className="border-t p-3.5">
-            <Tagpill>Read-only — you can review but not decide</Tagpill>
-          </div>
-        )}
-      </Panel>
+              {visible.length === 0 && (
+                <div className="flex flex-col items-center gap-2 px-6 py-14 text-center">
+                  <span className="grid size-12 place-items-center rounded-xl bg-muted text-muted-foreground">
+                    <ShieldCheckIcon className="size-[22px]" />
+                  </span>
+                  <p className="text-sm text-muted-foreground">
+                    Nothing {tab === "approved" ? "approved" : tab === "pending" ? "pending" : "here"} right now.
+                  </p>
+                </div>
+              )}
+            </>
+          )}
+        </Panel>
+      )}
+
+      <LifecycleDecisionDialog
+        key={lcrItem?.lifecycleRequestId ?? "none"}
+        item={lcrItem}
+        onClose={() => setLcrItem(null)}
+      />
     </div>
   )
 }

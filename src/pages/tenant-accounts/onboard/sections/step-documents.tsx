@@ -1,149 +1,184 @@
-import * as React from "react"
 import {
-  AlertTriangleIcon,
-  CheckIcon,
-  FileCheckIcon,
+  FileCheck2Icon,
   FileTextIcon,
-  PlusIcon,
-  ShieldCheckIcon,
+  TriangleAlertIcon,
   UploadIcon,
+  XIcon,
 } from "lucide-react"
+import { toast } from "sonner"
 
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import {
-  ONB_TEAM,
-  type OnbTeamKey,
+  DOC_CATEGORY_LABEL,
+  REQUIRED_DOC_CATEGORIES,
+  type OnbDocument,
   type OnboardingForm,
-  type WizStepKey,
 } from "@/lib/console-data"
-import { Seg } from "@/components/console/form-atoms"
+import type { SetField } from "../use-onboarding-form"
 import { Note } from "@/components/console/note"
-import { MiniBadge, Tagpill } from "@/components/console/tagpill"
 
-const REQUIRED = [
-  "Signed Contract",
-  "Company Registration Certificate",
-  "Proof of Address",
-  "Director / Shareholder IDs",
-]
-const OPTIONAL = [
-  "Tax Clearance Certificate",
-  "BBBEE Certificate",
-  "Insurance License",
-  "Power of Attorney",
-]
-const UPLOADED = [
-  "Signed Contract",
-  "Company Registration Certificate",
-  "Proof of Address",
-]
+/** Accepted KYB file types + size cap (matches the document upload contract). */
+const ACCEPT = ".pdf,.jpg,.jpeg,.png"
+const MAX_BYTES = 25 * 1024 * 1024
+
+const fmtSize = (b: number) =>
+  b >= 1024 * 1024
+    ? `${(b / 1024 / 1024).toFixed(1)} MB`
+    : b >= 1024
+      ? `${Math.round(b / 1024)} KB`
+      : `${b} B`
 
 export function StepDocuments({
   form,
-  assignees,
+  set,
 }: {
   form: OnboardingForm
-  assignees: Record<WizStepKey, OnbTeamKey>
+  set: SetField
 }) {
-  const owner = ONB_TEAM[assignees.documents]
-  const [tenant, setTenant] = React.useState("primary")
-  const tenantOpts = [
-    { v: "primary", l: form.legal },
-    ...form.secondaries.map((s, i) => ({
-      v: "s" + i,
-      l: s.name || `Secondary ${i + 1}`,
-    })),
-  ]
+  const docFor = (cat: string) => form.documents.find((d) => d.category === cat)
+
+  const pickFile = (cat: string, file?: File | null) => {
+    if (!file) return
+    if (file.size > MAX_BYTES) {
+      toast.error(`${file.name} is over the 25 MB limit.`)
+      return
+    }
+    const others = form.documents.filter((d) => d.category !== cat)
+    const prev = docFor(cat)
+    set("documents", [
+      ...others,
+      { category: cat, fileName: file.name, file, expiryDate: prev?.expiryDate },
+    ])
+  }
+  const clear = (cat: string) =>
+    set(
+      "documents",
+      form.documents.filter((d) => d.category !== cat)
+    )
+  const update = (cat: string, patch: Partial<OnbDocument>) => {
+    const cur = docFor(cat)
+    if (!cur) return
+    const others = form.documents.filter((d) => d.category !== cat)
+    set("documents", [...others, { ...cur, ...patch }])
+  }
+
+  const missing = REQUIRED_DOC_CATEGORIES.filter((c) => !docFor(c)).length
 
   return (
-    <div className="flex flex-col gap-5">
-      <Note tone="info" icon={<ShieldCheckIcon />}>
-        KYC review is owned by <b>{owner.name}</b> ({owner.role}). Uploaded
-        files are stored as <b>Pending Review</b> and routed to the Platform
-        Approver on submission.
-      </Note>
+    <div className="flex flex-col gap-4">
+      <div className="eyebrow text-[10.5px]">Required documents</div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Seg value={tenant} options={tenantOpts} onChange={setTenant} />
-        <span className="text-xs text-muted-foreground">
-          PDF, JPG, PNG · max 25 MB each
-        </span>
-      </div>
-
-      <div className="flex flex-col items-center gap-1 rounded-xl border border-dashed py-8 text-center">
-        <UploadIcon className="size-6 text-muted-foreground" />
-        <b className="text-[13px]">
-          Drag &amp; drop documents, or click to browse
-        </b>
-        <span className="text-[11.5px] text-muted-foreground">
-          Select a category for each file before uploading
-        </span>
-      </div>
-
-      <div>
-        <div className="eyebrow mb-2.5 text-[10.5px]">Required documents</div>
-        <div className="flex flex-col gap-2">
-          {REQUIRED.map((d) => {
-            const up = UPLOADED.includes(d)
-            return (
-              <div
-                key={d}
-                className="flex items-center gap-3 rounded-lg border p-3"
-              >
+      <div className="flex flex-col gap-2.5">
+        {REQUIRED_DOC_CATEGORIES.map((cat) => {
+          const doc = docFor(cat)
+          // Resume: a doc already on the server has no local File to re-send.
+          const onFile = doc?.uploaded
+          const size = doc?.file ? ` · ${fmtSize(doc.file.size)}` : ""
+          return (
+            <div key={cat} className="rounded-xl border p-3.5">
+              <div className="flex items-center gap-3">
                 <span
-                  className={
-                    up
-                      ? "grid size-8 place-items-center rounded-lg bg-success-subtle text-success-subtle-foreground"
-                      : "grid size-8 place-items-center rounded-lg bg-muted text-muted-foreground"
-                  }
-                >
-                  {up ? (
-                    <FileCheckIcon className="size-4" />
-                  ) : (
-                    <FileTextIcon className="size-4" />
+                  className={cn(
+                    "grid size-10 shrink-0 place-items-center rounded-lg [&>svg]:size-[18px]",
+                    doc
+                      ? "bg-success-subtle text-success"
+                      : "bg-muted text-muted-foreground"
                   )}
+                >
+                  {doc ? <FileCheck2Icon /> : <FileTextIcon />}
                 </span>
+
                 <div className="min-w-0 flex-1">
-                  <div className="text-[13px] font-medium">{d}</div>
-                  <div className="mono text-[11.5px] text-muted-foreground">
-                    {up
-                      ? `${d.toLowerCase().replace(/[^a-z]/g, "_")}.pdf · 1.4 MB`
-                      : "Not uploaded"}
+                  <div className="text-[14px] font-semibold">
+                    {DOC_CATEGORY_LABEL[cat] ?? cat}
+                  </div>
+                  <div className="mono truncate text-[12px] text-muted-foreground">
+                    {doc ? `${doc.fileName}${size}` : "Not uploaded"}
                   </div>
                 </div>
-                {up ? (
-                  <MiniBadge tone="success">
-                    <CheckIcon className="size-3" />
-                    Attached
-                  </MiniBadge>
+
+                {doc ? (
+                  <div className="flex shrink-0 items-center gap-1">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-success-subtle px-2.5 py-1 text-[12px] font-medium text-success-subtle-foreground">
+                      <span className="size-1.5 rounded-full bg-current" />
+                      Attached
+                    </span>
+                    {!onFile ? (
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        title="Remove"
+                        onClick={() => clear(cat)}
+                      >
+                        <XIcon />
+                      </Button>
+                    ) : null}
+                  </div>
                 ) : (
-                  <Button variant="outline" size="sm">
-                    <UploadIcon data-icon="inline-start" />
-                    Upload
-                  </Button>
+                  <label className="shrink-0">
+                    <input
+                      type="file"
+                      accept={ACCEPT}
+                      className="hidden"
+                      onChange={(e) => pickFile(cat, e.target.files?.[0])}
+                    />
+                    <span className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[13px] font-medium transition-colors hover:bg-muted/60">
+                      <UploadIcon className="size-3.5" />
+                      Upload
+                    </span>
+                  </label>
                 )}
               </div>
-            )
-          })}
-        </div>
+
+              {/* Optional metadata — only for a freshly attached file (a resumed,
+                 already-stored doc can't have its metadata re-sent). */}
+              {doc && !onFile ? (
+                <div className="mt-3 grid gap-3 border-t pt-3 sm:grid-cols-2">
+                  <label className="flex flex-col gap-1">
+                    <span className="text-[11.5px] font-medium text-muted-foreground">
+                      Expiry date <span className="font-normal">· optional</span>
+                    </span>
+                    <Input
+                      type="date"
+                      value={doc.expiryDate ?? ""}
+                      onChange={(e) =>
+                        update(cat, { expiryDate: e.target.value || undefined })
+                      }
+                    />
+                  </label>
+                  <label className="flex flex-col gap-1">
+                    <span className="text-[11.5px] font-medium text-muted-foreground">
+                      Description <span className="font-normal">· optional</span>
+                    </span>
+                    <Input
+                      value={doc.description ?? ""}
+                      placeholder="e.g. Signed master agreement"
+                      onChange={(e) =>
+                        update(cat, { description: e.target.value || undefined })
+                      }
+                    />
+                  </label>
+                </div>
+              ) : null}
+            </div>
+          )
+        })}
       </div>
 
-      <Note tone="warn" icon={<AlertTriangleIcon />}>
-        1 required document still missing for <b>{form.legal}</b>. Upload all
-        required items to submit.
-      </Note>
-
-      <div>
-        <div className="eyebrow mb-2.5 text-[10.5px]">Optional documents</div>
-        <div className="flex flex-wrap gap-2">
-          {OPTIONAL.map((d) => (
-            <Tagpill key={d}>
-              <PlusIcon className="size-[11px]" />
-              {d}
-            </Tagpill>
-          ))}
-        </div>
-      </div>
+      {missing > 0 ? (
+        <Note tone="warn" icon={<TriangleAlertIcon />}>
+          {missing} required {missing === 1 ? "document is" : "documents are"} still
+          missing. Upload all required items to submit — files are stored as{" "}
+          <b>Pending Review</b> and routed to the approver on submission.
+        </Note>
+      ) : (
+        <Note tone="ok" icon={<FileCheck2Icon />}>
+          All required documents attached. They’ll be uploaded as{" "}
+          <b>Pending Review</b> on submission.
+        </Note>
+      )}
     </div>
   )
 }

@@ -33,6 +33,9 @@ const MAP: Record<string, LucideIcon> = {
   building: Building2Icon,
 }
 
+/** The glyph names available to the module icon picker. */
+export const GLYPH_NAMES = Object.keys(MAP)
+
 export function Glyph({
   name,
   className,

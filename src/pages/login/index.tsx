@@ -1,5 +1,5 @@
 import * as React from "react"
-import { useNavigate } from "react-router-dom"
+import { useLocation, useNavigate } from "react-router-dom"
 import {
   ArrowRightIcon,
   CheckIcon,
@@ -24,7 +24,9 @@ import {
 } from "@/components/ui/input-group"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useAuth } from "@/contexts/auth-context"
 import { useBrand } from "@/contexts/brand-context"
+import { useLogin } from "@/features/auth/use-login"
 import { emailOk } from "@/lib/console-format"
 
 const FEATURES = [
@@ -63,14 +65,26 @@ function ThemeToggle() {
 /** Split-screen sign-in: brand panel on the left, credential form on the right. */
 export function LoginPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { brand } = useBrand()
+  const { isAuthenticated, applySession } = useAuth()
+  const login = useLogin()
 
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
   const [showPw, setShowPw] = React.useState(false)
   const [remember, setRemember] = React.useState(true)
   const [errors, setErrors] = React.useState({ email: "", password: "" })
-  const [submitting, setSubmitting] = React.useState(false)
+
+  // Where to land after sign-in (the page the user was bounced from, else home).
+  const from =
+    (location.state as { from?: { pathname?: string } } | null)?.from
+      ?.pathname ?? "/"
+
+  // Already signed in? Skip the form.
+  React.useEffect(() => {
+    if (isAuthenticated) navigate(from, { replace: true })
+  }, [isAuthenticated, from, navigate])
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -81,14 +95,24 @@ export function LoginPage() {
     setErrors(next)
     if (next.email || next.password) return
 
-    setSubmitting(true)
-    // No backend — simulate the round-trip, then enter the console.
-    window.setTimeout(() => {
-      toast.success("Signed in", {
-        description: `Welcome back — ${email.trim()}`,
-      })
-      navigate("/")
-    }, 850)
+    login.mutate(
+      { email: email.trim(), password },
+      {
+        onSuccess: (session) => {
+          applySession(session, remember)
+          toast.success("Signed in", {
+            description: `Welcome back — ${session.email}`,
+          })
+          navigate(from, { replace: true })
+        },
+        onError: (err) => {
+          toast.error("Sign-in failed", {
+            description:
+              err.message || "Check your credentials and try again.",
+          })
+        },
+      }
+    )
   }
 
   const adminHelp = () =>
@@ -267,10 +291,10 @@ export function LoginPage() {
 
             <Button
               type="submit"
-              disabled={submitting}
+              disabled={login.isPending}
               className="mt-1 h-9 w-full"
             >
-              {submitting ? (
+              {login.isPending ? (
                 <>
                   <LoaderCircleIcon data-icon="inline-start" className="animate-spin" />
                   Signing in…

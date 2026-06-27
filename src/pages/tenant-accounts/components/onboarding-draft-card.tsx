@@ -1,16 +1,10 @@
-import { ClockIcon, UserPlusIcon } from "lucide-react"
+import { ClockIcon, TriangleAlertIcon, UserPlusIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import type { DraftVM } from "@/features/payers/draft-vm"
 import {
-  ONB_SECTIONS,
-  onbDone,
-  onbTeamIds,
-  onbUnassigned,
-  type OnbDraft,
-} from "@/lib/console-data"
-import {
+  AssigneeAvatar,
   AvatarInitials,
-  StaffAvatar,
 } from "@/components/console/avatar-initials"
 import { SegTrack } from "@/components/console/seg-track"
 
@@ -20,15 +14,11 @@ export function OnboardingDraftCard({
   onOpen,
   onManageTeam,
 }: {
-  draft: OnbDraft
+  draft: DraftVM
   onOpen: () => void
   onManageTeam: () => void
 }) {
-  const total = ONB_SECTIONS.length
-  const done = onbDone(draft)
-  const pct = Math.round((done / total) * 100)
-  const team = onbTeamIds(draft)
-  const open = onbUnassigned(draft)
+  const { team, unassigned } = draft
 
   return (
     <div
@@ -43,24 +33,31 @@ export function OnboardingDraftCard({
         <div className="min-w-0 flex-1">
           <div className="truncate text-[13px] font-semibold">{draft.name}</div>
           <div className="mono truncate text-[11.5px] text-muted-foreground">
-            {draft.id} · {draft.country}
+            {draft.code} · {draft.country}
           </div>
         </div>
         <div className="text-right">
-          <b className="mono text-[15px] font-bold">{pct}%</b>
+          <b className="mono text-[15px] font-bold">
+            {draft.stepsUnavailable ? "—" : `${draft.progressPct}%`}
+          </b>
           <div className="text-[11px] text-muted-foreground">
-            {done}/{total}
+            {draft.stepsUnavailable ? "" : `${draft.done}/${draft.total}`}
           </div>
         </div>
       </div>
 
-      <SegTrack sections={draft.sections} />
+      <SegTrack sections={draft.sectionStatus} />
 
       <div className="flex items-center gap-2 text-[11.5px]">
-        {open.length > 0 ? (
+        {draft.stepsUnavailable ? (
+          <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+            <TriangleAlertIcon className="size-3 shrink-0" />
+            Progress unavailable
+          </span>
+        ) : unassigned.length > 0 ? (
           <span className="inline-flex items-center gap-1.5 font-medium text-warning-subtle-foreground">
             <UserPlusIcon className="size-3" />
-            {open.length} unassigned
+            {unassigned.length} unassigned
           </span>
         ) : (
           <span className="inline-flex items-center gap-1.5 text-muted-foreground">
@@ -78,10 +75,10 @@ export function OnboardingDraftCard({
           }}
           className="group ml-auto flex items-center"
         >
-          {team.map((id, i) => (
-            <StaffAvatar
-              key={id}
-              id={id}
+          {team.map((a, i) => (
+            <AssigneeAvatar
+              key={a.email}
+              name={a.name}
               size="sm"
               className={cn("ring-2 ring-card", i > 0 && "-ml-1.5")}
             />

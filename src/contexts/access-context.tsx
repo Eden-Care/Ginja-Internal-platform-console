@@ -1,8 +1,11 @@
 import * as React from "react"
+
+import { useAuth } from "@/contexts/auth-context"
 import {
   CONSOLE_ROLES,
   cHasPerm,
   cReadonly,
+  roleKeyFromApiRoles,
   type ConsoleRole,
   type ConsoleRoleKey,
 } from "@/lib/console-data"
@@ -14,10 +17,9 @@ export type AccessUser = {
 }
 
 type AccessContextValue = {
-  /** The role currently being acted as (demo: switchable from the header). */
+  /** The acting console role, derived from the logged-in user's JWT roles. */
   role: ConsoleRole
   roleKey: ConsoleRoleKey
-  setRoleKey: (key: ConsoleRoleKey) => void
   user: AccessUser
   isLoading: boolean
   /** True if the current role may view a module (by permId, e.g. "approvals"). */
@@ -30,33 +32,38 @@ const AccessContext = React.createContext<AccessContextValue | undefined>(
   undefined
 )
 
-const STORAGE_KEY = "ginja:roleKey"
+/** Best-effort display name from an email local-part ("amara.okeke" → "Amara Okeke"). */
+function displayNameFromEmail(email: string): string {
+  const local = email.split("@")[0] ?? email
+  return (
+    local
+      .split(/[._-]+/)
+      .filter(Boolean)
+      .map((p) => p[0].toUpperCase() + p.slice(1))
+      .join(" ") || email
+  )
+}
 
 export function AccessProvider({ children }: { children: React.ReactNode }) {
-  const [roleKey, setRoleKeyState] = React.useState<ConsoleRoleKey>(() => {
-    const saved =
-      typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null
-    return saved && saved in CONSOLE_ROLES
-      ? (saved as ConsoleRoleKey)
-      : "platform_admin"
-  })
-  const setRoleKey = React.useCallback((key: ConsoleRoleKey) => {
-    setRoleKeyState(key)
-    localStorage.setItem(STORAGE_KEY, key)
-  }, [])
+  const { session } = useAuth()
+
+  const roleKey = roleKeyFromApiRoles(session?.roles)
   const role = CONSOLE_ROLES[roleKey]
 
   const value = React.useMemo<AccessContextValue>(
     () => ({
       role,
       roleKey,
-      setRoleKey,
-      user: { fullName: role.name, email: role.email, role: role.label },
+      user: {
+        fullName: session ? displayNameFromEmail(session.email) : "",
+        email: session?.email ?? "",
+        role: role.label,
+      },
       isLoading: false,
       hasPermission: (permId: string) => cHasPerm(role, permId),
       isReadonly: (permId: string) => cReadonly(role, permId),
     }),
-    [role, roleKey, setRoleKey]
+    [role, roleKey, session]
   )
 
   return (

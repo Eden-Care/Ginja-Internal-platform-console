@@ -2,13 +2,15 @@ import * as React from "react"
 import {
   CheckIcon,
   ChevronLeftIcon,
+  InfoIcon,
+  Loader2Icon,
   TriangleAlertIcon,
   UserPlusIcon,
   UsersIcon,
   XIcon,
-  ZapIcon,
 } from "lucide-react"
 import { toast } from "sonner"
+
 import { Button } from "@/components/ui/button"
 import {
   Popover,
@@ -16,59 +18,111 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { SheetTitle } from "@/components/ui/sheet"
-import { StaffAvatar } from "@/components/console/avatar-initials"
+import { AssigneeAvatar } from "@/components/console/avatar-initials"
 import { Note } from "@/components/console/note"
-import {
-  ONB_SECTIONS,
-  STAFF,
-  STAFF_BY_ID,
-  suggestAssign,
-  type OnbDraft,
-} from "@/lib/console-data"
-import { RoleChip, SECTION_ICON } from "./draft-shared"
-import { OwnerSelect } from "./owner-select"
+import { LoadingSpinner } from "@/components/common/loading"
+import { useMembers } from "@/features/access/use-members"
+import { useAssignStep } from "@/features/payers/use-drafts"
+import type { DraftVM } from "@/features/payers/draft-vm"
+import { SECTION_ICON } from "./draft-shared"
+import { OwnerSelect, toOwnerOption, type OwnerOption } from "./owner-select"
 
-/** Manage a draft's onboarding team + per-section ownership. */
+/** Manage a draft's onboarding team + per-section ownership.
+   Assignments persist via POST …/steps/{key}/assign (one call per changed
+   section on Save). */
 export function AssignTeamPanel({
   draft,
   onBack,
-  onSave,
 }: {
-  draft: OnbDraft
+  draft: DraftVM
   onBack: () => void
-  onSave: (id: string, assign: Record<string, string | null>) => void
 }) {
+  const membersQ = useMembers()
+  const members = React.useMemo(
+    () => membersQ.data?.items ?? [],
+    [membersQ.data]
+  )
+  const assignMut = useAssignStep()
+  const [saving, setSaving] = React.useState(false)
+
+  // member email → display option.
+  const optByEmail = React.useMemo(() => {
+    const m = new Map<string, OwnerOption>()
+    for (const mb of members) m.set(mb.email, toOwnerOption(mb))
+    return m
+  }, [members])
+
+  const resolve = (email: string): OwnerOption =>
+    optByEmail.get(email) ?? { email, name: email, roleLabel: null }
+
+  // Original per-section assignee (email | null), keyed by section.
+  const original = React.useMemo(() => {
+    const o: Record<string, string | null> = {}
+    draft.sections.forEach((s) => (o[s.key] = s.assignee?.email ?? null))
+    return o
+  }, [draft])
+
   const [assign, setAssign] = React.useState<Record<string, string | null>>(
-    draft.assign
+    () => ({ ...original })
+  )
+  // Roster = people available to assign: current assignees + ones added here.
+  const [roster, setRoster] = React.useState<string[]>(() =>
+    Array.from(new Set(draft.team.map((a) => a.email)))
   )
 
-  const team = STAFF.map((p) => p.id).filter((id) =>
-    Object.values(assign).includes(id)
-  )
-  const counts = (id: string) =>
-    ONB_SECTIONS.filter((s) => assign[s.k] === id).length
-  const setOwner = (k: string, id: string | null) =>
-    setAssign((a) => ({ ...a, [k]: id }))
-  const removePerson = (id: string) =>
+  const teamOptions: OwnerOption[] = roster.map(resolve)
+  const counts = (email: string) =>
+    draft.sections.filter((s) => assign[s.key] === email).length
+  const setOwner = (k: string, email: string | null) =>
+    setAssign((a) => ({ ...a, [k]: email }))
+  const removePerson = (email: string) => {
+    setRoster((r) => r.filter((e) => e !== email))
     setAssign((a) =>
       Object.fromEntries(
-        Object.entries(a).map(([k, v]) => [k, v === id ? null : v])
+        Object.entries(a).map(([k, v]) => [k, v === email ? null : v])
       )
     )
-  const addable = STAFF.filter((p) => !team.includes(p.id))
-  const openCount = ONB_SECTIONS.filter((s) => !assign[s.k]).length
-
-  const addPerson = (id: string) => {
-    const p = STAFF_BY_ID[id]
-    const firstOpen =
-      ONB_SECTIONS.find((s) => !assign[s.k] && s.specRole === p.role) ||
-      ONB_SECTIONS.find((s) => !assign[s.k])
-    if (firstOpen) setOwner(firstOpen.k, id)
   }
-  const save = () => {
-    onSave(draft.id, assign)
-    toast.success(`Team updated for ${draft.name}.`)
-    onBack()
+  const addPerson = (email: string) =>
+    setRoster((r) => (r.includes(email) ? r : [...r, email]))
+
+  const addable = members.filter((m) => !roster.includes(m.email))
+  const openCount = draft.sections.filter((s) => !assign[s.key]).length
+
+  const save = async () => {
+    // Only push sections whose owner actually changed.
+    const changed = draft.sections.filter((s) => assign[s.key] !== original[s.key])
+    // The API has no un-assign (assignee is required), so clears can't persist.
+    const toAssign = changed.filter((s) => assign[s.key])
+    const cleared = changed.filter((s) => !assign[s.key])
+    if (changed.length === 0) {
+      onBack()
+      return
+    }
+    setSaving(true)
+    try {
+      await Promise.all(
+        toAssign.map((s) =>
+          assignMut.mutateAsync({
+            payerId: draft.payerId,
+            stepKey: s.key,
+            assignee: assign[s.key] as string,
+          })
+        )
+      )
+      if (cleared.length > 0) {
+        toast("Saved. Note: un-assigning a section isn’t supported by the API yet — those owners are unchanged.")
+      } else {
+        toast.success(`Team updated for ${draft.name}.`)
+      }
+      onBack()
+    } catch (e) {
+      toast.error(
+        e instanceof Error ? e.message : "Couldn’t save the assignments."
+      )
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -92,7 +146,7 @@ export function AssignTeamPanel({
               Manage onboarding team
             </SheetTitle>
             <div className="text-xs text-muted-foreground">
-              {draft.name} · {draft.id}
+              {draft.name} · {draft.code}
             </div>
           </div>
         </div>
@@ -103,87 +157,81 @@ export function AssignTeamPanel({
         <div>
           <div className="mb-2.5 flex items-center justify-between">
             <span className="eyebrow text-[10.5px]">
-              Team · {team.length || "none yet"}
+              Team · {roster.length || "none yet"}
             </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() =>
-                setAssign(
-                  suggestAssign(team.length ? team : STAFF.map((p) => p.id))
-                )
-              }
-            >
-              <ZapIcon data-icon="inline-start" />
-              Suggest by specialty
-            </Button>
           </div>
-          <div className="flex flex-col gap-1.5">
-            {team.map((id) => {
-              const p = STAFF_BY_ID[id]
-              return (
+          {membersQ.isLoading ? (
+            <div className="flex items-center justify-center py-6 text-muted-foreground">
+              <LoadingSpinner />
+            </div>
+          ) : (
+            <div className="flex flex-col gap-1.5">
+              {teamOptions.map((p) => (
                 <div
-                  key={id}
+                  key={p.email}
                   className="flex items-center gap-2.5 rounded-[10px] border px-2.5 py-2"
                 >
-                  <StaffAvatar id={id} />
+                  <AssigneeAvatar name={p.name} />
                   <div className="min-w-0 flex-1">
                     <div className="text-[13px] font-semibold leading-tight">
                       {p.name}
                     </div>
                     <div className="mt-0.5">
-                      <RoleChip role={p.role} />
+                      <span className="inline-flex items-center rounded-full bg-muted px-[7px] py-px text-[10px] font-semibold tracking-[0.02em] text-muted-foreground">
+                        {p.roleLabel ?? "Member"}
+                      </span>
                     </div>
                   </div>
                   <span className="text-[11.5px] text-muted-foreground">
-                    {counts(id)} {counts(id) === 1 ? "section" : "sections"}
+                    {counts(p.email)}{" "}
+                    {counts(p.email) === 1 ? "section" : "sections"}
                   </span>
                   <Button
                     variant="ghost"
                     size="icon-sm"
                     title="Remove from team"
-                    onClick={() => removePerson(id)}
+                    onClick={() => removePerson(p.email)}
                   >
                     <XIcon />
                   </Button>
                 </div>
-              )
-            })}
-            <Popover>
-              <PopoverTrigger
-                disabled={addable.length === 0}
-                className="inline-flex w-fit items-center gap-2 rounded-[10px] border border-dashed border-input px-3 py-2 text-[12.5px] font-semibold text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <UserPlusIcon className="size-[15px]" />
-                Add teammate
-              </PopoverTrigger>
-              <PopoverContent align="start" className="w-[250px] p-0">
-                <div className="px-3 pt-2.5 pb-1.5 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
-                  Add from roster
-                </div>
-                <div className="pb-1">
-                  {addable.map((p) => (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => addPerson(p.id)}
-                      className="flex w-full items-center gap-2.5 px-3 py-2 text-left hover:bg-muted"
-                    >
-                      <StaffAvatar id={p.id} size="sm" />
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-[13px] font-semibold">
-                          {p.name}
+              ))}
+              <Popover>
+                <PopoverTrigger
+                  disabled={addable.length === 0}
+                  className="inline-flex w-fit items-center gap-2 rounded-[10px] border border-dashed border-input px-3 py-2 text-[12.5px] font-semibold text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <UserPlusIcon className="size-[15px]" />
+                  Add teammate
+                </PopoverTrigger>
+                <PopoverContent align="start" className="max-h-[320px] w-[260px] overflow-y-auto p-0">
+                  <div className="px-3 pt-2.5 pb-1.5 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+                    Add from members
+                  </div>
+                  <div className="pb-1">
+                    {addable.map((m) => (
+                      <button
+                        key={m.email}
+                        type="button"
+                        onClick={() => addPerson(m.email)}
+                        className="flex w-full items-center gap-2.5 px-3 py-2 text-left hover:bg-muted"
+                      >
+                        <AssigneeAvatar name={m.name || m.email} size="sm" />
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-[13px] font-semibold">
+                            {m.name || m.email}
+                          </span>
+                          <span className="block text-[11.5px] text-muted-foreground">
+                            {m.roles?.[0]?.name ?? m.email}
+                          </span>
                         </span>
-                        <span className="block text-[11.5px] text-muted-foreground">
-                          {p.role}
-                        </span>
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
+                      </button>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+          )}
         </div>
 
         {/* section ownership */}
@@ -199,44 +247,53 @@ export function AssignTeamPanel({
             </Note>
           )}
           <div className="flex flex-col gap-1.5">
-            {ONB_SECTIONS.map((s) => {
+            {draft.sections.map((s) => {
               const Ico = SECTION_ICON[s.icon] ?? UsersIcon
               return (
                 <div
-                  key={s.k}
+                  key={s.key}
                   className="flex items-center gap-2.5 rounded-[10px] border px-2.5 py-2"
                 >
                   <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
                     <Ico className="size-3.5" />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <div className="text-[13px] font-semibold">{s.l}</div>
+                    <div className="text-[13px] font-semibold">{s.label}</div>
                     <div className="text-[11px] text-muted-foreground">
-                      {s.specRole}
+                      {s.ownerRole ? `Owner team: ${s.ownerRole}` : "Any team"}
                     </div>
                   </div>
                   <OwnerSelect
-                    value={assign[s.k] ?? null}
-                    team={team}
-                    onChange={(id) => setOwner(s.k, id)}
+                    value={assign[s.key] ?? null}
+                    team={teamOptions}
+                    onChange={(email) => setOwner(s.key, email)}
                   />
                 </div>
               )
             })}
           </div>
+          <Note tone="info" icon={<InfoIcon />} className="mt-2.5">
+            Owners are assigned manually — the API has no specialty data for
+            “suggest by specialty”, and a section can’t be un-assigned once set.
+          </Note>
         </div>
       </div>
 
       <div className="mt-auto flex items-center gap-2 border-t p-4">
         <span className="flex-1 text-[11.5px] text-muted-foreground">
-          {team.length} {team.length === 1 ? "person" : "people"} ·{" "}
-          {ONB_SECTIONS.length - openCount}/{ONB_SECTIONS.length} sections owned
+          {roster.length} {roster.length === 1 ? "person" : "people"} ·{" "}
+          {draft.sections.length - openCount}/{draft.sections.length} sections
+          owned
         </span>
-        <Button variant="outline" onClick={onBack}>
+        <Button variant="outline" onClick={onBack} disabled={saving}>
           Cancel
         </Button>
-        <Button onClick={save}>
-          <CheckIcon data-icon="inline-start" />
+        <Button onClick={save} disabled={saving}>
+          {saving ? (
+            <Loader2Icon data-icon="inline-start" className="animate-spin" />
+          ) : (
+            <CheckIcon data-icon="inline-start" />
+          )}
           Save team
         </Button>
       </div>

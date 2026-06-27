@@ -1,31 +1,59 @@
-import {
-  CheckIcon,
-  ChevronDownIcon,
-  UserPlusIcon,
-  XIcon,
-} from "lucide-react"
+import * as React from "react"
+import { CheckIcon, ChevronDownIcon, UserPlusIcon, XIcon } from "lucide-react"
+
 import { cn } from "@/lib/utils"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { StaffAvatar } from "@/components/console/avatar-initials"
-import { STAFF_BY_ID } from "@/lib/console-data"
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command"
+import { AssigneeAvatar } from "@/components/console/avatar-initials"
+import type { Member } from "@/features/access/types"
 
-/** Section owner picker — choose a teammate from the draft's team (or clear). */
+export type OwnerOption = {
+  email: string
+  name: string
+  roleLabel: string | null
+}
+
+/** Map a platform Member to the picker's display option (email is the key the
+   assign API takes; roleLabel is the member's first role, if any). */
+export function toOwnerOption(m: Member): OwnerOption {
+  return {
+    email: m.email,
+    name: m.name || m.email,
+    roleLabel: m.roles?.[0]?.name ?? null,
+  }
+}
+
+/** Section owner picker — a searchable combobox over the team (or clear). */
 export function OwnerSelect({
   value,
   team,
   onChange,
 }: {
   value: string | null
-  team: string[]
-  onChange: (id: string | null) => void
+  team: OwnerOption[]
+  onChange: (email: string | null) => void
 }) {
-  const cur = value ? STAFF_BY_ID[value] : null
+  const [open, setOpen] = React.useState(false)
+  const cur = value ? team.find((t) => t.email === value) ?? null : null
+
+  const pick = (email: string | null) => {
+    onChange(email)
+    setOpen(false)
+  }
+
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         className={cn(
           "flex w-[196px] items-center gap-2 rounded-[9px] border bg-card px-2.5 py-1.5 transition-colors hover:border-primary/50",
@@ -34,7 +62,7 @@ export function OwnerSelect({
       >
         {cur ? (
           <>
-            <StaffAvatar id={cur.id} size="sm" />
+            <AssigneeAvatar name={cur.name} size="sm" />
             <span className="truncate text-[12.5px] font-medium">
               {cur.name}
             </span>
@@ -51,45 +79,41 @@ export function OwnerSelect({
         )}
         <ChevronDownIcon className="ml-auto size-3.5 text-muted-foreground" />
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-[240px] p-0">
-        <div className="px-3 pt-2.5 pb-1.5 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
-          Assign to a teammate
-        </div>
-        {team.length === 0 && (
-          <div className="px-3 py-1.5 text-xs text-muted-foreground">
-            Add teammates first.
-          </div>
-        )}
-        <div className="pb-1">
-          {team.map((id) => {
-            const p = STAFF_BY_ID[id]
-            return (
-              <button
-                key={id}
-                type="button"
-                onClick={() => onChange(id)}
-                className="flex w-full items-center gap-2.5 px-3 py-2 text-left hover:bg-muted"
-              >
-                <StaffAvatar id={id} size="sm" />
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[13px] font-semibold">
-                    {p.name}
+      <PopoverContent align="end" className="w-[260px] p-0">
+        <Command>
+          <CommandInput placeholder="Search teammates…" className="h-9" />
+          <CommandList>
+            <CommandEmpty>No teammates found.</CommandEmpty>
+            <CommandGroup heading="Assign to a teammate">
+              {team.map((t) => (
+                <CommandItem
+                  key={t.email}
+                  // Searchable text: name, email and role all match the query.
+                  value={`${t.name} ${t.email} ${t.roleLabel ?? ""}`}
+                  onSelect={() => pick(t.email)}
+                  className="gap-2.5"
+                >
+                  <AssigneeAvatar name={t.name} size="sm" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[13px] font-semibold">
+                      {t.name}
+                    </span>
+                    <span className="block truncate text-[11.5px] text-muted-foreground">
+                      {t.roleLabel ?? "Member"}
+                    </span>
                   </span>
-                  <span className="block text-[11.5px] text-muted-foreground">
-                    {p.role}
-                  </span>
-                </span>
-                {value === id && (
-                  <CheckIcon className="size-3.5 text-primary" />
-                )}
-              </button>
-            )
-          })}
-        </div>
+                  {value === t.email && (
+                    <CheckIcon className="size-3.5 shrink-0 text-primary" />
+                  )}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
         {value && (
           <button
             type="button"
-            onClick={() => onChange(null)}
+            onClick={() => pick(null)}
             className="flex w-full items-center gap-2.5 border-t px-3 py-2 text-left text-[12.5px] font-semibold text-muted-foreground hover:bg-muted"
           >
             <span className="grid size-[22px] place-items-center rounded-full border border-dashed border-input">

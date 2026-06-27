@@ -64,6 +64,10 @@ export type ModuleStatus = "Published" | "Beta" | "Sunset"
 
 export type RegistryModule = {
   id: string
+  /** Functional code, e.g. "CLAIMS". */
+  code: string
+  /** Module URL/route, e.g. "/claims" (may be blank). */
+  url: string
   name: string
   icon: string
   version: string
@@ -96,26 +100,74 @@ export type DocTemplate = {
   version: string
   status: DocStatus
   updated: string
-  overrides: number
+  /** Tenant-override count — not exposed by the list API (optional). */
+  overrides?: number
   by: string
+  /** Short description from the API (optional; absent in legacy mock rows). */
+  description?: string
 }
 
 export type EmailChannel = "Email" | "Email + SMS"
 
 export type EmailTemplate = {
   id: string
+  /** Numeric template id from the API — used to fetch full detail (get-one + version). */
+  templateId?: number
   name: string
   trigger: string
   channel: EmailChannel
   status: DocStatus
   version: string
   updated: string
-  overrides: number
+  /** Tenant-override count — not exposed by the list API (optional). */
+  overrides?: number
   subject: string
   body: string
+  /** Short description from the API (optional; absent in legacy mock rows). */
+  description?: string
+  /** Which platform the template belongs to, e.g. "TENANT_PLATFORMS" (optional). */
+  usedBy?: string
+  /** Whether the template is enabled (active) — drives the Disabled state. */
+  active?: boolean
+  /** Whether the template is archived (hidden from the default list). */
+  archived?: boolean
 }
 
 export type EmailVar = { n: string; d: string }
+
+/** A point-in-time version of an email template (version-history + diff). */
+export type EmailVersion = {
+  v: string
+  status: DocStatus
+  current: boolean
+  note: string
+  date: string
+  by: string
+  subject: string
+  body: string
+  text?: string
+}
+
+export type EmailAuditKind = "create" | "edit" | "publish" | "rollback" | "test"
+
+/** A single audit-feed event on an email template. */
+export type EmailAuditEvent = {
+  id: string
+  kind: EmailAuditKind
+  action: string
+  detail: string
+  when: string
+  by: string
+  initials: string
+}
+
+/** A centrally-managed placeholder auto-injected into every email at send time. */
+export type GlobalPlaceholder = {
+  key: string
+  value: string
+  desc: string
+  active: boolean
+}
 
 export type TierRow = {
   tier: string
@@ -148,8 +200,9 @@ export type AuditEntry = {
   kind: "create" | "system" | "approve" | "edit" | "danger" | "warn"
 }
 
+/** Onboarding step owner *category* (the `owner_role` the steps API returns).
+   Actual people are real platform members now — see OwnerSelect / useMembers. */
 export type OnbTeamKey = "profile" | "tech" | "compliance"
-export type OnbTeamMember = { name: string; initials: string; role: string }
 
 export type SecStatus = "complete" | "progress" | "empty"
 
@@ -160,20 +213,6 @@ export type OnbSection = {
   /** The specialty that naturally owns this section (drives "suggest by specialty"). */
   specRole: StaffRole
   icon: string
-}
-
-export type OnbDraft = {
-  id: string
-  name: string
-  country: string
-  type: TenantType
-  started: string
-  updated: string
-  /** Section key → assigned staff id (or null when no owner yet). */
-  assign: Record<string, string | null>
-  waiting: string
-  sections: Record<string, SecStatus>
-  edited: Record<string, string>
 }
 
 export type WizStepKey =
@@ -203,6 +242,41 @@ export type Secondary = {
   country: string
   region: string
   subdomain: string
+  /** Server tenant id once this secondary is saved (POSTed) under the draft.
+     Present → server-backed (PATCH on edit, DELETE on remove); absent → a new,
+     not-yet-saved row. */
+  tenantId?: number
+}
+
+/** A KYB/contract document captured in onboarding. The API now accepts real
+   file bytes (multipart) and serves a pre-signed download URL per document. */
+export type OnbDocument = {
+  category: string
+  fileName: string
+  expiryDate?: string
+  /** Optional free-text note sent as the document `description`. */
+  description?: string
+  /** The picked File — present for a not-yet-uploaded document. */
+  file?: File
+  /** Server document id once uploaded (used for the pre-signed download). */
+  documentId?: string
+  /** True when the file is already stored on the server (e.g. on resume). */
+  uploaded?: boolean
+}
+
+/** KYB categories the submit gate requires on the primary tenant (API §8.6). */
+export const REQUIRED_DOC_CATEGORIES = [
+  "SIGNED_CONTRACT",
+  "COMPANY_REGISTRATION",
+  "PROOF_OF_ADDRESS",
+  "DIRECTOR_SHAREHOLDER_ID",
+] as const
+
+export const DOC_CATEGORY_LABEL: Record<string, string> = {
+  SIGNED_CONTRACT: "Signed Contract",
+  COMPANY_REGISTRATION: "Company Registration Certificate",
+  PROOF_OF_ADDRESS: "Proof of Address",
+  DIRECTOR_SHAREHOLDER_ID: "Director / Shareholder IDs",
 }
 
 export type OnboardingForm = {
@@ -222,9 +296,21 @@ export type OnboardingForm = {
   address: string
   website: string
   secondaries: Secondary[]
+  /** Selected module codes → submodule codes. Modules-only for now (no
+     submodule catalogue API), so the arrays are empty. */
   modules: Record<string, string[]>
+  /** Chosen ACTIVE pricing structure id (null until picked). */
+  pricingStructureId: number | null
+  /** subscription_model: PMPM | PER_CLAIM | PCT_GWP. Derived from the chosen
+     structure (no separate picker). */
   model: string
   freq: string
+  /** Free-trial length in days → subscription `free_trial_days` (§8.4). */
+  freeTrialDays: string
+  /** Contract window (ISO yyyy-mm-dd) → subscription `contract_start`/`_end`. */
+  contractStart: string
+  contractEnd: string
+  documents: OnbDocument[]
 }
 
 /* ------------------------------------------------------------------- nav -- */
@@ -267,7 +353,13 @@ export const C_MODULES: ConsoleModule[] = [
   },
   {
     id: "email-templates",
-    label: "Email & SMS templates",
+    label: "Email templates",
+    icon: "mail",
+    group: "Configuration library",
+  },
+  {
+    id: "sms-templates",
+    label: "SMS templates",
     icon: "mail",
     group: "Configuration library",
   },
@@ -1116,6 +1208,192 @@ export const SAMPLE: Record<string, string> = {
   policy_no: "POL-99231",
 }
 
+/* ----------------------------------------- email editor — rich mock data -- */
+
+/** Allowed attachment file extensions offered in the create form. */
+export const ATTACH_EXTS = ["pdf", "png", "jpg", "docx", "xlsx", "csv"]
+
+/** Branded HTML starter shell shown when creating a fresh email template. */
+export const STARTER_HTML = `<!DOCTYPE html>
+<html>
+  <body style="font-family: Arial, sans-serif; background:#f4f5f7; padding:24px; margin:0;">
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr><td align="center">
+        <table width="520" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:10px; overflow:hidden;">
+          <tr><td style="background:#5B5BD6; padding:20px 28px;">
+            <span style="color:#fff; font-size:18px; font-weight:700;">{{org_name}}</span>
+          </td></tr>
+          <tr><td style="padding:28px;">
+            <h1 style="font-size:20px; margin:0 0 12px;">Hi {{admin_name}},</h1>
+            <p style="font-size:14px; line-height:1.6; color:#374151;">
+              Your Ginja workspace for <strong>{{org_name}}</strong> is ready. Click below to set up your account.
+            </p>
+            <a href="{{invite_link}}" style="display:inline-block; margin:18px 0; background:#5B5BD6; color:#fff; text-decoration:none; padding:11px 22px; border-radius:8px; font-weight:600;">Set up your account</a>
+            <p style="font-size:12px; color:#6b7280;">This link expires in {{expiry_hours}} hours.</p>
+          </td></tr>
+          <tr><td style="padding:16px 28px; border-top:1px solid #eee; font-size:11px; color:#9ca3af;">
+            Sent by Ginja on behalf of {{org_name}}.
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
+</html>`
+
+/** Wrap an existing template's plain body into the branded HTML shell for editing. */
+export const htmlFromTemplate = (t: EmailTemplate) => `<!DOCTYPE html>
+<html>
+  <body style="font-family: Arial, sans-serif; background:#f4f5f7; padding:24px; margin:0;">
+    <table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
+      <table width="520" cellpadding="0" cellspacing="0" style="background:#fff; border-radius:10px; overflow:hidden;">
+        <tr><td style="background:#5B5BD6; padding:20px 28px;"><img src="{{logo_url}}" alt="{{org_name}}" height="24" style="display:inline-block;vertical-align:middle" /></td></tr>
+        <tr><td style="padding:28px; font-size:14px; line-height:1.6; color:#374151; white-space:pre-line;">${t.body}</td></tr>
+        <tr><td style="padding:16px 28px; border-top:1px solid #eee; font-size:11px; color:#9ca3af;">Need help? Contact {{support_email}}.<br/>&copy; {{current_year}} Ginja · <a href="{{unsubscribe_url}}">Unsubscribe</a></td></tr>
+      </table>
+    </td></tr></table>
+  </body>
+</html>`
+
+/** Centrally-managed placeholders auto-injected into every email at send time. */
+export const GLOBAL_PLACEHOLDERS: GlobalPlaceholder[] = [
+  {
+    key: "logo_url",
+    value: "https://cdn.ginja.ai/brand/logo.png",
+    desc: "Platform logo shown in the email header.",
+    active: true,
+  },
+  {
+    key: "support_email",
+    value: "support@ginja.ai",
+    desc: "Support inbox shown in footers.",
+    active: true,
+  },
+  {
+    key: "current_year",
+    value: "2026",
+    desc: "Current calendar year for copyright lines.",
+    active: true,
+  },
+  {
+    key: "unsubscribe_url",
+    value: "https://ginja.ai/unsubscribe",
+    desc: "Standard unsubscribe link.",
+    active: true,
+  },
+  {
+    key: "company_address",
+    value: "Ginja AI, Westlands, Nairobi",
+    desc: "Registered postal address (legacy templates).",
+    active: false,
+  },
+]
+
+/** Version history for the editor's Versions tab (newest first; one is current). */
+export const EMAIL_VERSIONS: EmailVersion[] = [
+  {
+    v: "v3.0",
+    status: "Published",
+    current: true,
+    note: "Refreshed copy and added a 72-hour expiry note.",
+    date: "04 Jun 2026",
+    by: "Amara Okeke",
+    subject: "You're invited to administer {{org_name}} on Ginja",
+    body: "Hi {{admin_name}},\n\nYour Ginja workspace for {{org_name}} is ready. You have been assigned as Tenant Administrator.\n\nSet up your account using the secure link below. This link expires in {{expiry_hours}} hours.\n\n{{invite_link}}\n\nWelcome aboard,\nThe Ginja Team",
+    text: "Hi {{admin_name}},\n\nYour Ginja workspace for {{org_name}} is ready. Set up your account: {{invite_link}}",
+  },
+  {
+    v: "v2.0",
+    status: "Draft",
+    current: false,
+    note: "Switched the CTA wording from 'Activate' to 'Set up'.",
+    date: "21 May 2026",
+    by: "Lily Tesfaye",
+    subject: "You're invited to manage {{org_name}} on Ginja",
+    body: "Hi {{admin_name}},\n\nYour Ginja workspace for {{org_name}} is ready. You have been assigned as Tenant Administrator.\n\nSet up your account using the link below. This link expires soon.\n\n{{invite_link}}\n\nThanks,\nThe Ginja Team",
+    text: "Hi {{admin_name}},\n\nYour Ginja workspace for {{org_name}} is ready. Set up your account: {{invite_link}}",
+  },
+  {
+    v: "v1.0",
+    status: "Draft",
+    current: false,
+    note: "Initial invitation template.",
+    date: "02 May 2026",
+    by: "Amara Okeke",
+    subject: "Activate your {{org_name}} workspace",
+    body: "Hi {{admin_name}},\n\nA Ginja workspace for {{org_name}} has been created. Activate your account below.\n\n{{invite_link}}",
+  },
+]
+
+/** Audit feed for the editor's Audit tab. */
+export const EMAIL_AUDIT: EmailAuditEvent[] = [
+  {
+    id: "EA-08",
+    kind: "publish",
+    action: "Published v3.0",
+    detail: "Refreshed copy and added a 72-hour expiry note.",
+    when: "04 Jun 09:12",
+    by: "Amara Okeke",
+    initials: "AO",
+  },
+  {
+    id: "EA-07",
+    kind: "test",
+    action: "Sent test email",
+    detail: "Test of v3.0 sent to amara.okeke@ginja.ai.",
+    when: "04 Jun 09:05",
+    by: "Amara Okeke",
+    initials: "AO",
+  },
+  {
+    id: "EA-06",
+    kind: "edit",
+    action: "Edited subject & body",
+    detail: "Reworded the call to action and footer.",
+    when: "03 Jun 16:40",
+    by: "Lily Tesfaye",
+    initials: "LT",
+  },
+  {
+    id: "EA-05",
+    kind: "rollback",
+    action: "Rolled back to v2.0",
+    detail: "Restored the previous CTA wording as a new version.",
+    when: "21 May 11:22",
+    by: "David Kimani",
+    initials: "DK",
+  },
+  {
+    id: "EA-01",
+    kind: "create",
+    action: "Created template",
+    detail: "Initial Tenant Admin Invitation template added to the library.",
+    when: "02 May 14:08",
+    by: "Amara Okeke",
+    initials: "AO",
+  },
+]
+
+/** Audit-feed event kind → dot tone. */
+export const EMAIL_AUDIT_TONE: Record<
+  EmailAuditKind,
+  "success" | "warning" | "info" | "neutral"
+> = {
+  create: "info",
+  edit: "neutral",
+  publish: "success",
+  rollback: "warning",
+  test: "info",
+}
+
+/** Template codes already in the library — used for uniqueness validation. */
+export const RESERVED_CODES = EMAIL_TEMPLATES.map((t) =>
+  t.name
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "_")
+    .replace(/^_|_$/g, "")
+)
+
 /* --------------------------------------------------------- approval queue -- */
 
 export const APPROVALS: Approval[] = [
@@ -1281,22 +1559,6 @@ export const STATUS_TONE: Record<string, StatusTone> = {
 
 /* ---------------------------------------------------------- onboarding -- */
 
-export const ONB_TEAM: Record<OnbTeamKey, OnbTeamMember> = {
-  profile: {
-    name: "Amara Okeke",
-    initials: "AO",
-    role: "Onboarding Specialist",
-  },
-  tech: { name: "Lily Tesfaye", initials: "LT", role: "Platform Engineer" },
-  compliance: {
-    name: "David Kimani",
-    initials: "DK",
-    role: "Compliance Officer",
-  },
-}
-
-export const ONB_TEAM_KEYS: OnbTeamKey[] = ["profile", "tech", "compliance"]
-
 /** Fillable sections (mirror the wizard, minus Review) — drive the draft cards.
     `specRole` is the specialty that naturally owns the section. Technical config
     moved out of onboarding into Tenant provisioning, so it's no longer here. */
@@ -1335,214 +1597,6 @@ export const ONB_SECTIONS: OnbSection[] = [
     short: "KYC",
     specRole: "Compliance Officer",
     icon: "fileText",
-  },
-]
-
-export const onbDone = (d: OnbDraft) =>
-  ONB_SECTIONS.filter((s) => d.sections[s.k] === "complete").length
-
-/** Unique staff assigned anywhere on a draft, in roster order. */
-export const onbTeamIds = (d: OnbDraft) =>
-  STAFF.map((p) => p.id).filter((id) =>
-    Object.values(d.assign || {}).includes(id)
-  )
-
-/** Sections that still have no owner. */
-export const onbUnassigned = (d: OnbDraft) =>
-  ONB_SECTIONS.filter((s) => !(d.assign || {})[s.k])
-
-/** Auto-distribute a team across sections by specialty (null where no match). */
-export function suggestAssign(teamIds: string[]): Record<string, string | null> {
-  const team = teamIds.map((id) => STAFF_BY_ID[id]).filter(Boolean)
-  const out: Record<string, string | null> = {}
-  ONB_SECTIONS.forEach((s) => {
-    const match = team.find((p) => p.role === s.specRole)
-    out[s.k] = match ? match.id : null
-  })
-  return out
-}
-
-/** In-progress onboarding drafts (resumable). */
-export const ONB_DRAFTS: OnbDraft[] = [
-  {
-    id: "ONB-2041",
-    name: "CIC Insurance Group",
-    country: "Kenya",
-    type: "Insurer",
-    started: "08 Jun",
-    updated: "2 min ago",
-    assign: {
-      primary: "amara",
-      secondary: "amara",
-      modules: "lily",
-      billing: "amara",
-      documents: "david",
-    },
-    waiting: "KYC & documents",
-    sections: {
-      primary: "complete",
-      secondary: "complete",
-      modules: "complete",
-      billing: "progress",
-      documents: "empty",
-    },
-    edited: {
-      primary: "08 Jun 09:12",
-      secondary: "08 Jun 09:20",
-      modules: "08 Jun 10:40",
-      billing: "2 min ago",
-      documents: "—",
-    },
-  },
-  {
-    id: "ONB-2036",
-    name: "Equity Afia Care",
-    country: "Kenya",
-    type: "Insurer",
-    started: "08 Jun",
-    updated: "1 hr ago",
-    assign: {
-      primary: "fatima",
-      secondary: "fatima",
-      modules: "kwame",
-      billing: "fatima",
-      documents: null,
-    },
-    waiting: "KYC owner",
-    sections: {
-      primary: "complete",
-      secondary: "complete",
-      modules: "empty",
-      billing: "empty",
-      documents: "empty",
-    },
-    edited: {
-      primary: "08 Jun 08:30",
-      secondary: "08 Jun 08:51",
-      modules: "—",
-      billing: "—",
-      documents: "—",
-    },
-  },
-  {
-    id: "ONB-2033",
-    name: "Strategis Insurance",
-    country: "Tanzania",
-    type: "Insurer",
-    started: "08 Jun",
-    updated: "3 hr ago",
-    assign: {
-      primary: "amara",
-      secondary: "amara",
-      modules: "amara",
-      billing: "amara",
-      documents: "amara",
-    },
-    waiting: "Secondary tenants",
-    sections: {
-      primary: "complete",
-      secondary: "empty",
-      modules: "empty",
-      billing: "empty",
-      documents: "empty",
-    },
-    edited: {
-      primary: "3 hr ago",
-      secondary: "—",
-      modules: "—",
-      billing: "—",
-      documents: "—",
-    },
-  },
-  {
-    id: "ONB-2029",
-    name: "Liberty Health",
-    country: "Uganda",
-    type: "TPA",
-    started: "07 Jun",
-    updated: "Yesterday",
-    assign: {
-      primary: "fatima",
-      secondary: "fatima",
-      modules: "lily",
-      billing: "fatima",
-      documents: "naledi",
-    },
-    waiting: "KYC & documents",
-    sections: {
-      primary: "complete",
-      secondary: "complete",
-      modules: "complete",
-      billing: "complete",
-      documents: "progress",
-    },
-    edited: {
-      primary: "07 Jun 11:00",
-      secondary: "07 Jun 11:18",
-      modules: "07 Jun 15:10",
-      billing: "07 Jun 16:02",
-      documents: "Yesterday",
-    },
-  },
-  {
-    id: "ONB-2025",
-    name: "Britam Health",
-    country: "Kenya",
-    type: "Insurer",
-    started: "07 Jun",
-    updated: "Yesterday",
-    assign: {
-      primary: "amara",
-      secondary: "amara",
-      modules: "kwame",
-      billing: "amara",
-      documents: null,
-    },
-    waiting: "KYC owner",
-    sections: {
-      primary: "complete",
-      secondary: "complete",
-      modules: "progress",
-      billing: "empty",
-      documents: "empty",
-    },
-    edited: {
-      primary: "07 Jun 09:40",
-      secondary: "07 Jun 09:58",
-      modules: "Yesterday",
-      billing: "—",
-      documents: "—",
-    },
-  },
-  {
-    id: "ONB-2018",
-    name: "Jubilee Tanzania",
-    country: "Tanzania",
-    type: "Insurer",
-    started: "05 Jun",
-    updated: "3 days ago",
-    assign: {
-      primary: "fatima",
-      secondary: "fatima",
-      modules: "fatima",
-      billing: "fatima",
-      documents: "fatima",
-    },
-    waiting: "Basic profile",
-    sections: {
-      primary: "progress",
-      secondary: "empty",
-      modules: "empty",
-      billing: "empty",
-      documents: "empty",
-    },
-    edited: {
-      primary: "3 days ago",
-      secondary: "—",
-      modules: "—",
-      billing: "—",
-      documents: "—",
-    },
   },
 ]
 
@@ -1929,6 +1983,159 @@ export const roleById = (id: string): AccessRole | undefined =>
 
 export const rolePermCount = (r: AccessRole): number =>
   r.perms.includes("*") ? PERM_TOTAL : r.perms.length
+
+/* ===================== My Account (self-service) =========================
+   Mock data for the signed-in user's own profile / security center. There is
+   no backend endpoint for self-service yet, so these mirror the hi-fi `MY_*`
+   block verbatim (sessions, security activity, role grants). */
+
+export type MySession = {
+  id: string
+  browser: string
+  os: string
+  device: string
+  ip: string
+  loc: string
+  started: string
+  /** "Active now" / "3 hr ago" / … */
+  lastSeen: string
+  /** This is the device the user is currently signed in from. */
+  current: boolean
+  /** Set once the session has been signed out from the UI. */
+  ended?: boolean
+}
+
+export const MY_SESSIONS: MySession[] = [
+  {
+    id: "MSE-01",
+    browser: "Chrome 126",
+    os: "macOS 14.5",
+    device: "MacBook Pro",
+    ip: "197.232.14.8",
+    loc: "Nairobi, KE",
+    started: "25 Jun · 08:02",
+    lastSeen: "Active now",
+    current: true,
+  },
+  {
+    id: "MSE-02",
+    browser: "Safari 17",
+    os: "iOS 17.5",
+    device: "iPhone 15",
+    ip: "197.232.61.140",
+    loc: "Nairobi, KE",
+    started: "24 Jun · 19:40",
+    lastSeen: "3 hr ago",
+    current: false,
+  },
+  {
+    id: "MSE-03",
+    browser: "Chrome 125",
+    os: "Windows 11",
+    device: "Office desktop",
+    ip: "102.134.88.3",
+    loc: "Mombasa, KE",
+    started: "21 Jun · 09:12",
+    lastSeen: "4 days ago",
+    current: false,
+  },
+]
+
+export type MyActivityKind = "login" | "mfa" | "password"
+
+export type MyActivity = {
+  kind: MyActivityKind
+  /** false → a failed/denied event, rendered with an alert glyph. */
+  ok: boolean
+  label: string
+  detail: string
+  ip: string
+  when: string
+}
+
+export const MY_ACTIVITY: MyActivity[] = [
+  {
+    kind: "login",
+    ok: true,
+    label: "Signed in",
+    detail: "Chrome on macOS · Nairobi, KE",
+    ip: "197.232.14.8",
+    when: "Today · 08:02",
+  },
+  {
+    kind: "login",
+    ok: false,
+    label: "Failed sign-in",
+    detail: "Wrong password · Chrome on Windows",
+    ip: "41.90.7.55",
+    when: "Yesterday · 22:14",
+  },
+  {
+    kind: "mfa",
+    ok: true,
+    label: "MFA verified",
+    detail: "Authenticator app",
+    ip: "197.232.14.8",
+    when: "24 Jun · 19:40",
+  },
+  {
+    kind: "password",
+    ok: true,
+    label: "Password changed",
+    detail: "From My account → Password",
+    ip: "197.232.14.8",
+    when: "12 May · 09:14",
+  },
+  {
+    kind: "login",
+    ok: true,
+    label: "Signed in",
+    detail: "Safari on iOS · Nairobi, KE",
+    ip: "197.232.61.140",
+    when: "21 Jun · 07:30",
+  },
+  {
+    kind: "mfa",
+    ok: true,
+    label: "Backup codes generated",
+    detail: "10 new single-use codes",
+    ip: "197.232.14.8",
+    when: "02 Apr · 10:11",
+  },
+]
+
+export const MY_ACTIVITY_KIND: Record<
+  MyActivityKind,
+  { icon: string; tone: AccessTone }
+> = {
+  login: { icon: "logOut", tone: "neutral" },
+  mfa: { icon: "key", tone: "success" },
+  password: { icon: "lock", tone: "success" },
+}
+
+/** A role held by the signed-in user, with grant provenance. */
+export type MyRoleGrant = {
+  /** AccessRole id — resolved via roleById for name/desc/perms/colour. */
+  id: string
+  grantedBy: string
+  when: string
+  note?: string
+}
+
+export const MY_ROLES: MyRoleGrant[] = [
+  {
+    id: "platform_admin",
+    grantedBy: "System (founder)",
+    when: "10 Jan 2026",
+    note: "Initial platform owner",
+  },
+  {
+    id: "compliance_officer",
+    grantedBy: "Amara Okeke",
+    when: "14 Mar 2026",
+    note: "Added for KYB review coverage",
+  },
+]
 
 export const USER_STATUS_TONE: Record<UserStatus, AccessTone> = {
   Active: "success",
@@ -2427,39 +2634,331 @@ export const ACCESS_USERS: AccessUser[] = [
 export const usersWithRole = (roleId: string): AccessUser[] =>
   ACCESS_USERS.filter((u) => u.roles.includes(roleId))
 
+/* ---- Active sessions per user (admin monitoring) ---------------------------
+   Each session: device, browser, os, ip, location, started, lastSeen, current. */
+export type UserSession = {
+  id: string
+  browser: string
+  os: string
+  device: string
+  ip: string
+  loc: string
+  started: string
+  lastSeen: string
+  current: boolean
+}
+
+export const USER_SESSIONS: Record<string, UserSession[]> = {
+  "USR-001": [
+    {
+      id: "SES-9001",
+      browser: "Chrome 126",
+      os: "macOS 14.5",
+      device: "MacBook Pro",
+      ip: "197.232.14.8",
+      loc: "Nairobi, KE",
+      started: "08 Jun · 08:02",
+      lastSeen: "2 min ago",
+      current: true,
+    },
+    {
+      id: "SES-9002",
+      browser: "Safari 17",
+      os: "iOS 17.5",
+      device: "iPhone 15",
+      ip: "197.232.61.140",
+      loc: "Nairobi, KE",
+      started: "07 Jun · 19:40",
+      lastSeen: "3 hr ago",
+      current: false,
+    },
+  ],
+  "USR-002": [
+    {
+      id: "SES-9010",
+      browser: "Firefox 127",
+      os: "Windows 11",
+      device: "ThinkPad X1",
+      ip: "102.89.34.22",
+      loc: "Lagos, NG",
+      started: "08 Jun · 07:15",
+      lastSeen: "1 hr ago",
+      current: true,
+    },
+  ],
+  "USR-003": [
+    {
+      id: "SES-9020",
+      browser: "Chrome 126",
+      os: "Ubuntu 24.04",
+      device: "Dell XPS",
+      ip: "154.72.9.180",
+      loc: "Addis Ababa, ET",
+      started: "08 Jun · 06:30",
+      lastSeen: "3 hr ago",
+      current: true,
+    },
+    {
+      id: "SES-9021",
+      browser: "Chrome 125",
+      os: "Android 14",
+      device: "Pixel 8",
+      ip: "154.72.40.61",
+      loc: "Addis Ababa, ET",
+      started: "05 Jun · 11:05",
+      lastSeen: "2 days ago",
+      current: false,
+    },
+  ],
+  "USR-004": [
+    {
+      id: "SES-9030",
+      browser: "Edge 126",
+      os: "Windows 11",
+      device: "Surface Laptop",
+      ip: "41.90.7.55",
+      loc: "Mombasa, KE",
+      started: "07 Jun · 09:50",
+      lastSeen: "Yesterday",
+      current: true,
+    },
+  ],
+  "USR-008": [
+    {
+      id: "SES-9040",
+      browser: "Chrome 126",
+      os: "macOS 14.4",
+      device: "iMac",
+      ip: "197.232.18.9",
+      loc: "Nairobi, KE",
+      started: "08 Jun · 04:25",
+      lastSeen: "5 hr ago",
+      current: true,
+    },
+    {
+      id: "SES-9041",
+      browser: "Safari 17",
+      os: "iPadOS 17.5",
+      device: "iPad Air",
+      ip: "105.163.2.71",
+      loc: "Nairobi, KE",
+      started: "06 Jun · 20:10",
+      lastSeen: "2 days ago",
+      current: false,
+    },
+    {
+      id: "SES-9042",
+      browser: "Chrome 126",
+      os: "Windows 10",
+      device: "HP EliteBook",
+      ip: "102.134.88.3",
+      loc: "Kampala, UG",
+      started: "04 Jun · 13:30",
+      lastSeen: "4 days ago",
+      current: false,
+    },
+  ],
+  "USR-009": [
+    {
+      id: "SES-9050",
+      browser: "Chrome 126",
+      os: "Android 14",
+      device: "Samsung S24",
+      ip: "154.118.22.40",
+      loc: "Kisumu, KE",
+      started: "08 Jun · 09:40",
+      lastSeen: "20 min ago",
+      current: true,
+    },
+  ],
+  "USR-010": [
+    {
+      id: "SES-9060",
+      browser: "Chrome 126",
+      os: "Windows 11",
+      device: "Acer Swift",
+      ip: "102.89.41.7",
+      loc: "Lagos, NG",
+      started: "08 Jun · 08:55",
+      lastSeen: "1 hr ago",
+      current: true,
+    },
+  ],
+  "USR-012": [
+    {
+      id: "SES-9070",
+      browser: "Safari 17",
+      os: "macOS 14.5",
+      device: "MacBook Air",
+      ip: "197.232.90.12",
+      loc: "Nairobi, KE",
+      started: "08 Jun · 05:30",
+      lastSeen: "4 hr ago",
+      current: true,
+    },
+  ],
+  "USR-013": [
+    {
+      id: "SES-9080",
+      browser: "Firefox 127",
+      os: "Ubuntu 22.04",
+      device: "Lenovo Yoga",
+      ip: "154.72.55.99",
+      loc: "Dar es Salaam, TZ",
+      started: "06 Jun · 10:00",
+      lastSeen: "2 days ago",
+      current: true,
+    },
+  ],
+}
+
+/** Sessions for a single user (empty when none). */
+export const userSessions = (id: string): UserSession[] =>
+  USER_SESSIONS[id] ?? []
+
+/** Users that currently have at least one active session. */
+export const SESSION_USERS: AccessUser[] = ACCESS_USERS.filter(
+  (u) => userSessions(u.id).length > 0
+)
+
+/** The date a user first logged in (acceptance → invite → join, in that order). */
+export const firstLoginOf = (u: AccessUser): string =>
+  (
+    u.timeline?.find((t) => t.kind === "accepted") ||
+    u.timeline?.find((t) => t.kind === "invited")
+  )?.date || u.joined
+
+/* ---- MFA enrolment status per user (admin monitoring) ----------------------
+   enabled: methods[] + backupCodes remaining + enabledOn. not configured: [] */
+export type MfaMethod = "totp" | "email"
+export type MfaRecord = {
+  methods: MfaMethod[]
+  backupCodes: number | null
+  enabledOn: string | null
+}
+
+export const MFA_STATUS: Record<string, MfaRecord> = {
+  "USR-001": {
+    methods: ["totp", "email"],
+    backupCodes: 8,
+    enabledOn: "12 Jan 2026 · 09:14",
+  },
+  "USR-002": {
+    methods: ["totp"],
+    backupCodes: 3,
+    enabledOn: "20 Jan 2026 · 11:02",
+  },
+  "USR-003": {
+    methods: ["totp", "email"],
+    backupCodes: 10,
+    enabledOn: "01 Feb 2026 · 08:40",
+  },
+  "USR-004": {
+    methods: ["email"],
+    backupCodes: 0,
+    enabledOn: "14 Feb 2026 · 15:50",
+  },
+  "USR-005": { methods: [], backupCodes: null, enabledOn: null }, // Invited
+  "USR-006": { methods: [], backupCodes: null, enabledOn: null }, // Invited (expired)
+  "USR-007": {
+    methods: ["totp"],
+    backupCodes: 5,
+    enabledOn: "05 Mar 2026 · 09:30",
+  }, // Suspended
+  "USR-008": {
+    methods: ["totp", "email"],
+    backupCodes: 9,
+    enabledOn: "18 Mar 2026 · 09:35",
+  },
+  "USR-009": {
+    methods: ["totp"],
+    backupCodes: 6,
+    enabledOn: "02 Apr 2026 · 10:10",
+  },
+  "USR-010": {
+    methods: ["totp", "email"],
+    backupCodes: 7,
+    enabledOn: "15 Apr 2026 · 09:20",
+  },
+  "USR-011": { methods: [], backupCodes: null, enabledOn: null }, // mfa: false
+  "USR-012": {
+    methods: ["email"],
+    backupCodes: 2,
+    enabledOn: "05 May 2026 · 09:05",
+  },
+  "USR-013": {
+    methods: ["totp"],
+    backupCodes: 10,
+    enabledOn: "12 May 2026 · 11:00",
+  },
+}
+
+export const MFA_METHOD_LABEL: Record<MfaMethod, string> = {
+  totp: "Authenticator app",
+  email: "Email OTP",
+}
+
+export const mfaOf = (id: string): MfaRecord =>
+  MFA_STATUS[id] ?? { methods: [], backupCodes: null, enabledOn: null }
+export const mfaEnabled = (id: string): boolean => mfaOf(id).methods.length > 0
+
+/* ---- Password status per user (90-day rotation policy) ---------------------
+   status derived from daysLeft: <0 expired · <=14 expiring soon · else ok.
+   Invited users have no password yet (pending). */
+export type PasswordRecord =
+  | { pending: true; lastChanged?: undefined; daysLeft?: undefined }
+  | { pending?: false; lastChanged: string; daysLeft: number }
+
+export const PASSWORD_STATUS: Record<string, PasswordRecord> = {
+  "USR-001": { lastChanged: "02 Apr 2026 · 09:14", daysLeft: 23 },
+  "USR-002": { lastChanged: "11 Mar 2026 · 11:02", daysLeft: 1 },
+  "USR-003": { lastChanged: "01 Feb 2026 · 08:40", daysLeft: 58 },
+  "USR-004": { lastChanged: "20 Feb 2026 · 15:50", daysLeft: -4 },
+  "USR-005": { pending: true }, // Invited — no password yet
+  "USR-006": { pending: true }, // Invited (expired)
+  "USR-007": { lastChanged: "05 Mar 2026 · 09:30", daysLeft: 11 },
+  "USR-008": { lastChanged: "28 Mar 2026 · 09:35", daysLeft: 19 },
+  "USR-009": { lastChanged: "02 Apr 2026 · 10:10", daysLeft: 24 },
+  "USR-010": { lastChanged: "15 Apr 2026 · 09:20", daysLeft: 37 },
+  "USR-011": { lastChanged: "10 Feb 2026 · 14:00", daysLeft: -26 },
+  "USR-012": { lastChanged: "05 May 2026 · 09:05", daysLeft: 57 },
+  "USR-013": { lastChanged: "12 May 2026 · 11:00", daysLeft: 64 },
+}
+
+export const PWD_POLICY_DAYS = 90
+export const pwdOf = (id: string): PasswordRecord =>
+  PASSWORD_STATUS[id] ?? { pending: true }
+
+/* A blank wizard seed — "Onboard tenant" must open an empty form, not demo
+   data. Only neutral UI defaults are kept (tenant type radio, billing
+   frequency); every identity/contact field starts empty. One empty Primary
+   Tenant Admin contact is seeded so its card renders ready to fill. */
 export const BASE_FORM: OnboardingForm = {
-  legal: "CIC Insurance Group",
-  trading: "CIC Health",
-  contact: "Grace Achieng",
-  email: "grace.a@cic.co.ke",
-  country: "Kenya",
-  region: "af-east-1",
+  legal: "",
+  trading: "",
+  contact: "",
+  email: "",
+  country: "",
+  region: "",
   type: "Insurer",
-  subdomain: "cic-health",
+  subdomain: "",
   isolation: "dedicated",
   sso: "None",
   customDomain: "",
-  tax: "KRA-P051234567X",
-  contacts: [
-    {
-      name: "Grace Achieng",
-      email: "grace.a@cic.co.ke",
-      role: "Chief Executive Officer",
-      phone: "+254 711 000 111",
-    },
-  ],
-  address: "CIC Plaza, Mara Road, Upper Hill, Nairobi, Kenya",
-  website: "www.cic.co.ke",
+  tax: "",
+  contacts: [{ name: "", email: "", role: "", phone: "" }],
+  address: "",
+  website: "",
   secondaries: [],
-  modules: {
-    claims: ["intake", "adjud", "preauth"],
-    members: ["enroll", "elig"],
-    products: ["builder", "rules"],
-    finance: ["invoicing", "payments"],
-    reporting: ["core"],
-  },
-  model: "pmpm",
+  // Start empty — Step 3 selects from the live module catalogue (real codes).
+  modules: {},
+  pricingStructureId: null,
+  model: "",
   freq: "Monthly",
+  freeTrialDays: "",
+  contractStart: "",
+  contractEnd: "",
+  documents: [],
 }
 
 /* ===================================================================== staff */
@@ -2482,13 +2981,48 @@ export type Staff = {
 }
 
 export const STAFF: Staff[] = [
-  { id: "amara", name: "Amara Okeke", initials: "AO", role: "Onboarding Specialist" },
-  { id: "fatima", name: "Fatima Hassan", initials: "FH", role: "Onboarding Specialist" },
-  { id: "lily", name: "Lily Tesfaye", initials: "LT", role: "Platform Engineer" },
-  { id: "kwame", name: "Kwame Mensah", initials: "KM", role: "Platform Engineer" },
-  { id: "tunde", name: "Tunde Adeyemi", initials: "TA", role: "Platform Engineer" },
-  { id: "david", name: "David Kimani", initials: "DK", role: "Compliance Officer" },
-  { id: "naledi", name: "Naledi Dube", initials: "ND", role: "Compliance Officer" },
+  {
+    id: "amara",
+    name: "Amara Okeke",
+    initials: "AO",
+    role: "Onboarding Specialist",
+  },
+  {
+    id: "fatima",
+    name: "Fatima Hassan",
+    initials: "FH",
+    role: "Onboarding Specialist",
+  },
+  {
+    id: "lily",
+    name: "Lily Tesfaye",
+    initials: "LT",
+    role: "Platform Engineer",
+  },
+  {
+    id: "kwame",
+    name: "Kwame Mensah",
+    initials: "KM",
+    role: "Platform Engineer",
+  },
+  {
+    id: "tunde",
+    name: "Tunde Adeyemi",
+    initials: "TA",
+    role: "Platform Engineer",
+  },
+  {
+    id: "david",
+    name: "David Kimani",
+    initials: "DK",
+    role: "Compliance Officer",
+  },
+  {
+    id: "naledi",
+    name: "Naledi Dube",
+    initials: "ND",
+    role: "Compliance Officer",
+  },
 ]
 
 export const STAFF_BY_ID: Record<string, Staff> = Object.fromEntries(
@@ -2514,7 +3048,12 @@ export type ProvSectionKey =
   | "email"
   | "migration"
 
-export type ProvSectionStatus = "done" | "tested" | "progress" | "failed" | "todo"
+export type ProvSectionStatus =
+  | "done"
+  | "tested"
+  | "progress"
+  | "failed"
+  | "todo"
 
 export type ProvStage =
   | "Awaiting start"
@@ -2607,33 +3146,130 @@ export type ProvisioningRecord = {
 }
 
 export const PROV_SECTIONS: ProvSection[] = [
-  { k: "database", l: "Database & storage", short: "Database", icon: "database", desc: "Provider, data-storage location, connection & schema" },
-  { k: "domains", l: "Domains & SSL", short: "Domains", icon: "globe", desc: "Subdomain, custom domain & certificate" },
-  { k: "sms", l: "SMS provider", short: "SMS", icon: "messageSquare", desc: "Gateway, credentials & sender ID" },
-  { k: "email", l: "Email provider", short: "Email", icon: "mail", desc: "Transactional email & domain auth" },
-  { k: "migration", l: "Data migration", short: "Migration", icon: "rotateCcw", desc: "Import legacy data & verify counts" },
+  {
+    k: "database",
+    l: "Database & storage",
+    short: "Database",
+    icon: "database",
+    desc: "Provider, data-storage location, connection & schema",
+  },
+  {
+    k: "domains",
+    l: "Domains & SSL",
+    short: "Domains",
+    icon: "globe",
+    desc: "Subdomain, custom domain & certificate",
+  },
+  {
+    k: "sms",
+    l: "SMS provider",
+    short: "SMS",
+    icon: "messageSquare",
+    desc: "Gateway, credentials & sender ID",
+  },
+  {
+    k: "email",
+    l: "Email provider",
+    short: "Email",
+    icon: "mail",
+    desc: "Transactional email & domain auth",
+  },
+  {
+    k: "migration",
+    l: "Data migration",
+    short: "Migration",
+    icon: "rotateCcw",
+    desc: "Import legacy data & verify counts",
+  },
 ]
 
 export const DB_PROVIDERS: ProvProvider[] = [
-  { id: "rds", name: "AWS RDS (PostgreSQL)", default: true, regions: ["af-south-1 · Cape Town", "eu-west-1 · Ireland", "me-south-1 · Bahrain"] },
-  { id: "aurora", name: "AWS Aurora", default: false, regions: ["af-south-1 · Cape Town", "eu-west-1 · Ireland", "me-south-1 · Bahrain"] },
-  { id: "aos", name: "AOS Managed Postgres", default: false, regions: ["af-east-1 · Nairobi", "af-south-1 · Cape Town", "af-west-1 · Lagos"] },
-  { id: "azuresql", name: "Azure Database", default: false, regions: ["southafricanorth · Johannesburg", "westeurope · Amsterdam"] },
+  {
+    id: "rds",
+    name: "AWS RDS (PostgreSQL)",
+    default: true,
+    regions: [
+      "af-south-1 · Cape Town",
+      "eu-west-1 · Ireland",
+      "me-south-1 · Bahrain",
+    ],
+  },
+  {
+    id: "aurora",
+    name: "AWS Aurora",
+    default: false,
+    regions: [
+      "af-south-1 · Cape Town",
+      "eu-west-1 · Ireland",
+      "me-south-1 · Bahrain",
+    ],
+  },
+  {
+    id: "aos",
+    name: "AOS Managed Postgres",
+    default: false,
+    regions: [
+      "af-east-1 · Nairobi",
+      "af-south-1 · Cape Town",
+      "af-west-1 · Lagos",
+    ],
+  },
+  {
+    id: "azuresql",
+    name: "Azure Database",
+    default: false,
+    regions: ["southafricanorth · Johannesburg", "westeurope · Amsterdam"],
+  },
   { id: "self", name: "Self-managed", default: false, regions: [] },
 ]
 
 export const SMS_PROVIDERS: ProvProvider[] = [
-  { id: "twilio", name: "Twilio", default: true, hint: "Global SMS — default gateway" },
+  {
+    id: "twilio",
+    name: "Twilio",
+    default: true,
+    hint: "Global SMS — default gateway",
+  },
   { id: "pindo", name: "Pindo", default: false, hint: "East Africa optimised" },
-  { id: "at", name: "Africa's Talking", default: false, hint: "Pan-African coverage" },
-  { id: "infobip", name: "Infobip", default: false, hint: "Enterprise routing" },
+  {
+    id: "at",
+    name: "Africa's Talking",
+    default: false,
+    hint: "Pan-African coverage",
+  },
+  {
+    id: "infobip",
+    name: "Infobip",
+    default: false,
+    hint: "Enterprise routing",
+  },
 ]
 
 export const EMAIL_PROVIDERS: ProvProvider[] = [
-  { id: "resend", name: "Resend", default: true, hint: "Default transactional email" },
-  { id: "ses", name: "Amazon SES", default: false, hint: "High-volume, low cost" },
-  { id: "sendgrid", name: "SendGrid", default: false, hint: "Marketing + transactional" },
-  { id: "postmark", name: "Postmark", default: false, hint: "Fast transactional" },
+  {
+    id: "resend",
+    name: "Resend",
+    default: true,
+    hint: "Default transactional email",
+  },
+  {
+    id: "ses",
+    name: "Amazon SES",
+    default: false,
+    hint: "High-volume, low cost",
+  },
+  {
+    id: "sendgrid",
+    name: "SendGrid",
+    default: false,
+    hint: "Marketing + transactional",
+  },
+  {
+    id: "postmark",
+    name: "Postmark",
+    default: false,
+    hint: "Fast transactional",
+  },
 ]
 
 /** Per-section status → label + tone. */
@@ -2656,7 +3292,13 @@ export const PROV_STAGE_TONE: Record<ProvStage, ProvTone> = {
 }
 
 /** Subdomains already claimed by other tenants — drives the availability check. */
-export const TAKEN_SUBDOMAINS = ["jubilee", "britam", "aar", "sanlam", "old-mutual"]
+export const TAKEN_SUBDOMAINS = [
+  "jubilee",
+  "britam",
+  "aar",
+  "sanlam",
+  "old-mutual",
+]
 
 /** Staff ids eligible to be assigned as provisioning engineers. */
 export const PROV_ENGINEERS = ["lily", "kwame", "tunde"]
@@ -2674,15 +3316,57 @@ export const PROVISIONING: ProvisioningRecord[] = [
     engineer: "lily",
     stage: "In progress",
     remarks: [
-      { id: "RMK-101", section: "domains", by: "Zola Mbeki", initials: "ZM", when: "08 Jun · 10:24", severity: "action", status: "open", text: "Custom domain health.cic.co.ke still resolves to the legacy portal. Ask the tenant to update the CNAME to cic-health.ginja.ai, then re-run verification before activation." },
-      { id: "RMK-100", section: "database", by: "Zola Mbeki", initials: "ZM", when: "08 Jun · 09:50", severity: "note", status: "resolved", text: "Connection user has DDL rights on the whole cluster — consider a scoped app user. Fine for go-live; revisit post-activation." },
+      {
+        id: "RMK-101",
+        section: "domains",
+        by: "Zola Mbeki",
+        initials: "ZM",
+        when: "08 Jun · 10:24",
+        severity: "action",
+        status: "open",
+        text: "Custom domain health.cic.co.ke still resolves to the legacy portal. Ask the tenant to update the CNAME to cic-health.ginja.ai, then re-run verification before activation.",
+      },
+      {
+        id: "RMK-100",
+        section: "database",
+        by: "Zola Mbeki",
+        initials: "ZM",
+        when: "08 Jun · 09:50",
+        severity: "note",
+        status: "resolved",
+        text: "Connection user has DDL rights on the whole cluster — consider a scoped app user. Fine for go-live; revisit post-activation.",
+      },
     ],
-    sections: { database: "tested", domains: "progress", sms: "todo", email: "done", migration: "todo" },
+    sections: {
+      database: "tested",
+      domains: "progress",
+      sms: "todo",
+      email: "done",
+      migration: "todo",
+    },
     config: {
-      database: { provider: "rds", region: "af-south-1 · Cape Town", providerName: "", host: "cic-health.cluster-xyz.af-south-1.rds.amazonaws.com", tested: true, tables: false },
-      domains: { subdomain: "cic-health", custom: "health.cic.co.ke", cnameVerified: false, ssl: "pending" },
+      database: {
+        provider: "rds",
+        region: "af-south-1 · Cape Town",
+        providerName: "",
+        host: "cic-health.cluster-xyz.af-south-1.rds.amazonaws.com",
+        tested: true,
+        tables: false,
+      },
+      domains: {
+        subdomain: "cic-health",
+        custom: "health.cic.co.ke",
+        cnameVerified: false,
+        ssl: "pending",
+      },
       sms: { provider: "twilio", senderId: "", tested: false },
-      email: { provider: "resend", from: "no-reply@cic-health.ginja.ai", spf: true, dkim: true, tested: true },
+      email: {
+        provider: "resend",
+        from: "no-reply@cic-health.ginja.ai",
+        spf: true,
+        dkim: true,
+        tested: true,
+      },
       migration: { source: "Legacy SQL export", status: "todo", records: 0 },
     },
   },
@@ -2697,12 +3381,36 @@ export const PROVISIONING: ProvisioningRecord[] = [
     approvedOn: "08 Jun 2026",
     engineer: "kwame",
     stage: "Awaiting start",
-    sections: { database: "todo", domains: "todo", sms: "todo", email: "todo", migration: "todo" },
+    sections: {
+      database: "todo",
+      domains: "todo",
+      sms: "todo",
+      email: "todo",
+      migration: "todo",
+    },
     config: {
-      database: { provider: "rds", region: "", providerName: "", host: "", tested: false, tables: false },
-      domains: { subdomain: "equity-afia", custom: "", cnameVerified: false, ssl: "todo" },
+      database: {
+        provider: "rds",
+        region: "",
+        providerName: "",
+        host: "",
+        tested: false,
+        tables: false,
+      },
+      domains: {
+        subdomain: "equity-afia",
+        custom: "",
+        cnameVerified: false,
+        ssl: "todo",
+      },
       sms: { provider: "twilio", senderId: "", tested: false },
-      email: { provider: "resend", from: "", spf: false, dkim: false, tested: false },
+      email: {
+        provider: "resend",
+        from: "",
+        spf: false,
+        dkim: false,
+        tested: false,
+      },
       migration: { source: "", status: "todo", records: 0 },
     },
   },
@@ -2718,14 +3426,47 @@ export const PROVISIONING: ProvisioningRecord[] = [
     engineer: "lily",
     stage: "Blocked",
     remarks: [
-      { id: "RMK-102", section: "database", by: "Zola Mbeki", initials: "ZM", when: "07 Jun · 16:12", severity: "action", status: "open", text: "Connection test keeps failing — credentials look rotated on the tenant side. Request a fresh connection string from the Strategis DBA and re-test before any schema work." },
+      {
+        id: "RMK-102",
+        section: "database",
+        by: "Zola Mbeki",
+        initials: "ZM",
+        when: "07 Jun · 16:12",
+        severity: "action",
+        status: "open",
+        text: "Connection test keeps failing — credentials look rotated on the tenant side. Request a fresh connection string from the Strategis DBA and re-test before any schema work.",
+      },
     ],
-    sections: { database: "failed", domains: "progress", sms: "tested", email: "tested", migration: "todo" },
+    sections: {
+      database: "failed",
+      domains: "progress",
+      sms: "tested",
+      email: "tested",
+      migration: "todo",
+    },
     config: {
-      database: { provider: "aurora", region: "af-south-1 · Cape Town", providerName: "", host: "strategis.cluster-abc.af-south-1.rds.amazonaws.com", tested: false, tables: false },
-      domains: { subdomain: "jubilee", custom: "", cnameVerified: false, ssl: "todo" },
+      database: {
+        provider: "aurora",
+        region: "af-south-1 · Cape Town",
+        providerName: "",
+        host: "strategis.cluster-abc.af-south-1.rds.amazonaws.com",
+        tested: false,
+        tables: false,
+      },
+      domains: {
+        subdomain: "jubilee",
+        custom: "",
+        cnameVerified: false,
+        ssl: "todo",
+      },
       sms: { provider: "pindo", senderId: "STRATEGIS", tested: true },
-      email: { provider: "ses", from: "no-reply@strategis.ginja.ai", spf: true, dkim: true, tested: true },
+      email: {
+        provider: "ses",
+        from: "no-reply@strategis.ginja.ai",
+        spf: true,
+        dkim: true,
+        tested: true,
+      },
       migration: { source: "CSV bundle", status: "todo", records: 0 },
     },
   },
@@ -2740,12 +3481,36 @@ export const PROVISIONING: ProvisioningRecord[] = [
     approvedOn: "06 Jun 2026",
     engineer: "lily",
     stage: "Ready to activate",
-    sections: { database: "done", domains: "done", sms: "tested", email: "tested", migration: "done" },
+    sections: {
+      database: "done",
+      domains: "done",
+      sms: "tested",
+      email: "tested",
+      migration: "done",
+    },
     config: {
-      database: { provider: "rds", region: "af-south-1 · Cape Town", providerName: "", host: "liberty.cluster-def.af-south-1.rds.amazonaws.com", tested: true, tables: true },
-      domains: { subdomain: "liberty-health", custom: "portal.liberty.co.ug", cnameVerified: true, ssl: "active" },
+      database: {
+        provider: "rds",
+        region: "af-south-1 · Cape Town",
+        providerName: "",
+        host: "liberty.cluster-def.af-south-1.rds.amazonaws.com",
+        tested: true,
+        tables: true,
+      },
+      domains: {
+        subdomain: "liberty-health",
+        custom: "portal.liberty.co.ug",
+        cnameVerified: true,
+        ssl: "active",
+      },
       sms: { provider: "at", senderId: "LIBERTY", tested: true },
-      email: { provider: "resend", from: "no-reply@liberty-health.ginja.ai", spf: true, dkim: true, tested: true },
+      email: {
+        provider: "resend",
+        from: "no-reply@liberty-health.ginja.ai",
+        spf: true,
+        dkim: true,
+        tested: true,
+      },
       migration: { source: "Legacy API sync", status: "done", records: 142800 },
     },
   },
@@ -2757,7 +3522,8 @@ export const provOpenRemarks = (p: ProvisioningRecord) =>
 
 /** Count of provisioning sections that are provisioned or tested. */
 export const provDone = (p: ProvisioningRecord) =>
-  PROV_SECTIONS.filter((s) => ["done", "tested"].includes(p.sections[s.k])).length
+  PROV_SECTIONS.filter((s) => ["done", "tested"].includes(p.sections[s.k]))
+    .length
 
 /* ============================================================ access roles */
 /* The internal staff roles you can act as (demo: switch via the header). Each
@@ -2813,6 +3579,7 @@ export const CONSOLE_ROLES: Record<ConsoleRoleKey, ConsoleRole> = {
       "view:registry",
       "view:doc-templates",
       "view:email-templates",
+      "view:sms-templates",
       "view:pricing",
       "view:audit",
     ],
@@ -2856,6 +3623,7 @@ export const CONSOLE_ROLES: Record<ConsoleRoleKey, ConsoleRole> = {
       "view:registry",
       "view:doc-templates",
       "view:email-templates",
+      "view:sms-templates",
       "view:pricing",
       "view:access-users",
       "view:access-roles",
@@ -2868,6 +3636,7 @@ export const CONSOLE_ROLES: Record<ConsoleRoleKey, ConsoleRole> = {
       "registry",
       "doc-templates",
       "email-templates",
+      "sms-templates",
       "pricing",
       "access-users",
       "access-roles",
@@ -2899,6 +3668,24 @@ export const cHasPerm = (role: ConsoleRole, permId: string) =>
 /** Can this role see-but-not-edit a module (by permId)? */
 export const cReadonly = (role: ConsoleRole, permId: string) =>
   role.readonly.includes(permId) && !role.perms.includes("*")
+
+/* Maps a backend role (JWT `roles` claim, e.g. "PLATFORM_ADMIN") to the console
+   role that drives nav-gating + separation-of-duties. See API_GUIDE.md §1. */
+const API_ROLE_TO_KEY: Record<string, ConsoleRoleKey> = {
+  PLATFORM_ADMIN: "platform_admin",
+  PLATFORM_APPROVER: "platform_approver",
+  PLATFORM_ENGINEER: "platform_engineer",
+  SUPPORT: "read_only",
+}
+
+/** Resolve the acting console role from the login token's roles (least-privilege fallback). */
+export function roleKeyFromApiRoles(roles?: string[] | null): ConsoleRoleKey {
+  for (const r of roles ?? []) {
+    const key = API_ROLE_TO_KEY[r]
+    if (key) return key
+  }
+  return "read_only"
+}
 
 /* Approval kind → icon key (mapped to a lucide icon in the Approvals page). */
 export const APPROVAL_KIND_ICON: Record<string, string> = {

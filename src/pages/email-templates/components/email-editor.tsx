@@ -1,171 +1,251 @@
 import * as React from "react"
-import { EyeIcon, InfoIcon, SendIcon } from "lucide-react"
+import {
+  CheckIcon,
+  FileTextIcon,
+  HistoryIcon,
+  InfoIcon,
+  PencilIcon,
+  SendIcon,
+  TriangleAlertIcon,
+} from "lucide-react"
 import { toast } from "sonner"
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import {
-  EMAIL_VARS,
-  type DocStatus,
+  EMAIL_VERSIONS,
   type EmailTemplate,
+  type DocStatus,
 } from "@/lib/console-data"
-import { renderTpl } from "@/lib/console-format"
-import { ConsolePageHeader } from "@/components/console/page-header"
-import { Panel, PanelBody, PanelHead } from "@/components/console/panel"
-import { Field } from "@/components/console/form-atoms"
+import { Button } from "@/components/ui/button"
 import { MiniBadge } from "@/components/console/tagpill"
+import { CopyId } from "@/components/console/copy-id"
 import { Note } from "@/components/console/note"
+import { TabBar, type TabItem } from "@/components/console/tab-bar"
+import { ConfirmDialog, ImpactBox } from "@/components/console/confirm-dialog"
+import { LoadingSpinner } from "@/components/common/loading"
+import type { EmailVersionRow } from "@/features/email-templates/api"
+import {
+  useEmailTemplateDetail,
+  useEmailTemplateVersions,
+  useRollbackEmailTemplate,
+  useUpdateEmailTemplate,
+} from "@/features/email-templates/use-email-templates"
+import {
+  EmailTemplateForm,
+  type EmailTemplateFormHandle,
+} from "./email-template-form"
+import { VersionsTab } from "./versions-tab"
+import { AuditTab } from "./audit-tab"
+import { SendTestModal } from "./send-test-modal"
 
 const TPL_TONE: Record<DocStatus, "success" | "neutral"> = {
   Published: "success",
   Draft: "neutral",
 }
 
+const buildTabs = (versionsCount?: number): TabItem[] => [
+  { k: "editor", label: "Editor", icon: <PencilIcon /> },
+  {
+    k: "versions",
+    label: "Versions",
+    icon: <HistoryIcon />,
+    count: versionsCount,
+  },
+  { k: "audit", label: "Audit log", icon: <FileTextIcon /> },
+]
+
+/**
+ * Email template editor — a record-page shell (breadcrumb, header with status +
+ * Send test / Save & publish, three tabs). The Editor tab embeds the shared
+ * create/edit form. Mirrors the hi-fi `EmailEditor`.
+ */
 export function EmailEditor({
   tpl,
+  readonly = false,
   onBack,
 }: {
   tpl: EmailTemplate
+  readonly?: boolean
   onBack: () => void
 }) {
-  const [subject, setSubject] = React.useState(tpl.subject)
-  const [body, setBody] = React.useState(tpl.body)
+  const [tab, setTab] = React.useState("editor")
+  const [rollback, setRollback] = React.useState<EmailVersionRow | null>(null)
+  const [sendTest, setSendTest] = React.useState(false)
+  const cur = EMAIL_VERSIONS.find((v) => v.current) ?? EMAIL_VERSIONS[0]
+  const overrides = tpl.overrides ?? 0
+
+  // Fetch the full template detail (metadata + current version content) so the
+  // editor form is filled from the live API, not derived/static placeholders.
+  const detailQuery = useEmailTemplateDetail(tpl.templateId)
+
+  // Real version count for the Versions tab badge (shares VersionsTab's query).
+  const versionsQuery = useEmailTemplateVersions(tpl.templateId)
+  const versionsCount =
+    versionsQuery.data?.totalElements ?? versionsQuery.data?.items.length
+  const TABS = buildTabs(versionsCount)
+
+  // Editor form holds the edit state; the header Save button drives the PUT.
+  const formRef = React.useRef<EmailTemplateFormHandle>(null)
+  const updateMut = useUpdateEmailTemplate()
+  const save = () => {
+    const body = formRef.current?.submit()
+    if (!body || tpl.templateId == null) return
+    updateMut.mutate(
+      { id: tpl.templateId, body, publish: true },
+      {
+        onSuccess: () => toast.success(`${tpl.name} saved & published.`),
+        onError: (e) =>
+          toast.error("Couldn't save template", {
+            description: e instanceof Error ? e.message : undefined,
+          }),
+      }
+    )
+  }
+  const rollbackMut = useRollbackEmailTemplate()
+  const doRollback = () => {
+    const v = rollback
+    if (!v || tpl.templateId == null) return
+    rollbackMut.mutate(
+      { id: tpl.templateId, versionNumber: v.versionNumber },
+      {
+        onSuccess: () => {
+          toast.success(
+            `Rolled back ${tpl.name} to v${v.versionNumber}. A new draft version was created.`
+          )
+          setRollback(null)
+          setTab("versions")
+        },
+        onError: (e) =>
+          toast.error("Couldn't roll back", {
+            description: e instanceof Error ? e.message : undefined,
+          }),
+      }
+    )
+  }
 
   return (
-    <div className="flex flex-col gap-5">
-      <button
-        type="button"
-        onClick={onBack}
-        className="flex w-fit items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-      >
-        Email &amp; SMS templates
-        <span className="text-muted-foreground/50">/</span>
-        <span className="font-medium text-foreground">{tpl.name}</span>
-      </button>
-
-      <ConsolePageHeader
-        title={
-          <span className="flex items-center gap-2.5">
-            {tpl.name}
-            <MiniBadge tone={TPL_TONE[tpl.status]}>{tpl.status}</MiniBadge>
-          </span>
-        }
-        sub={`Trigger: ${tpl.trigger} · ${tpl.channel} · ${tpl.version}`}
-        actions={
-          <>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => toast("Test message sent.")}
-            >
-              <SendIcon data-icon="inline-start" />
-              Send test
-            </Button>
-            <Button size="sm" onClick={() => toast(`${tpl.name} published.`)}>
-              Save &amp; publish
-            </Button>
-          </>
-        }
-      />
-
-      <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
-        <div className="flex flex-col gap-4">
-          <Field label="Subject line">
-            <Input
-              className="mono text-[12.5px]"
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-            />
-          </Field>
-          <Field label="Message body">
-            <Textarea
-              className="mono min-h-[240px] text-[12.5px]"
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-            />
-          </Field>
-
-          <Panel>
-            <PanelHead
-              icon={<EyeIcon />}
-              title="Live preview"
-              action={
-                <span className="text-[11px] text-muted-foreground">
-                  Sample: Jubilee Health
-                </span>
-              }
-            />
-            <PanelBody>
-              <div className="rounded-[10px] border bg-white p-6">
-                <div className="text-[15px] font-bold text-slate-900">
-                  {renderTpl(subject)}
-                </div>
-                <div className="mt-0.5 mb-4 border-b border-slate-200 pb-3 text-[11.5px] text-slate-500">
-                  from notifications@ginja.ai
-                </div>
-                <div className="text-[13.5px] leading-relaxed whitespace-pre-wrap text-slate-800">
-                  {renderTpl(body)}
-                </div>
-              </div>
-            </PanelBody>
-          </Panel>
+    <div className="flex flex-col gap-4">
+      <div>
+        <div className="mb-2.5 flex items-center gap-[7px] text-xs text-muted-foreground">
+          <button
+            type="button"
+            onClick={onBack}
+            className="transition-colors hover:text-foreground"
+          >
+            Email templates
+          </button>
+          <span className="text-muted-foreground/45">/</span>
+          <span className="font-medium text-foreground">{tpl.name}</span>
         </div>
 
-        <div className="flex flex-col gap-4">
-          <Panel>
-            <PanelHead title="Merge variables" />
-            <PanelBody className="flex flex-col gap-2.5">
-              <p className="text-[11.5px] text-muted-foreground">
-                Click to insert at the cursor.
-              </p>
-              <div className="flex flex-col gap-1.5">
-                {EMAIL_VARS.map((v) => (
-                  <button
-                    key={v.n}
-                    type="button"
-                    onClick={() => setBody((b) => `${b} {{${v.n}}}`)}
-                    className="flex items-center gap-2 rounded-lg border px-2.5 py-[7px] text-[11.5px] transition-colors hover:border-primary hover:bg-primary/[0.04]"
-                  >
-                    <span className="mono font-semibold text-primary">
-                      {`{{${v.n}}}`}
-                    </span>
-                    <span className="ml-auto text-muted-foreground">{v.d}</span>
-                  </button>
-                ))}
-              </div>
-            </PanelBody>
-          </Panel>
-
-          <Panel>
-            <PanelHead title="Delivery" />
-            <PanelBody className="flex flex-col gap-2.5 text-[13px]">
-              {(
-                [
-                  ["Channel", tpl.channel],
-                  ["Trigger", tpl.trigger],
-                  ["Tenant overrides", String(tpl.overrides)],
-                ] as const
-              ).map(([k, v]) => (
-                <div
-                  key={k}
-                  className="flex items-center justify-between gap-3"
-                >
-                  <span className="text-muted-foreground">{k}</span>
-                  <span className="text-right text-[12.5px] font-medium">
-                    {v}
-                  </span>
-                </div>
-              ))}
-            </PanelBody>
-          </Panel>
-
-          <Note tone="info" icon={<InfoIcon />}>
-            Tenants inherit this template and can override the copy in their own
-            admin settings.
-          </Note>
+        <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+          <div className="min-w-0">
+            <h1 className="flex items-center gap-2.5 text-2xl font-semibold tracking-tight">
+              {tpl.name}
+              <MiniBadge tone={tpl.archived ? "neutral" : TPL_TONE[tpl.status]}>
+                {tpl.archived ? "Archived" : tpl.status}
+              </MiniBadge>
+            </h1>
+            <div className="mt-[3px] flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+              <span>
+                Trigger: {tpl.trigger} · {tpl.version}
+              </span>
+              <CopyId value={tpl.id} label="Template ID" />
+            </div>
+          </div>
+          {tab === "editor" ? (
+            <div className="flex shrink-0 items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSendTest(true)}
+              >
+                <SendIcon data-icon="inline-start" />
+                Send test
+              </Button>
+              {!readonly ? (
+                <Button size="sm" onClick={save} disabled={updateMut.isPending}>
+                  <CheckIcon data-icon="inline-start" />
+                  {updateMut.isPending ? "Saving…" : "Save & publish"}
+                </Button>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </div>
+
+      <TabBar tabs={TABS} value={tab} onChange={setTab} />
+
+      {tab === "editor" ? (
+        detailQuery.isLoading ? (
+          <div className="flex items-center justify-center py-20 text-muted-foreground">
+            <LoadingSpinner />
+          </div>
+        ) : detailQuery.isError ? (
+          <Note tone="err" icon={<TriangleAlertIcon />}>
+            Couldn’t load this template.{" "}
+            <button
+              className="font-semibold underline underline-offset-2"
+              onClick={() => detailQuery.refetch()}
+            >
+              Try again
+            </button>
+            .
+          </Note>
+        ) : detailQuery.data ? (
+          <EmailTemplateForm ref={formRef} detail={detailQuery.data} embedded />
+        ) : null
+      ) : tab === "versions" ? (
+        <VersionsTab
+          templateId={tpl.templateId}
+          readonly={readonly}
+          onRollback={setRollback}
+        />
+      ) : (
+        <AuditTab templateId={tpl.templateId} />
+      )}
+
+      <SendTestModal
+        open={sendTest}
+        tpl={tpl}
+        cur={cur}
+        onClose={() => setSendTest(false)}
+      />
+
+      <ConfirmDialog
+        open={!!rollback}
+        icon={<HistoryIcon />}
+        tone="warn"
+        title={rollback ? `Roll back to v${rollback.versionNumber}?` : ""}
+        confirmLabel={
+          rollback ? `Roll back to v${rollback.versionNumber}` : "Roll back"
+        }
+        onConfirm={doRollback}
+        onCancel={() => setRollback(null)}
+        body={
+          rollback ? (
+            <>
+              <p>
+                This restores the <b>v{rollback.versionNumber}</b> subject &amp;
+                body as a <b>new draft version</b> of {tpl.name}. The current
+                live version is unchanged — nothing is deleted.
+              </p>
+              <ImpactBox
+                tone="warn"
+                icon={<InfoIcon />}
+                heading="Impact"
+                items={[
+                  `A new draft with the v${rollback.versionNumber} content is created — publish it to make it live.`,
+                  <>
+                    <b>{overrides}</b> tenant{overrides === 1 ? "" : "s"} with
+                    their own override are unaffected.
+                  </>,
+                  "A rollback entry is written to the audit log, attributed to you.",
+                ]}
+              />
+            </>
+          ) : undefined
+        }
+      />
     </div>
   )
 }

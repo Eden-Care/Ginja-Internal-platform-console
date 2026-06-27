@@ -1,10 +1,9 @@
 import * as React from "react"
-import { NavLink, useLocation } from "react-router-dom"
+import { NavLink, useLocation, useNavigate } from "react-router-dom"
 import {
   Building2Icon,
   ChevronsUpDownIcon,
   CreditCardIcon,
-  EyeIcon,
   FileTextIcon,
   GalleryVerticalEndIcon,
   HistoryIcon,
@@ -12,7 +11,9 @@ import {
   LayersIcon,
   type LucideIcon,
   LayoutDashboardIcon,
+  LogOutIcon,
   MailIcon,
+  MessageSquareIcon,
   ServerIcon,
   SettingsIcon,
   ShieldCheckIcon,
@@ -27,12 +28,7 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
   DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
@@ -49,12 +45,8 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 import { useAccess } from "@/contexts/access-context"
+import { useAuth } from "@/contexts/auth-context"
 import { useBrand } from "@/contexts/brand-context"
-import {
-  CONSOLE_ROLES,
-  CONSOLE_ROLE_KEYS,
-  type ConsoleRoleKey,
-} from "@/lib/console-data"
 
 export type NavItem = {
   title: string
@@ -123,10 +115,16 @@ export const navGroups: NavGroup[] = [
         permId: "doc-templates",
       },
       {
-        title: "Email & SMS templates",
+        title: "Email templates",
         url: "/email-templates",
         icon: MailIcon,
         permId: "email-templates",
+      },
+      {
+        title: "SMS templates",
+        url: "/sms-templates",
+        icon: MessageSquareIcon,
+        permId: "sms-templates",
       },
       {
         title: "Pricing & plans",
@@ -189,8 +187,10 @@ function isActivePath(pathname: string, url: string, exact?: boolean) {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const location = useLocation()
+  const navigate = useNavigate()
   const { brand } = useBrand()
-  const { user, hasPermission, role, roleKey, setRoleKey } = useAccess()
+  const { user, hasPermission } = useAccess()
+  const { logout } = useAuth()
 
   const visibleGroups = navGroups
     .map((group) => ({
@@ -347,40 +347,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => navigate("/my-account")}>
                     <UserIcon data-icon="inline-start" />
                     Profile
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => navigate("/my-account?tab=profile")}
+                  >
                     <SettingsIcon data-icon="inline-start" />
                     Preferences
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>
-                    <EyeIcon data-icon="inline-start" />
-                    <span>Viewing as</span>
-                    <span className="ml-auto max-w-28 truncate text-xs text-muted-foreground">
-                      {role.label}
-                    </span>
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent>
-                    <DropdownMenuLabel className="text-xs text-muted-foreground">
-                      Acting role (demo)
-                    </DropdownMenuLabel>
-                    <DropdownMenuRadioGroup
-                      value={roleKey}
-                      onValueChange={(v) => setRoleKey(v as ConsoleRoleKey)}
-                    >
-                      {CONSOLE_ROLE_KEYS.map((k) => (
-                        <DropdownMenuRadioItem key={k} value={k}>
-                          {CONSOLE_ROLES[k].label}
-                        </DropdownMenuRadioItem>
-                      ))}
-                    </DropdownMenuRadioGroup>
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
+                <DropdownMenuItem onSelect={() => logout()}>
+                  <LogOutIcon data-icon="inline-start" />
+                  Sign out
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </SidebarMenuItem>

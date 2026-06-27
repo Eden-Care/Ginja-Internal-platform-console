@@ -10,18 +10,22 @@ import {
 
 import { Button } from "@/components/ui/button"
 import {
-  ONB_TEAM,
-  PRICING_MODELS,
-  REGISTRY,
-  type OnbTeamKey,
+  DOC_CATEGORY_LABEL,
+  REQUIRED_DOC_CATEGORIES,
   type OnboardingForm,
   type WizStepKey,
 } from "@/lib/console-data"
 import type { WizStatus } from "@/lib/console-format"
-import { Glyph } from "@/components/console/glyph"
-import { MiniAvatar } from "@/components/console/avatar-initials"
+import { useModuleCatalogue } from "@/features/registry/use-module-catalogue"
+import { useTenantPricingOptions } from "@/features/pricing/use-pricing-structures"
+import { useMembers } from "@/features/access/use-members"
+import { AssigneeAvatar } from "@/components/console/avatar-initials"
 import { Note } from "@/components/console/note"
 import { MiniBadge, Tagpill } from "@/components/console/tagpill"
+import {
+  toOwnerOption,
+  type OwnerOption,
+} from "@/pages/tenant-accounts/components/owner-select"
 
 const STEP_BY_KEY: Record<string, number> = {
   primary: 0,
@@ -44,18 +48,17 @@ function ReviewSection({
   title,
   sectionKey,
   status,
-  assignees,
+  owner,
   setStep,
   children,
 }: {
   title: string
   sectionKey: WizStepKey
   status: Record<WizStepKey, WizStatus>
-  assignees: Record<WizStepKey, OnbTeamKey>
+  owner: OwnerOption | null
   setStep: (n: number) => void
   children: React.ReactNode
 }) {
-  const a = ONB_TEAM[assignees[sectionKey]]
   const badge = STATUS_BADGE[status[sectionKey]]
   return (
     <div className="rounded-xl border">
@@ -63,11 +66,17 @@ function ReviewSection({
         <h4 className="text-[13.5px] font-semibold">{title}</h4>
         <MiniBadge tone={badge.tone}>{badge.label}</MiniBadge>
         <Tagpill className="text-[10.5px]">
-          <MiniAvatar
-            initials={a.initials}
-            className="size-[15px] text-[9px]"
-          />
-          {a.name}
+          {owner ? (
+            <>
+              <AssigneeAvatar
+                name={owner.name}
+                className="size-[15px] text-[9px]"
+              />
+              {owner.name}
+            </>
+          ) : (
+            "Unassigned"
+          )}
         </Tagpill>
         <Button
           variant="ghost"
@@ -105,14 +114,37 @@ export function StepReview({
 }: {
   form: OnboardingForm
   status: Record<WizStepKey, WizStatus>
-  assignees: Record<WizStepKey, OnbTeamKey>
+  assignees: Record<WizStepKey, string | null>
   setStep: (n: number) => void
 }) {
-  const enabled = REGISTRY.filter((m) => form.modules[m.id])
+  const { data: modules } = useModuleCatalogue()
+  const { data: structures } = useTenantPricingOptions()
+  const { data: membersPage } = useMembers()
+  const ownerByEmail = React.useMemo(() => {
+    const m = new Map<string, OwnerOption>()
+    for (const mb of membersPage?.items ?? []) m.set(mb.email, toOwnerOption(mb))
+    return m
+  }, [membersPage])
+  const resolveOwner = (email: string | null): OwnerOption | null =>
+    email ? ownerByEmail.get(email) ?? { email, name: email, roleLabel: null } : null
+  const catByCode = new Map((modules ?? []).map((m) => [m.code, m]))
+  const modCodes = Object.keys(form.modules)
+  /** "Module" or "Module · 2/3" when only some sub-modules are entitled. */
+  const moduleLabel = (code: string) => {
+    const cat = catByCode.get(code)
+    const name = cat?.name ?? code
+    const total = cat?.subs.length ?? 0
+    const picked = form.modules[code]?.length ?? 0
+    if (total && picked && picked < total) return `${name} · ${picked}/${total}`
+    return name
+  }
+  const structure = (structures ?? []).find(
+    (s) => s.id === form.pricingStructureId
+  )
   const allDone = (Object.values(status) as WizStatus[]).every(
     (v) => v === "complete"
   )
-  const sectionProps = { status, assignees, setStep }
+  const sectionProps = { status, setStep }
 
   return (
     <div className="flex flex-col gap-4">
@@ -127,15 +159,13 @@ export function StepReview({
               {1 + form.secondaries.length} tenant{" "}
               {form.secondaries.length === 0 ? "record" : "records"}
             </b>{" "}
-            {form.secondaries.length === 0 ? "is" : "are"} created in a single
-            transaction in <b>Draft</b> status and routed to the Platform
-            Approver.
+            {form.secondaries.length === 0 ? "is" : "are"} created in{" "}
+            <b>Draft</b> and routed to the Platform Approver.
           </span>
         ) : (
           <span>
-            Some sections are still in progress. You can submit once every
-            section is complete, or <b>save the draft</b> and let the assigned
-            owners finish their parts.
+            Some sections are still in progress. Submit becomes available once
+            every required section is complete.
           </span>
         )}
       </Note>
@@ -143,22 +173,20 @@ export function StepReview({
       <ReviewSection
         title="Basic profile"
         sectionKey="primary"
+        owner={resolveOwner(assignees.primary)}
         {...sectionProps}
       >
         <Meta
           items={[
-            ["Legal entity", form.legal],
+            ["Legal entity", form.legal || "—"],
             ["Tenant type", form.type],
             ["Country", form.country],
+            ["Subdomain", form.subdomain ? `${form.subdomain}.ginja.ai` : "—"],
+            ["Region", form.region || "—"],
             ["Tax / VAT", form.tax || "—"],
             ["Primary contact", form.contacts[0]?.name || "—"],
             ["Contact email", form.contacts[0]?.email || "—"],
-            [
-              "Contacts",
-              `${form.contacts.length} ${form.contacts.length === 1 ? "contact" : "contacts"}`,
-            ],
             ["Website", form.website || "—"],
-            ["Address", form.address || "—"],
           ]}
         />
       </ReviewSection>
@@ -166,12 +194,12 @@ export function StepReview({
       <ReviewSection
         title={`Secondary tenants (${form.secondaries.length})`}
         sectionKey="secondary"
+        owner={resolveOwner(assignees.secondary)}
         {...sectionProps}
       >
         {form.secondaries.length === 0 ? (
           <div className="text-[13px] text-muted-foreground">
-            None — single-tenant account. Entitlements &amp; billing apply to
-            the primary tenant only.
+            None — single-tenant account.
           </div>
         ) : (
           <div className="flex flex-col gap-2">
@@ -189,39 +217,45 @@ export function StepReview({
       </ReviewSection>
 
       <ReviewSection
-        title={`Module entitlements (${enabled.length})`}
+        title={`Module access (${modCodes.length})`}
         sectionKey="modules"
+        owner={resolveOwner(assignees.modules)}
         {...sectionProps}
       >
-        <div className="flex flex-wrap gap-2">
-          {enabled.map((m) => (
-            <Tagpill key={m.id}>
-              <Glyph name={m.icon} className="size-[11px]" />
-              {m.name} · {form.modules[m.id].length}
-            </Tagpill>
-          ))}
-        </div>
+        {modCodes.length === 0 ? (
+          <div className="text-[13px] text-muted-foreground">
+            No modules selected.
+          </div>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {modCodes.map((code) => (
+              <Tagpill key={code}>{moduleLabel(code)}</Tagpill>
+            ))}
+          </div>
+        )}
       </ReviewSection>
 
       <ReviewSection
         title="Subscription & billing"
         sectionKey="billing"
+        owner={resolveOwner(assignees.billing)}
         {...sectionProps}
       >
         <div className="flex flex-wrap gap-6 text-[13px]">
           <div>
-            <span className="text-muted-foreground">Model</span>
+            <span className="text-muted-foreground">Structure</span>
             <div className="font-semibold">
-              {PRICING_MODELS.find((m) => m.id === form.model)?.name}
+              {structure?.name ??
+                (form.pricingStructureId ? `#${form.pricingStructureId}` : "—")}
             </div>
+          </div>
+          <div>
+            <span className="text-muted-foreground">Model</span>
+            <div className="font-semibold">{form.model || "—"}</div>
           </div>
           <div>
             <span className="text-muted-foreground">Frequency</span>
             <div className="font-semibold">{form.freq}</div>
-          </div>
-          <div>
-            <span className="text-muted-foreground">Tied to</span>
-            <div className="font-semibold">{form.legal} (primary)</div>
           </div>
         </div>
       </ReviewSection>
@@ -229,34 +263,31 @@ export function StepReview({
       <ReviewSection
         title="KYC & documents"
         sectionKey="documents"
+        owner={resolveOwner(assignees.documents)}
         {...sectionProps}
       >
         <div className="flex flex-col gap-2">
-          {(
-            [
-              ["Signed Contract", true],
-              ["Company Registration", true],
-              ["Proof of Address", true],
-              ["Director / Shareholder IDs", false],
-            ] as [string, boolean][]
-          ).map(([d, ok]) => (
-            <div key={d} className="flex items-center gap-2.5 text-[13px]">
-              <span
-                className={
-                  ok
-                    ? "grid size-5 place-items-center rounded-full bg-success-subtle text-success-subtle-foreground"
-                    : "grid size-5 place-items-center rounded-full bg-muted text-muted-foreground"
-                }
-              >
-                {ok ? (
-                  <CheckIcon className="size-3" />
-                ) : (
-                  <MinusIcon className="size-3" />
-                )}
-              </span>
-              {d}
-            </div>
-          ))}
+          {REQUIRED_DOC_CATEGORIES.map((cat) => {
+            const ok = form.documents.some((d) => d.category === cat)
+            return (
+              <div key={cat} className="flex items-center gap-2.5 text-[13px]">
+                <span
+                  className={
+                    ok
+                      ? "grid size-5 place-items-center rounded-full bg-success-subtle text-success-subtle-foreground"
+                      : "grid size-5 place-items-center rounded-full bg-muted text-muted-foreground"
+                  }
+                >
+                  {ok ? (
+                    <CheckIcon className="size-3" />
+                  ) : (
+                    <MinusIcon className="size-3" />
+                  )}
+                </span>
+                {DOC_CATEGORY_LABEL[cat] ?? cat}
+              </div>
+            )
+          })}
         </div>
       </ReviewSection>
     </div>
