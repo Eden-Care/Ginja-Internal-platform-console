@@ -55,7 +55,7 @@ All endpoints require this scheme unless noted otherwise (the `/dev/token` helpe
 - [Payer Lifecycle](#payer-lifecycle) (6)
 - [Tenant Provisioning & Technical Review](#tenant-provisioning-technical-review) (11)
 - [Platform Settings · Localization](#platform-settings-localization) (9)
-- [Platform Settings · Security](#platform-settings-security) (11)
+- [Platform Settings · Security](#platform-settings-security) (14)
 - [Platform Settings · Provisioning Tiers](#platform-settings-provisioning-tiers) (5)
 - [Platform Settings · Data Residency](#platform-settings-data-residency) (5)
 - [Dashboard](#dashboard) (1)
@@ -2319,7 +2319,7 @@ authority again on the member's next login.
 
 **Get a permission**
 
-`operationId: get_7`
+`operationId: get_8`
 
 Returns a single permission by its numeric id.
 
@@ -2645,7 +2645,7 @@ the prior current version is simply archived and remains in the history.
 
 **Get a module by business id**
 
-`operationId: get_5`
+`operationId: get_6`
 
 Returns one module by its business id (e.g. `MRC000001`), including sub-modules and the derived
 `tenants` count.
@@ -2700,7 +2700,7 @@ Returns one module by its business id (e.g. `MRC000001`), including sub-modules 
 
 **Update a module (PATCH, publish/unpublish)**
 
-`operationId: update_5`
+`operationId: update_6`
 
 Partially updates a module — only the non-null fields are applied. Supplying `sub_modules` replaces
 the whole set; omitting it leaves them unchanged. Setting `status` to `PUBLISHED` (from another
@@ -3879,7 +3879,7 @@ attachable to a Payer subscription via `PUT /platform/payers/{id}/subscription`.
 
 **Get a pricing structure**
 
-`operationId: get_4`
+`operationId: get_5`
 
 Fetches a single pricing structure by numeric id, including its nested `components[]` and `tiers[]`.
 
@@ -3947,7 +3947,7 @@ Fetches a single pricing structure by numeric id, including its nested `componen
 
 **Update a pricing structure (PATCH, DRAFT only)**
 
-`operationId: update_4`
+`operationId: update_5`
 
 Partial update — only non-null fields are applied. If `components` is provided, the **entire**
 component/tier set is replaced; if omitted, it is left unchanged.
@@ -6440,7 +6440,7 @@ on payer submit.
 
 **Get a tenant's provisioning detail**
 
-`operationId: get_6`
+`operationId: get_7`
 
 Returns one tenant's `ProvisioningResponse` including its full `sections[]` (DATABASE,
 DOMAINS_SSL, EMAIL, SMS, DATA_MIGRATION) with config, test results, and review status.
@@ -6732,7 +6732,7 @@ Publishes the DRAFT (archiving the current published version). **Role:** `PLATFO
 
 **Get localization settings**
 
-`operationId: get_2`
+`operationId: get_3`
 
 Returns the singleton platform-default locale/formatting (timezone, week start, date/time format,
 decimal/thousands separators, currency + symbol + decimals, default language) that tenants inherit.
@@ -6780,7 +6780,7 @@ decimal/thousands separators, currency + symbol + decimals, default language) th
 
 **Update localization settings**
 
-`operationId: update_2`
+`operationId: update_3`
 
 Partial update — supply only the fields to change. Enforced platform-wide as the tenant-inherited
 defaults.
@@ -6855,9 +6855,12 @@ All ruleset versions, newest first. **Roles:** `PLATFORM_ADMIN` / `SUPPORT`.
 | `POST` | `/platform/settings/mfa-status/{memberId}/remind` | Send an MFA-enrolment reminder |
 | `GET` | `/platform/settings/security-policy` | Get the platform security policy |
 | `PATCH` | `/platform/settings/security-policy` | Update the platform security policy |
-| `GET` | `/platform/settings/sessions` | List all active sessions (across users) |
+| `GET` | `/platform/settings/notification-templates/{type}` | Get one notification template mapping |
+| `PATCH` | `/platform/settings/notification-templates/{type}` | Update a notification template mapping |
+| `GET` | `/platform/settings/sessions` | List all active sessions (grouped by member) |
 | `GET` | `/platform/settings/password-status` | Password status — summary + per-user list |
 | `GET` | `/platform/settings/password-status/{memberId}` | Password status for one user (detail panel) |
+| `GET` | `/platform/settings/notification-templates` | List notification template mappings |
 | `GET` | `/platform/settings/mfa-status` | MFA status — adoption summary + per-user list |
 | `GET` | `/platform/settings/mfa-status/{memberId}` | MFA status for one user (detail panel) |
 
@@ -7124,15 +7127,78 @@ Enforced across the platform; PLATFORM_ADMIN only.
 
 ---
 
+### `GET` `/platform/settings/notification-templates/{type}`
+
+**Get one notification template mapping**
+
+`operationId: get_2`
+
+Returns the template mapping for one notification type. **Roles:** `PLATFORM_ADMIN` or `SUPPORT`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `type` | path | ✓ | string enum: `MEMBER_INVITE`, `TENANT_ADMIN_INVITE`, `SMS_OTP` | Notification type. |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK. |
+| `400` | Unknown notification type. |
+| `404` | Type not configured. |
+
+---
+
+### `PATCH` `/platform/settings/notification-templates/{type}`
+
+**Update a notification template mapping**
+
+`operationId: update_2`
+
+Sets a notification type's `template_id` / `template_code` (and optional `active` toggle) at
+runtime — the next send for that type uses the new values immediately. Partial: only non-null
+fields are applied. Audited as `NOTIFICATION_TEMPLATE_UPDATED`.
+
+**Role:** `PLATFORM_ADMIN`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `type` | path | ✓ | string enum: `MEMBER_INVITE`, `TENANT_ADMIN_INVITE`, `SMS_OTP` | Notification type. |
+
+**Request body** (required): [`UpdateNotificationTemplateRequest`](#schema-updatenotificationtemplaterequest)
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `template_id` | integer (int64) |  | New template id in the notification service. _(e.g. `42`)_ |
+| `template_code` | string |  | New template code in the notification service. _(e.g. `member_invite_v2`)_ |
+| `active` | boolean |  | Enable/disable sending this notification type. _(e.g. `True`)_ |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | Updated — returns the new mapping. |
+| `400` | Unknown notification type / invalid body. |
+| `403` | Caller is not PLATFORM_ADMIN. |
+| `404` | Type not configured. |
+
+---
+
 ### `GET` `/platform/settings/sessions`
 
-**List all active sessions (across users)**
+**List all active sessions (grouped by member)**
 
 `operationId: listSessions`
 
-Returns every ACTIVE login session across the platform, newest-activity first, enriched with the
-user's account/name and the browser/OS/device parsed from the user-agent. The caller's own session
-is flagged `current: true`. `location` is null until an IP-geo source is configured.
+Returns every ACTIVE login session across the platform **grouped by member** — one block per
+user with their `session_count` and `sessions[]` (each enriched with the browser/OS/device parsed
+from the user-agent). Members are ordered by most-recent activity first; sessions within a member
+are newest-activity first. The caller's own session is flagged `current: true`. `location` is null
+until an IP-geo source is configured. Revoke a whole member's sessions via `revoke-all`.
 
 **Roles:** `PLATFORM_ADMIN` or `SUPPORT` (read-only).
 
@@ -7140,7 +7206,7 @@ is flagged `current: true`. `location` is null until an IP-geo source is configu
 
 | Status | Description |
 |---|---|
-| `200` | OK. |
+| `200` | OK — sessions grouped by member. |
 | `403` | Caller lacks PLATFORM_ADMIN or SUPPORT. |
 
 <details><summary>Example <code>200</code> response</summary>
@@ -7153,21 +7219,29 @@ is flagged `current: true`. `location` is null until an IP-geo source is configu
   "error_details": null,
   "result": [
     {
-      "session_id": "8f3c\u2026",
-      "user_session_id": "SES000001",
       "member_id": 1,
       "account": "admin@ginja.ai",
       "user": "Platform Administrator",
-      "browser": "Chrome",
-      "os": "macOS",
-      "device": "Desktop",
-      "ip_address": "102.89.x.x",
-      "location": null,
-      "started_at": "2026-06-20T08:00:00Z",
-      "last_seen_at": "2026-06-20T08:30:00Z",
-      "expires_at": "2026-06-20T16:00:00Z",
-      "status": "ACTIVE",
-      "current": true
+      "session_count": 2,
+      "sessions": [
+        {
+          "session_id": "8f3c\u2026",
+          "user_session_id": "SES000001",
+          "member_id": 1,
+          "account": "admin@ginja.ai",
+          "user": "Platform Administrator",
+          "browser": "Chrome",
+          "os": "macOS",
+          "device": "Desktop",
+          "ip_address": "102.89.x.x",
+          "location": null,
+          "started_at": "2026-06-20T08:00:00Z",
+          "last_seen_at": "2026-06-20T08:30:00Z",
+          "expires_at": "2026-06-20T16:00:00Z",
+          "status": "ACTIVE",
+          "current": true
+        }
+      ]
     }
   ]
 }
@@ -7254,6 +7328,52 @@ Single user's password status for the detail drawer. **Roles:** `PLATFORM_ADMIN`
 | `200` | OK. |
 | `403` | Caller lacks PLATFORM_ADMIN or SUPPORT. |
 | `404` | Member not found. |
+
+---
+
+### `GET` `/platform/settings/notification-templates`
+
+**List notification template mappings**
+
+`operationId: list_5`
+
+Returns every notification type and the template it currently maps to. `active:false` means the
+adapter skips sending that type (per-type kill switch).
+
+**Roles:** `PLATFORM_ADMIN` or `SUPPORT` (read).
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK. |
+| `403` | Caller lacks PLATFORM_ADMIN or SUPPORT. |
+
+<details><summary>Example <code>200</code> response</summary>
+
+```json
+{
+  "status": 200,
+  "success": true,
+  "message": null,
+  "error_details": null,
+  "result": [
+    {
+      "type": "MEMBER_INVITE",
+      "channel": "EMAIL",
+      "template_id": 1,
+      "template_code": "member_invite",
+      "description": "Platform member invite / resend",
+      "active": true,
+      "updated_by": null,
+      "updated_by_name": null,
+      "updated_at": null
+    }
+  ]
+}
+```
+
+</details>
 
 ---
 
@@ -7722,7 +7842,7 @@ already exists.
 
 **Get a data-residency region**
 
-`operationId: get_3`
+`operationId: get_4`
 
 Returns a single data-residency region by its code (e.g. `af-east-1`).
 
@@ -7770,7 +7890,7 @@ Returns a single data-residency region by its code (e.g. `af-east-1`).
 
 **Update a data-residency region**
 
-`operationId: update_3`
+`operationId: update_4`
 
 Partially updates a data-residency region — only non-null fields in the request body are applied.
 
@@ -8902,6 +9022,17 @@ PATCH payload to update a module; all fields are optional — only non-null valu
 | `status` | string enum: `DRAFT`, `PUBLISHED`, `BETA`, `SUNSET` |  | New lifecycle status; PUBLISHED publishes, anything else from PUBLISHED unpublishes. _(e.g. `PUBLISHED`)_ |
 | `sub_modules` | array&lt;[`SubModuleRequest`](#schema-submodulerequest)&gt; |  | Replaces the full sub-module set when non-null (existing sub-modules are deleted first). |
 | `note` | string |  | Change note recorded on the new version this update creates. _(e.g. `Added Appeals & disputes sub-module.`)_ |
+
+### UpdateNotificationTemplateRequest
+<a id="schema-updatenotificationtemplaterequest"></a>
+
+Partial update of a notification template; only non-null fields are applied.
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `template_id` | integer (int64) |  | New template id in the notification service. _(e.g. `42`)_ |
+| `template_code` | string |  | New template code in the notification service. _(e.g. `member_invite_v2`)_ |
+| `active` | boolean |  | Enable/disable sending this notification type. _(e.g. `True`)_ |
 
 ### UpdatePricingStructureRequest
 <a id="schema-updatepricingstructurerequest"></a>

@@ -33,9 +33,13 @@ const fmtSize = (b: number) =>
 export function StepDocuments({
   form,
   set,
+  showErrors = false,
 }: {
   form: OnboardingForm
   set: SetField
+  /** Escalate the "documents missing" note + highlight empty rows (set once
+     Continue is tried). */
+  showErrors?: boolean
 }) {
   const docFor = (cat: string) => form.documents.find((d) => d.category === cat)
 
@@ -77,7 +81,13 @@ export function StepDocuments({
           const onFile = doc?.uploaded
           const size = doc?.file ? ` · ${fmtSize(doc.file.size)}` : ""
           return (
-            <div key={cat} className="rounded-xl border p-3.5">
+            <div
+              key={cat}
+              className={cn(
+                "rounded-xl border p-3.5",
+                showErrors && !doc && "border-destructive"
+              )}
+            >
               <div className="flex items-center gap-3">
                 <span
                   className={cn(
@@ -168,7 +178,7 @@ export function StepDocuments({
       </div>
 
       {missing > 0 ? (
-        <Note tone="warn" icon={<TriangleAlertIcon />}>
+        <Note tone={showErrors ? "err" : "warn"} icon={<TriangleAlertIcon />}>
           {missing} required {missing === 1 ? "document is" : "documents are"} still
           missing. Upload all required items to submit — files are stored as{" "}
           <b>Pending Review</b> and routed to the approver on submission.

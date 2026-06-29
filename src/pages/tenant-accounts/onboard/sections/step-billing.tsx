@@ -23,9 +23,12 @@ import {
 export function StepBilling({
   form,
   set,
+  showErrors = false,
 }: {
   form: OnboardingForm
   set: SetField
+  /** Reveal the "select a pricing structure" error (set once Continue is tried). */
+  showErrors?: boolean
 }) {
   const { data, isLoading, isError, refetch } = useTenantPricingOptions()
   const structures = data ?? []
@@ -33,6 +36,13 @@ export function StepBilling({
 
   return (
     <div className="flex flex-col gap-6">
+      {showErrors && structures.length > 0 && !form.pricingStructureId ? (
+        <Note tone="err" icon={<AlertTriangleIcon />}>
+          <b>Select a pricing structure.</b> A subscription must be chosen before
+          you can continue.
+        </Note>
+      ) : null}
+
       <FormSection
         title="Subscription model"
         desc="Pick an active commercial structure — its price is frozen onto the subscription. The billing model is set from your choice."

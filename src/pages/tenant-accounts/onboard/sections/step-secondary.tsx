@@ -1,4 +1,5 @@
 import {
+  AlertTriangleIcon,
   BriefcaseIcon,
   GitBranchIcon,
   PlusIcon,
@@ -8,6 +9,7 @@ import {
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { cn } from "@/lib/utils"
 import {
   REGIONS,
   type OnboardingForm,
@@ -15,6 +17,7 @@ import {
 } from "@/lib/console-data"
 import type { SetField } from "../use-onboarding-form"
 import { ConsoleSelect, Field, FormGrid } from "@/components/console/form-atoms"
+import { Note } from "@/components/console/note"
 import { Tagpill } from "@/components/console/tagpill"
 
 const SECONDARY_COUNTRIES = [
@@ -35,6 +38,7 @@ export function StepSecondary({
   onRemove,
   onClear,
   busy = false,
+  showErrors = false,
 }: {
   form: OnboardingForm
   set: SetField
@@ -45,8 +49,15 @@ export function StepSecondary({
   onClear?: () => void
   /** A save/delete is in flight — disable mutating controls. */
   busy?: boolean
+  /** Reveal field-level validation on added rows (set once Continue is tried).
+     Secondary tenants are optional, so an empty list is never an error. */
+  showErrors?: boolean
 }) {
   const list = form.secondaries
+  // A row is incomplete if it's missing the two fields that gate completion
+  // (name + subdomain). Country/region default from the primary.
+  const rowInvalid = (s: Secondary) => !s.name.trim() || !s.subdomain.trim()
+  const anyInvalid = showErrors && list.some(rowInvalid)
   const add = () =>
     set("secondaries", [
       ...list,
@@ -68,6 +79,13 @@ export function StepSecondary({
 
   return (
     <div className="flex flex-col gap-4">
+      {anyInvalid ? (
+        <Note tone="err" icon={<AlertTriangleIcon />}>
+          <b>Finish the secondary tenants below.</b> Each one needs a legal entity
+          name and subdomain — or remove it to continue.
+        </Note>
+      ) : null}
+
       <div className="flex items-start gap-3 rounded-xl border bg-muted/30 p-4">
         <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
           <GitBranchIcon className="size-[18px]" />
@@ -138,10 +156,20 @@ export function StepSecondary({
                 </Button>
               </div>
               <FormGrid>
-                <Field label="Legal entity name" required>
+                <Field
+                  label="Legal entity name"
+                  required
+                  hint={
+                    showErrors && !s.name.trim()
+                      ? "Legal entity name is required."
+                      : undefined
+                  }
+                  hintTone="error"
+                >
                   <Input
                     value={s.name}
                     placeholder="e.g. CIC Tanzania"
+                    aria-invalid={showErrors && !s.name.trim()}
                     onChange={(e) => edit(i, "name", e.target.value)}
                   />
                 </Field>
@@ -159,8 +187,22 @@ export function StepSecondary({
                     options={REGION_OPTS}
                   />
                 </Field>
-                <Field label="Subdomain" required>
-                  <div className="flex items-center rounded-lg border focus-within:ring-2 focus-within:ring-ring/50">
+                <Field
+                  label="Subdomain"
+                  required
+                  hint={
+                    showErrors && !s.subdomain.trim()
+                      ? "Subdomain is required."
+                      : undefined
+                  }
+                  hintTone="error"
+                >
+                  <div
+                    className={cn(
+                      "flex items-center rounded-lg border focus-within:ring-2 focus-within:ring-ring/50",
+                      showErrors && !s.subdomain.trim() && "border-destructive"
+                    )}
+                  >
                     <input
                       value={s.subdomain}
                       onChange={(e) =>

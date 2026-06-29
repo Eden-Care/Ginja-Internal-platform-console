@@ -7,6 +7,7 @@ import { toPayer, type Payer, type PayerDTO } from "@/features/payers/types"
 import {
   toApprovalQueueItem,
   toApprovalReview,
+  type ApprovalDecision,
   type ApprovalQueueItem,
   type ApprovalQueueItemDTO,
   type ApprovalReview,
@@ -30,6 +31,24 @@ export async function fetchApprovalReview(
 ): Promise<ApprovalReview> {
   return toApprovalReview(
     await apiGet<ApprovalReviewDTO>(`/platform/approvals/${payerId}`)
+  )
+}
+
+/** POST /platform/payers/{payerId}/sections/{sectionKey}/{approve|reject|request-info}
+   → record one review section's decision; returns the refreshed review payload
+   (its `sections[]` now carry the new review_status). `comment` is mandatory for
+   reject / request-info (enforced server-side, 400 otherwise). */
+export async function decideSection(
+  payerId: number,
+  sectionKey: string,
+  action: ApprovalDecision,
+  comment?: string
+): Promise<ApprovalReview> {
+  return toApprovalReview(
+    await apiPost<ApprovalReviewDTO>(
+      `/platform/payers/${payerId}/sections/${sectionKey}/${action}`,
+      { comment }
+    )
   )
 }
 

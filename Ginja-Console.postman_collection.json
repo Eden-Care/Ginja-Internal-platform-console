@@ -1094,6 +1094,33 @@
               ]
             }
           }
+        },
+        {
+          "name": "POST /platform/organization/members/{memberId}/unlock  · unlockMember",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/members/{{memberId}}/unlock",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "members",
+                "{{memberId}}",
+                "unlock"
+              ]
+            },
+            "description": "Clear a member's failed-login lockout so they can sign in again. PLATFORM_ADMIN."
+          },
+          "response": []
         }
       ]
     },
@@ -2070,7 +2097,7 @@
                 "sessions"
               ]
             },
-            "description": "All active sessions across users (admin/support). Enriched with account/user/browser/os/device + current flag."
+            "description": "All active sessions across users, GROUPED BY MEMBER (admin/support). result is an array of MemberSessionsResponse: { member_id, account, user, session_count, sessions[] }, members ordered by most-recent activity. Each sessions[] entry is enriched with browser/os/device + current flag. Per-user 'revoke all' → revoke-all?member_id={member_id}."
           },
           "response": []
         },
@@ -2132,6 +2159,39 @@
             "description": "Revoke all active sessions of a member (PLATFORM_ADMIN). Returns {revoked:n}."
           },
           "response": []
+        },
+        {
+          "name": "GET /platform/settings/notification-templates  · listNotificationTemplates",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/notification-templates",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "platform", "settings", "notification-templates" ]
+            },
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{adminToken}}", "type": "string" } ] },
+            "description": "List the runtime-editable notification type→template mappings (MEMBER_INVITE, TENANT_ADMIN_INVITE, SMS_OTP). Each: { type, channel, template_id, template_code, description, active, updated_by, ... }. ADMIN/SUPPORT."
+          }
+        },
+        {
+          "name": "PATCH /platform/settings/notification-templates/{type}  · updateNotificationTemplate",
+          "request": {
+            "method": "PATCH",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/settings/notification-templates/MEMBER_INVITE",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "platform", "settings", "notification-templates", "MEMBER_INVITE" ]
+            },
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{adminToken}}", "type": "string" } ] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"template_id\": 42,\n  \"template_code\": \"member_invite_v2\",\n  \"active\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Set a notification type's template_id / template_code / active at runtime (partial; only non-null fields applied). Takes effect on the NEXT send — no redeploy. {type} ∈ MEMBER_INVITE | TENANT_ADMIN_INVITE | SMS_OTP. active:false = per-type kill switch. ADMIN. Audited NOTIFICATION_TEMPLATE_UPDATED."
+          }
         },
         {
           "name": "GET /platform/settings/mfa-status  · mfaStatus",
@@ -2627,13 +2687,61 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"code\": \"REINSURANCE\",\n  \"name\": \"Reinsurance\",\n  \"description\": \"Treaties, cessions and recoveries.\",\n  \"icon\": \"reinsurance\",\n  \"url\": \"/reinsurance\",\n  \"version\": \"1.6.0\",\n  \"owner_team\": \"Risk Platform\",\n  \"status\": \"BETA\",\n  \"sub_modules\": [\n    {\n      \"code\": \"TREATIES\",\n      \"name\": \"Treaties\",\n      \"description\": \"Treaty configuration\"\n    },\n    {\n      \"code\": \"CESSIONS\",\n      \"name\": \"Cessions\",\n      \"description\": \"Risk cession ledger\",\n      \"requires\": \"TREATIES\"\n    }\n  ]\n}",
+              "raw": "{\n  \"code\": \"REINSURANCE\",\n  \"name\": \"Reinsurance\",\n  \"description\": \"Treaties, cessions and recoveries.\",\n  \"icon\": \"reinsurance\",\n  \"url\": \"/reinsurance\",\n  \"owner_team\": \"Risk Platform\",\n  \"status\": \"BETA\",\n  \"note\": \"Initial registry import.\",\n  \"sub_modules\": [\n    {\n      \"code\": \"TREATIES\",\n      \"name\": \"Treaties\",\n      \"description\": \"Treaty configuration\"\n    },\n    {\n      \"code\": \"CESSIONS\",\n      \"name\": \"Cessions\",\n      \"description\": \"Risk cession ledger\",\n      \"requires\": \"TREATIES\"\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
             }
+          }
+        },
+        {
+          "name": "GET /platform/organization/modules/availability  · checkAvailability",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/modules/availability?code=CLAIMS&name=Claims Management",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "modules",
+                "availability"
+              ],
+              "query": [
+                {
+                  "key": "code",
+                  "value": "CLAIMS",
+                  "disabled": false
+                },
+                {
+                  "key": "name",
+                  "value": "Claims Management",
+                  "disabled": false
+                },
+                {
+                  "key": "exclude_module_id",
+                  "value": "MRC000001",
+                  "disabled": true,
+                  "description": "When editing, set to the module's own business id so its current value isn't flagged."
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Real-time duplicate check for module code and/or name (use on the create/edit form before submit). Supply either or both of code/name. code is checked in normalised UPPER_SNAKE form; name is case-insensitive. Returns { code, name } each as { value, normalized, available, reason } (null if not supplied). Mirrors the server guards — register/update reject duplicates with 409."
           }
         },
         {
@@ -2805,7 +2913,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"status\": \"PUBLISHED\",\n  \"version\": \"1.7.0\",\n  \"owner_team\": \"Risk Platform\"\n}",
+              "raw": "{\n  \"status\": \"PUBLISHED\",\n  \"owner_team\": \"Risk Platform\",\n  \"note\": \"Published; owner team set.\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2859,6 +2967,114 @@
                 }
               ]
             }
+          }
+        },
+        {
+          "name": "GET /platform/organization/modules/{moduleId}/versions  · versions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/modules/{{moduleId}}/versions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "modules",
+                "{{moduleId}}",
+                "versions"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Version history for the module, newest first. One PUBLISHED (current=true), the rest ARCHIVED. Each row carries the change note, the snapshot, and timestamps."
+          }
+        },
+        {
+          "name": "GET /platform/organization/modules/{moduleId}/versions/compare  · compareVersions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/modules/{{moduleId}}/versions/compare?from=1.0&to=1.1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "modules",
+                "{{moduleId}}",
+                "versions",
+                "compare"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "1.0",
+                  "disabled": false
+                },
+                {
+                  "key": "to",
+                  "value": "1.1",
+                  "disabled": false
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Diffs two versions: both snapshots plus sub_modules_added / sub_modules_removed and changed_fields — an array of { field, from, to } (one entry per differing field: name, description, owner_team, status, note)."
+          }
+        },
+        {
+          "name": "POST /platform/organization/modules/{moduleId}/versions/{version}/rollback  · rollback",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/organization/modules/{{moduleId}}/versions/1.0/rollback",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "organization",
+                "modules",
+                "{{moduleId}}",
+                "versions",
+                "1.0",
+                "rollback"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Restores the given version's snapshot onto the live module (fields + sub-modules) and publishes it as a NEW current version (auto-incremented minor). The prior current version is archived; nothing is overwritten. Returns the refreshed ModuleResponse."
           }
         }
       ]
@@ -3645,10 +3861,65 @@
                   "key": "file",
                   "type": "file",
                   "src": []
+                },
+                {
+                  "key": "file_id",
+                  "value": "",
+                  "type": "text",
+                  "disabled": true,
+                  "description": "Leave disabled to CREATE. To REPLACE an existing document's file, enable this and set it to that document's file_id (category is then ignored)."
                 }
               ]
             },
-            "description": "Multipart upload. The `file` part carries the bytes (ops proxies them to ginja-ai-document-service); `category` is required, `description` and `expiry_date` are optional. Select a file for the `file` part before sending."
+            "description": "Multipart upload. The `file` part carries the bytes (ops proxies them to ginja-ai-document-service); `category` is required when creating, `description`/`expiry_date` optional. To REPLACE the file behind an existing document (e.g. wrong file uploaded), enable the `file_id` part and set it to that document's file_id — ops stores the bytes as a NEW VERSION of that same file_id (file_id unchanged, version_number increments, prior version retained in the document service's history; keeps document_id + category, status resets to PENDING_REVIEW). Select a file for the `file` part before sending. See the dedicated 'replace document file' request below."
+          }
+        },
+        {
+          "name": "POST /platform/payers/{payerId}/tenants/{tenantId}/documents  · replaceDocumentFile",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers/{{payerId}}/tenants/{{tenantId}}/documents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "payers",
+                "{{payerId}}",
+                "tenants",
+                "{{tenantId}}",
+                "documents"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file_id",
+                  "value": "FIL000001HPHODQ6Y9GJD",
+                  "type": "text",
+                  "description": "The existing document's document-service file_id to replace. Must belong to this tenant."
+                },
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "description": "REPLACE the file behind an already-uploaded document (same endpoint as upload). Pass the existing `file_id` + the new `file`; no `category` needed (the document keeps its category and document_id, status resets to PENDING_REVIEW). Ops stores the bytes as a NEW VERSION against the same file_id via the document service's POST /document/{fileId}/version — file_id is unchanged, version_number increments, and the prior version is retained in the document service's history (GET /document/{fileId}/versions). Errors: 404 unknown file_id; 400 if file_id belongs to another tenant or a supplied category mismatches. Audited as DOCUMENT_REPLACED."
           }
         },
         {
@@ -4059,7 +4330,8 @@
                   "language": "json"
                 }
               }
-            }
+            },
+            "description": "Final approve \\u2192 auto-activate (PLATFORM_APPROVER, comment optional). 409 unless awaiting approval AND provisioning complete (every tenant READY_TO_ACTIVATE) AND all four review sections APPROVED (per-section checklist, see the sections/{sectionKey} requests; the error lists outstanding section keys). 403 if the caller submitted this payer (SoD). Watch all_sections_approved on GET /platform/approvals/{payerId} to know when this will pass."
           }
         },
         {
@@ -4146,6 +4418,144 @@
                 }
               }
             }
+          }
+        },
+        {
+          "name": "POST /platform/payers/{payerId}/sections/{sectionKey}/approve  · approveSection",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers/{{payerId}}/sections/{{sectionKey}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "payers",
+                "{{payerId}}",
+                "sections",
+                "{{sectionKey}}",
+                "approve"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{approverToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"comment\": \"All four KYB docs verified\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Approve one review section of a submitted payer (PLATFORM_APPROVER). sectionKey \\u2208 primary_tenant_details | module_entitlements | subscription_billing | kyb_documents. comment optional. Upserts the section state; returns the refreshed ApprovalReviewResponse (its sections[] now carry review_status/decided_by/comment/decided_at). Does not require provisioning complete; SoD enforced (submitter cannot decide)."
+          }
+        },
+        {
+          "name": "POST /platform/payers/{payerId}/sections/{sectionKey}/reject  · rejectSection",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers/{{payerId}}/sections/{{sectionKey}}/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "payers",
+                "{{payerId}}",
+                "sections",
+                "{{sectionKey}}",
+                "reject"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{approverToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"comment\": \"Company registration document is illegible\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Reject one review section (PLATFORM_APPROVER). comment is mandatory (400 if missing). Returns the refreshed ApprovalReviewResponse."
+          }
+        },
+        {
+          "name": "POST /platform/payers/{payerId}/sections/{sectionKey}/request-info  · requestInfoSection",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers/{{payerId}}/sections/{{sectionKey}}/request-info",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platform",
+                "payers",
+                "{{payerId}}",
+                "sections",
+                "{{sectionKey}}",
+                "request-info"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{approverToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"comment\": \"Please attach the latest proof of address\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Flag one review section as needing more information (PLATFORM_APPROVER). comment is mandatory (400 if missing). Returns the refreshed ApprovalReviewResponse."
           }
         },
         {
@@ -4283,17 +4693,18 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"reason\": \"NON_PAYMENT\"\n}",
+              "raw": "{\n  \"reason\": \"NON_PAYMENT\",\n  \"note\": \"Two invoices overdue >60 days.\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
-            }
+            },
+            "description": "MAKER step (maker-checker). Raises a PENDING SUSPEND request — does NOT suspend immediately. Returns a LifecycleChangeRequestResponse (request_id LCR…, status PENDING). Payer must be ACTIVE with no request already pending (else 409). A checker with APPROVAL_DECIDE must approve it (see the approve request below)."
           }
         },
         {
-          "name": "POST /platform/payers/{payerId}/reactivate  · reactivate",
+          "name": "POST /platform/payers/{payerId}/reactivate  · reactivate (maker)",
           "request": {
             "method": "POST",
             "header": [],
@@ -4318,11 +4729,21 @@
                   "type": "string"
                 }
               ]
-            }
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"comment\": \"Payment cleared.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "MAKER step. Raises a PENDING REACTIVATE request for a SUSPENDED payer (optional comment). A checker must approve to actually reactivate."
           }
         },
         {
-          "name": "POST /platform/payers/{payerId}/retire  · retire",
+          "name": "POST /platform/payers/{payerId}/retire  · retire (maker)",
           "request": {
             "method": "POST",
             "header": [
@@ -4361,7 +4782,73 @@
                   "language": "json"
                 }
               }
-            }
+            },
+            "description": "MAKER step. Raises a PENDING RETIRE request for a SUSPENDED payer (reason mandatory). A checker must approve to move the payer (and its tenants) to the terminal RETIRED state."
+          }
+        },
+        {
+          "name": "POST /platform/payers/{payerId}/lifecycle-requests/{requestId}/approve  · approve (checker)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers/{{payerId}}/lifecycle-requests/{{lifecycleRequestId}}/approve",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "platform", "payers", "{{payerId}}", "lifecycle-requests", "{{lifecycleRequestId}}", "approve" ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [ { "key": "token", "value": "{{approverToken}}", "type": "string" } ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"comment\": \"Confirmed.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "CHECKER step. Requires the APPROVAL_DECIDE permission and a DIFFERENT actor than the requester (else 403). Executes the requested transition (suspend/reactivate/retire) and revokes tenant sessions where applicable. Re-validates the transition against the payer's current status (409 if it drifted). Set {{lifecycleRequestId}} to the LCR… returned by the maker request."
+          }
+        },
+        {
+          "name": "POST /platform/payers/{payerId}/lifecycle-requests/{requestId}/reject  · reject (checker)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers/{{payerId}}/lifecycle-requests/{{lifecycleRequestId}}/reject",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "platform", "payers", "{{payerId}}", "lifecycle-requests", "{{lifecycleRequestId}}", "reject" ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [ { "key": "token", "value": "{{approverToken}}", "type": "string" } ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"comment\": \"Need finance sign-off first.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "CHECKER step. Rejects a PENDING lifecycle request (requester ≠ approver, APPROVAL_DECIDE). Payer status is unchanged."
+          }
+        },
+        {
+          "name": "GET /platform/payers/{payerId}/lifecycle-requests  · history",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/platform/payers/{{payerId}}/lifecycle-requests",
+              "host": [ "{{baseUrl}}" ],
+              "path": [ "platform", "payers", "{{payerId}}", "lifecycle-requests" ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [ { "key": "token", "value": "{{adminToken}}", "type": "string" } ]
+            },
+            "description": "Lifecycle maker-checker history for a payer (newest first). Access: PLATFORM_ADMIN, or the APPROVAL_VIEW / APPROVAL_DECIDE permission."
           }
         }
       ]
@@ -4807,6 +5294,10 @@
     {
       "key": "section",
       "value": "DATABASE"
+    },
+    {
+      "key": "sectionKey",
+      "value": "kyb_documents"
     },
     {
       "key": "permissionCode",

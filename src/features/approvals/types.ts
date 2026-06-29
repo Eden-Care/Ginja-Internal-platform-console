@@ -12,8 +12,24 @@ export type { Payer } from "@/features/payers/types"
    reject / request-info (enforced server-side). */
 export type ApprovalActionRequest = { comment?: string }
 
-/** A decision the approver can take on a submitted payer. */
+/** A decision the approver can take — on the whole payer or one review section. */
 export type ApprovalDecision = "approve" | "reject" | "request-info"
+
+/** Per-section review state returned in the review payload's `sections[]`.
+   PENDING = undecided; the rest mirror the three decisions. */
+export type ReviewSectionStatus =
+  | "PENDING"
+  | "APPROVED"
+  | "REJECTED"
+  | "INFO_REQUESTED"
+
+/** The four decidable review sections (no key for secondary tenants — see
+   review.tsx, where secondary detail is folded into primary_tenant_details). */
+export type ReviewSectionKey =
+  | "primary_tenant_details"
+  | "module_entitlements"
+  | "subscription_billing"
+  | "kyb_documents"
 
 /** Per-row queue status (the directory tabs). */
 export type ApprovalStatus = "PENDING" | "APPROVED"
@@ -90,9 +106,44 @@ export function toApprovalQueueItem(d: ApprovalQueueItemDTO): ApprovalQueueItem 
 
 /* ------------------------------------------------------ review payload --- */
 
-/** GET /platform/approvals/{payerId}. Header + review meta + the full payer
-   aggregate. Read defensively — only `payer` is relied on for the section
-   content; the meta flags drive gating with client-side fallbacks. */
+/** One entry of the review payload's `sections[]` — the persisted per-section
+   decision. `decided_by` is the member id as a string. */
+export type ReviewSectionDTO = {
+  key: string
+  label: string
+  review_status?: ReviewSectionStatus | string | null
+  decided_by?: string | null
+  decided_by_name?: string | null
+  comment?: string | null
+  decided_at?: string | null
+}
+
+export type ReviewSection = {
+  key: string
+  label: string
+  status: ReviewSectionStatus
+  decidedBy: string | null
+  decidedByName: string | null
+  comment: string | null
+  decidedAt: string | null
+}
+
+export function toReviewSection(d: ReviewSectionDTO): ReviewSection {
+  return {
+    key: d.key,
+    label: d.label,
+    status: (d.review_status as ReviewSectionStatus) || "PENDING",
+    decidedBy: d.decided_by ?? null,
+    decidedByName: d.decided_by_name ?? null,
+    comment: d.comment ?? null,
+    decidedAt: d.decided_at ?? null,
+  }
+}
+
+/** GET /platform/approvals/{payerId}. Header + review meta + per-section
+   decisions (`sections`) + the full payer aggregate. Read defensively — only
+   `payer` is relied on for the section content; the meta flags drive gating
+   with client-side fallbacks. */
 export type ApprovalReviewDTO = {
   id?: number
   request_id?: string
@@ -104,6 +155,9 @@ export type ApprovalReviewDTO = {
   own_submission?: boolean | null
   provisioning_complete?: boolean | null
   can_decide?: boolean | null
+  /** True once every review section is APPROVED — the gate for the final approve. */
+  all_sections_approved?: boolean | null
+  sections?: ReviewSectionDTO[] | null
   auto_activate_note?: string | null
   payer?: PayerDTO | null
 }
@@ -119,6 +173,10 @@ export type ApprovalReview = {
   canDecide: boolean | null
   /** Whether every tenant is provisioned (approval gate). */
   provisioningComplete: boolean | null
+  /** Whether every review section is APPROVED (the per-section approve gate). */
+  allSectionsApproved: boolean
+  /** Persisted per-section decisions (drives the checklist; rehydrates on reload). */
+  sections: ReviewSection[]
   autoActivateNote: string | null
 }
 
@@ -131,6 +189,8 @@ export function toApprovalReview(d: ApprovalReviewDTO): ApprovalReview {
     ownSubmission: d.own_submission ?? null,
     canDecide: d.can_decide ?? null,
     provisioningComplete: d.provisioning_complete ?? null,
+    allSectionsApproved: d.all_sections_approved ?? false,
+    sections: (d.sections ?? []).map(toReviewSection),
     autoActivateNote: d.auto_activate_note ?? null,
   }
 }

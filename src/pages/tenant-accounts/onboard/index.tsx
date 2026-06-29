@@ -74,6 +74,17 @@ const STEP_LABEL: Record<OnboardStep, string> = {
   submit: "Submitting for approval…",
 }
 
+/** Toast shown when Continue is pressed on an incomplete section. The rail still
+   lets users jump between sections in any order — this only gates the linear
+   Continue action ("this section is done, advance me"). */
+const INCOMPLETE_MSG: Partial<Record<WizStepKey, string>> = {
+  primary: "Complete the required fields in Basic profile before continuing.",
+  secondary: "Finish or remove the incomplete secondary tenant before continuing.",
+  modules: "Select at least one module before continuing.",
+  billing: "Choose a pricing structure before continuing.",
+  documents: "Attach all required documents before continuing.",
+}
+
 /** Resume context — present when the wizard is reopened on an existing DRAFT. */
 type ResumeCtx = {
   payerId: number
@@ -503,7 +514,17 @@ function OnboardWizard({
   }
   const next = async () => {
     if (step >= total - 1) return
+    // Reveal field-level validation for this section.
     setTried((t) => (t.has(cur.k) ? t : new Set(t).add(cur.k)))
+    // Continue means "this section is done" — refuse to advance while it's
+    // incomplete (the rail / goTo still allows jumping in any order). The errors
+    // surfaced above by `tried` show the user exactly what's missing.
+    if (status[cur.k] !== "complete") {
+      toast.error(
+        INCOMPLETE_MSG[cur.k] ?? "Complete this section before continuing."
+      )
+      return
+    }
     const ok = await saveCurrentStep()
     if (ok) setStep(step + 1)
   }
@@ -705,12 +726,29 @@ function OnboardWizard({
                   onRemove={removeSecondary}
                   onClear={clearSecondaries}
                   busy={busy}
+                  showErrors={tried.has("secondary")}
                 />
               )}
-              {cur.k === "modules" && <StepModules form={form} set={trackedSet} />}
-              {cur.k === "billing" && <StepBilling form={form} set={trackedSet} />}
+              {cur.k === "modules" && (
+                <StepModules
+                  form={form}
+                  set={trackedSet}
+                  showErrors={tried.has("modules")}
+                />
+              )}
+              {cur.k === "billing" && (
+                <StepBilling
+                  form={form}
+                  set={trackedSet}
+                  showErrors={tried.has("billing")}
+                />
+              )}
               {cur.k === "documents" && (
-                <StepDocuments form={form} set={trackedSet} />
+                <StepDocuments
+                  form={form}
+                  set={trackedSet}
+                  showErrors={tried.has("documents")}
+                />
               )}
               {cur.k === "review" && (
                 <StepReview
