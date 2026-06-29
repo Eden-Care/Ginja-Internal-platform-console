@@ -20,12 +20,28 @@ import {
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 import { ApiError } from "@/lib/api/client"
 import { useAccess } from "@/contexts/access-context"
-import { useApprovalDecision, useApprovalReview } from "@/features/approvals/use-approvals"
-import type { ApprovalQueueItem } from "@/features/approvals/types"
+import {
+  useApprovalDecision,
+  useApprovalReview,
+  useDecideSection,
+} from "@/features/approvals/use-approvals"
+import type {
+  ApprovalQueueItem,
+  ReviewSectionStatus,
+} from "@/features/approvals/types"
 import type { PayerDTO } from "@/features/payers/types"
 import { Panel, PanelBody, PanelHead } from "@/components/console/panel"
 import { Note } from "@/components/console/note"
@@ -34,7 +50,128 @@ import { LoadingSpinner } from "@/components/common/loading"
 import { Breadcrumbs } from "@/components/console/breadcrumbs"
 
 type Decision = "ok" | "info" | "no"
-type Section = { k: string; icon: LucideIcon; title: string; body: React.ReactNode }
+
+/** A rendered review section: server-keyed (matches the API's sectionKey), with
+   its content built from the payer aggregate. */
+type RenderSection = {
+  key: string
+  icon: LucideIcon
+  title: string
+  body: React.ReactNode
+  serverStatus: ReviewSectionStatus
+  decidedByName: string | null
+  comment: string | null
+  decidedAt: string | null
+}
+
+/** The four decidable sections, in display order. The API has no key for
+   secondary tenants — their detail is folded into `primary_tenant_details`. */
+const SECTION_ORDER = [
+  "primary_tenant_details",
+  "module_entitlements",
+  "subscription_billing",
+  "kyb_documents",
+] as const
+
+const SECTION_LABEL: Record<string, string> = {
+  primary_tenant_details: "Primary tenant details",
+  module_entitlements: "Module entitlements",
+  subscription_billing: "Subscription & billing",
+  kyb_documents: "KYB documents",
+}
+
+const SECTION_ICON: Record<string, LucideIcon> = {
+  primary_tenant_details: Building2Icon,
+  module_entitlements: LayersIcon,
+  subscription_billing: CreditCardIcon,
+  kyb_documents: FileCheck2Icon,
+}
+
+/** Map a persisted per-section status to the segmented-toggle value (PENDING → none). */
+const STATUS_TO_DECISION: Record<string, Decision | undefined> = {
+  APPROVED: "ok",
+  REJECTED: "no",
+  INFO_REQUESTED: "info",
+  PENDING: undefined,
+}
+
+const STATUS_TONE: Record<string, "success" | "warning" | "neutral" | "error"> = {
+  APPROVED: "success",
+  REJECTED: "error",
+  INFO_REQUESTED: "warning",
+  PENDING: "neutral",
+}
+
+const STATUS_LABEL: Record<string, string> = {
+  APPROVED: "Approved",
+  REJECTED: "Rejected",
+  INFO_REQUESTED: "Info requested",
+  PENDING: "Pending",
+}
+
+/** Decision-comment dialog — reject / request-info need a reason, captured per
+   section (or for the whole payer) at click time rather than in a shared box. */
+function CommentDialog({
+  open,
+  title,
+  description,
+  submitLabel,
+  destructive,
+  busy,
+  onCancel,
+  onSubmit,
+}: {
+  open: boolean
+  title: string
+  description?: string
+  submitLabel: string
+  destructive?: boolean
+  busy: boolean
+  onCancel: () => void
+  onSubmit: (comment: string) => void
+}) {
+  // Fresh on each open: the parent keys this component by the pending target, so
+  // it remounts (resetting `text`) rather than syncing via an effect.
+  const [text, setText] = React.useState("")
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onCancel()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          {description ? (
+            <DialogDescription>{description}</DialogDescription>
+          ) : null}
+        </DialogHeader>
+        <div className="flex flex-col gap-1.5">
+          <Label className="flex items-center gap-1">
+            Reason / details<span className="text-destructive">*</span>
+          </Label>
+          <Textarea
+            autoFocus
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Explain what the submitter needs to fix or provide…"
+          />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onCancel} disabled={busy}>
+            Cancel
+          </Button>
+          <Button
+            variant={destructive ? "destructive" : "default"}
+            disabled={!text.trim() || busy}
+            onClick={() => onSubmit(text.trim())}
+          >
+            {busy ? (
+              <Loader2Icon data-icon="inline-start" className="animate-spin" />
+            ) : null}
+            {submitLabel}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
 
 const PAYER_TYPE_LABEL: Record<string, string> = {
   INSURER: "Insurer",
@@ -62,8 +199,13 @@ function Meta({ items }: { items: [string, string][] }) {
   )
 }
 
-/** Build the review sections from the payer aggregate in the review payload. */
-function sectionsFor(d: PayerDTO): Section[] {
+/** Build the body + count for each API review section from the payer aggregate.
+   Keyed by the API's sectionKey so the rendered checklist lines up 1:1 with the
+   persisted per-section decisions. Secondary tenants have no decision key of
+   their own, so they're shown inside `primary_tenant_details`. */
+function sectionBodies(
+  d: PayerDTO
+): Record<string, { body: React.ReactNode; count: number | null }> {
   const tenants = d.tenants ?? []
   const primary =
     tenants.find((t) => t.primary) ??
@@ -74,124 +216,111 @@ function sectionsFor(d: PayerDTO): Section[] {
   const sub = d.subscription
   const docs = primary?.documents ?? []
 
-  const sections: Section[] = [
-    {
-      k: "details",
-      icon: Building2Icon,
-      title: "Primary tenant details",
+  return {
+    primary_tenant_details: {
+      count: null,
       body: (
-        <Meta
-          items={[
-            ["Legal entity", primary?.legal_entity_name ?? "—"],
-            ["Tenant type", PAYER_TYPE_LABEL[d.payer_type] ?? d.payer_type],
-            ["Country", primary?.country ?? "—"],
-            ["Data residency", primary?.data_residency_region ?? "—"],
-            ["Subdomain", primary?.subdomain ?? "—"],
-            ["Tenant Admin", primary?.tenant_admin_email ?? "—"],
-          ]}
-        />
+        <div className="flex flex-col gap-3">
+          <Meta
+            items={[
+              ["Legal entity", primary?.legal_entity_name ?? "—"],
+              ["Tenant type", PAYER_TYPE_LABEL[d.payer_type] ?? d.payer_type],
+              ["Country", primary?.country ?? "—"],
+              ["Data residency", primary?.data_residency_region ?? "—"],
+              ["Subdomain", primary?.subdomain ?? "—"],
+              ["Tenant Admin", primary?.tenant_admin_email ?? "—"],
+            ]}
+          />
+          {secondaries.length > 0 && (
+            <div className="flex flex-col gap-1.5">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.05em] text-muted-foreground">
+                Secondary tenants ({secondaries.length})
+              </div>
+              {secondaries.map((t) => (
+                <div key={t.id} className="flex items-center gap-2 text-[13px]">
+                  <GitBranchIcon className="size-[15px] text-muted-foreground" />
+                  <b>{t.legal_entity_name}</b>
+                  <span className="text-muted-foreground">
+                    {t.country ?? ""} {t.subdomain ? `· ${t.subdomain}` : ""}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       ),
     },
-  ]
-
-  if (secondaries.length > 0) {
-    sections.push({
-      k: "secondary",
-      icon: GitBranchIcon,
-      title: `Secondary tenants (${secondaries.length})`,
-      body: (
-        <div className="flex flex-col gap-1.5">
-          {secondaries.map((t) => (
-            <div key={t.id} className="flex items-center gap-2 text-[13px]">
-              <GitBranchIcon className="size-[15px] text-muted-foreground" />
-              <b>{t.legal_entity_name}</b>
-              <span className="text-muted-foreground">
-                {t.country ?? ""} {t.subdomain ? `· ${t.subdomain}` : ""}
-              </span>
-            </div>
-          ))}
-        </div>
-      ),
-    })
-  }
-
-  sections.push({
-    k: "modules",
-    icon: LayersIcon,
-    title: `Module entitlements (${entitlements.length})`,
-    body:
-      entitlements.length > 0 ? (
-        <div className="flex flex-wrap gap-2">
-          {entitlements.map((e) => (
-            <Tagpill key={e.entitlement_id}>
-              <LayersIcon className="size-3" />
-              {e.module_code}
-              {e.submodule_code ? ` · ${e.submodule_code}` : ""}
-            </Tagpill>
-          ))}
-        </div>
+    module_entitlements: {
+      count: entitlements.length,
+      body:
+        entitlements.length > 0 ? (
+          <div className="flex flex-wrap gap-2">
+            {entitlements.map((e) => (
+              <Tagpill key={e.entitlement_id}>
+                <LayersIcon className="size-3" />
+                {e.module_code}
+                {e.submodule_code ? ` · ${e.submodule_code}` : ""}
+              </Tagpill>
+            ))}
+          </div>
+        ) : (
+          <span className="text-[12.5px] text-muted-foreground">
+            No module entitlements set.
+          </span>
+        ),
+    },
+    subscription_billing: {
+      count: null,
+      body: sub ? (
+        <Meta
+          items={[
+            [
+              "Structure",
+              sub.pricing_structure_name ??
+                sub.structure_name ??
+                sub.pricing_snapshot?.name ??
+                "—",
+            ],
+            ["Model", sub.subscription_model ?? "—"],
+            ["Frequency", sub.billing_frequency ?? "—"],
+          ]}
+        />
       ) : (
         <span className="text-[12.5px] text-muted-foreground">
-          No module entitlements set.
+          No subscription set.
         </span>
       ),
-  })
-
-  sections.push({
-    k: "billing",
-    icon: CreditCardIcon,
-    title: "Subscription & billing",
-    body: sub ? (
-      <Meta
-        items={[
-          [
-            "Structure",
-            sub.pricing_structure_name ??
-              sub.structure_name ??
-              sub.pricing_snapshot?.name ??
-              "—",
-          ],
-          ["Model", sub.subscription_model ?? "—"],
-          ["Frequency", sub.billing_frequency ?? "—"],
-        ]}
-      />
-    ) : (
-      <span className="text-[12.5px] text-muted-foreground">
-        No subscription set.
-      </span>
-    ),
-  })
-
-  if (docs.length > 0) {
-    sections.push({
-      k: "docs",
-      icon: FileCheck2Icon,
-      title: `KYB documents (${docs.length})`,
-      body: (
-        <div className="grid gap-[9px]">
-          {docs.map((doc) => (
-            <div
-              key={doc.document_id}
-              className="flex items-center gap-2.5 text-[12.5px]"
-            >
-              <span className="grid size-5 shrink-0 place-items-center rounded-full bg-success-subtle text-success-subtle-foreground">
-                <CheckIcon className="size-3" />
-              </span>
-              <span>{doc.file_name}</span>
-              <span className="mono text-[11px] text-muted-foreground">
-                {doc.category}
-              </span>
-              <MiniBadge tone="neutral" className="ml-auto">
-                {doc.status}
-              </MiniBadge>
-            </div>
-          ))}
-        </div>
-      ),
-    })
+    },
+    kyb_documents: {
+      count: docs.length,
+      body:
+        docs.length > 0 ? (
+          <div className="grid gap-[9px]">
+            {docs.map((doc) => (
+              <div
+                key={doc.document_id}
+                className="flex items-center gap-2.5 text-[12.5px]"
+              >
+                <span className="grid size-5 shrink-0 place-items-center rounded-full bg-success-subtle text-success-subtle-foreground">
+                  <CheckIcon className="size-3" />
+                </span>
+                <span>{doc.file_name}</span>
+                <span className="mono text-[11px] text-muted-foreground">
+                  {doc.category}
+                </span>
+                <MiniBadge tone="neutral" className="ml-auto">
+                  {doc.status}
+                </MiniBadge>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <span className="text-[12.5px] text-muted-foreground">
+            No KYB documents attached.
+          </span>
+        ),
+    },
   }
-
-  return sections
 }
 
 // v3 segmented control: a muted track holds three borderless buttons; the active
@@ -220,6 +349,7 @@ export function ApprovalReviewPage() {
 
   const reviewQ = useApprovalReview(validId ? payerId : null)
   const decisionMut = useApprovalDecision()
+  const sectionMut = useDecideSection()
   const review = reviewQ.data
   const forbidden =
     reviewQ.error instanceof ApiError && reviewQ.error.status === 403
@@ -266,18 +396,58 @@ export function ApprovalReviewPage() {
     !readonly && (review?.canDecide ?? (role.checker && !ownSubmission))
 
   const payerAgg = review?.payer
-  const sections = React.useMemo(
-    () => (payerAgg ? sectionsFor(payerAgg) : []),
+  const bodies = React.useMemo(
+    () => (payerAgg ? sectionBodies(payerAgg) : {}),
     [payerAgg]
   )
-  const [decisions, setDecisions] = React.useState<Record<string, Decision>>({})
-  const [comment, setComment] = React.useState("")
-  const setDec = (k: string, v: Decision) =>
-    setDecisions((d) => ({ ...d, [k]: v }))
+  // Drive the checklist from the server's per-section decisions so it rehydrates
+  // on reload; fall back to the four fixed sections (all PENDING) if the payload
+  // predates per-section review.
+  const sections = React.useMemo<RenderSection[]>(() => {
+    const src =
+      review?.sections && review.sections.length
+        ? review.sections.map((s) => ({
+            key: s.key,
+            label: s.label,
+            status: s.status,
+            decidedByName: s.decidedByName,
+            comment: s.comment,
+            decidedAt: s.decidedAt,
+          }))
+        : SECTION_ORDER.map((key) => ({
+            key,
+            label: SECTION_LABEL[key],
+            status: "PENDING" as ReviewSectionStatus,
+            decidedByName: null,
+            comment: null,
+            decidedAt: null,
+          }))
+    return src
+      .filter((s) => SECTION_ICON[s.key])
+      .map((s) => {
+        const b = bodies[s.key]
+        const suffix = b && b.count != null ? ` (${b.count})` : ""
+        return {
+          key: s.key,
+          title: (s.label || SECTION_LABEL[s.key] || s.key) + suffix,
+          icon: SECTION_ICON[s.key] ?? Building2Icon,
+          body: b?.body ?? null,
+          serverStatus: s.status,
+          decidedByName: s.decidedByName,
+          comment: s.comment,
+          decidedAt: s.decidedAt,
+        }
+      })
+  }, [review, bodies])
 
-  const allDecided = sections.length > 0 && sections.every((s) => decisions[s.k])
-  const anyReject = Object.values(decisions).includes("no")
-  const anyInfo = Object.values(decisions).includes("info")
+  // Per-section state is server-truth and persists across sessions: each toggle
+  // reflects its stored review_status and the click saves immediately. The final
+  // payer-level buttons just run the transition over that persisted checklist.
+  const statusDecision = (s: RenderSection): Decision | undefined =>
+    STATUS_TO_DECISION[s.serverStatus]
+  const allApproved = review?.allSectionsApproved ?? false
+  const anyReject = sections.some((s) => s.serverStatus === "REJECTED")
+  const anyInfo = sections.some((s) => s.serverStatus === "INFO_REQUESTED")
   const lockTip = ownSubmission
     ? "You submitted this — a different approver is required"
     : !canDecide
@@ -286,24 +456,98 @@ export function ApprovalReviewPage() {
         ? "Tenant must be fully provisioned before approval"
         : ""
 
-  const decide = (
-    decision: "approve" | "reject" | "request-info",
-    successMsg: string
+  // The section whose call is in flight (drives a per-row spinner).
+  const pendingKey = sectionMut.isPending
+    ? sectionMut.variables?.sectionKey
+    : undefined
+  const busy = decisionMut.isPending || sectionMut.isPending
+
+  // Reject / request-info need a comment, so they open a dialog — per section,
+  // or for the whole payer. Approve fires straight away (comment optional).
+  type Pending =
+    | { scope: "section"; key: string; title: string; action: "reject" | "request-info" }
+    | { scope: "payer"; action: "reject" | "request-info" }
+  const [pending, setPending] = React.useState<Pending | null>(null)
+
+  const runSection = async (
+    sectionKey: string,
+    action: "approve" | "reject" | "request-info",
+    sComment?: string
   ) => {
-    decisionMut.mutate(
-      { payerId, decision, comment: comment.trim() || undefined },
-      {
-        onSuccess: () => {
-          toast.success(successMsg)
-          navigate(decision === "approve" ? "/tenant-accounts" : "/approvals")
-        },
-        onError: (e) =>
-          toast.error(e instanceof Error ? e.message : "Decision failed."),
-      }
-    )
+    try {
+      await sectionMut.mutateAsync({ payerId, sectionKey, action, comment: sComment })
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't save the decision.")
+    }
   }
 
-  const busy = decisionMut.isPending
+  const onSectionClick = (s: RenderSection, v: Decision) => {
+    if (v === "ok") void runSection(s.key, "approve")
+    else
+      setPending({
+        scope: "section",
+        key: s.key,
+        title: s.title,
+        action: v === "no" ? "reject" : "request-info",
+      })
+  }
+
+  const runPayer = async (
+    decision: "approve" | "reject" | "request-info",
+    pComment: string | undefined,
+    successMsg: string
+  ) => {
+    try {
+      await decisionMut.mutateAsync({ payerId, decision, comment: pComment })
+      toast.success(successMsg)
+      navigate(decision === "approve" ? "/tenant-accounts" : "/approvals")
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Decision failed.")
+    }
+  }
+
+  const onDialogSubmit = async (text: string) => {
+    if (!pending) return
+    if (pending.scope === "section") {
+      await runSection(pending.key, pending.action, text)
+      setPending(null)
+    } else {
+      const msg =
+        pending.action === "reject"
+          ? "Submission rejected. Submitter notified."
+          : "Returned to submitter — info requested."
+      await runPayer(pending.action, text, msg)
+      setPending(null)
+    }
+  }
+
+  const dialogCopy = !pending
+    ? null
+    : pending.scope === "section"
+      ? {
+          title:
+            (pending.action === "reject" ? "Reject — " : "Request info — ") +
+            pending.title,
+          description:
+            pending.action === "reject"
+              ? "Tell the submitter why this section is rejected. Saved against this section; you can change it later."
+              : "Tell the submitter what additional information this section needs. Saved against this section.",
+          submitLabel: pending.action === "reject" ? "Reject section" : "Request info",
+          destructive: pending.action === "reject",
+        }
+      : {
+          title:
+            pending.action === "reject"
+              ? "Reject submission"
+              : "Return to submitter",
+          description:
+            pending.action === "reject"
+              ? "Returns the whole submission to the submitter as rejected."
+              : "Returns the whole submission to the submitter for more information.",
+          submitLabel:
+            pending.action === "reject" ? "Reject submission" : "Return for info",
+          destructive: pending.action === "reject",
+        }
 
   // A malformed id in the URL can't resolve to a submission — bounce to the queue.
   if (!validId) return <Navigate to="/approvals" replace />
@@ -417,64 +661,81 @@ export function ApprovalReviewPage() {
               const Ico = s.icon
               return (
                 <div
-                  key={s.k}
+                  key={s.key}
                   className="overflow-hidden rounded-[11px] border bg-card"
                 >
                   <div className="flex flex-wrap items-center gap-3 px-[15px] py-[13px]">
                     <Ico className="size-4 text-muted-foreground" />
                     <h4 className="text-[13.5px] font-semibold">{s.title}</h4>
                     {!decided && (
-                      <div className="ml-auto inline-flex gap-[3px] rounded-lg bg-muted p-[3px]">
-                        {(
-                          [
-                            { v: "ok", label: "Approve" },
-                            { v: "info", label: "Info needed" },
-                            { v: "no", label: "Reject" },
-                          ] as { v: Decision; label: string }[]
-                        ).map((b) => (
-                          <button
-                            key={b.v}
-                            type="button"
-                            disabled={!canDecide || busy}
-                            title={lockTip || undefined}
-                            data-on={decisions[s.k] === b.v}
-                            onClick={() => setDec(s.k, b.v)}
-                            className={cn(
-                              "inline-flex h-7 items-center gap-[5px] rounded-md px-[11px] text-[11.5px] font-semibold text-muted-foreground transition-colors disabled:cursor-not-allowed disabled:opacity-50",
-                              SEG[b.v]
-                            )}
-                          >
-                            {b.v === "ok" && <CheckIcon className="size-3" />}
-                            {b.v === "no" && <XIcon className="size-3" />}
-                            {b.label}
-                          </button>
-                        ))}
+                      <div className="ml-auto inline-flex items-center gap-2">
+                        {pendingKey === s.key && (
+                          <Loader2Icon className="size-3.5 animate-spin text-muted-foreground" />
+                        )}
+                        <div className="inline-flex gap-[3px] rounded-lg bg-muted p-[3px]">
+                          {(
+                            [
+                              { v: "ok", label: "Approve" },
+                              { v: "info", label: "Info needed" },
+                              { v: "no", label: "Reject" },
+                            ] as { v: Decision; label: string }[]
+                          ).map((b) => (
+                            <button
+                              key={b.v}
+                              type="button"
+                              disabled={!canDecide || busy}
+                              title={lockTip || undefined}
+                              data-on={statusDecision(s) === b.v}
+                              onClick={() => onSectionClick(s, b.v)}
+                              className={cn(
+                                "inline-flex h-7 items-center gap-[5px] rounded-md px-[11px] text-[11.5px] font-semibold text-muted-foreground transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+                                SEG[b.v]
+                              )}
+                            >
+                              {b.v === "ok" && <CheckIcon className="size-3" />}
+                              {b.v === "no" && <XIcon className="size-3" />}
+                              {b.label}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
                   <div className="px-[15px] pb-[14px]">{s.body}</div>
+                  {s.serverStatus !== "PENDING" && (
+                    <div className="border-t bg-muted/30 px-[15px] py-2.5 text-[11.5px]">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <MiniBadge tone={STATUS_TONE[s.serverStatus]}>
+                          {STATUS_LABEL[s.serverStatus]}
+                        </MiniBadge>
+                        {s.decidedByName && (
+                          <span className="text-muted-foreground">
+                            by{" "}
+                            <b className="text-foreground">{s.decidedByName}</b>
+                            {s.decidedAt
+                              ? ` · ${formatDistanceToNow(new Date(s.decidedAt), {
+                                  addSuffix: true,
+                                })}`
+                              : ""}
+                          </span>
+                        )}
+                      </div>
+                      {s.comment && (
+                        <div className="mt-1 text-muted-foreground">
+                          &ldquo;{s.comment}&rdquo;
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )
             })}
-            {(anyReject || anyInfo) && (
-              <div className="flex flex-col gap-1.5">
-                <label className="flex items-center gap-1 text-[12.5px] font-medium">
-                  Reason for rejection / information required
-                  <span className="text-destructive">*</span>
-                </label>
-                <Textarea
-                  placeholder="Required when any section is rejected or returned…"
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                />
-              </div>
-            )}
             {!decided && (
               <Note tone="info" className="text-[11.5px]">
-                <b>Note:</b> the API records one decision per submission — the
-                per-section choices above drive which action you take; only the
-                final decision + comment is sent. Per-section approval is
-                backend-pending.
+                <b>Note:</b> each section&rsquo;s decision is saved the moment you
+                set it (you can revisit and change it later). Approve every
+                section to enable <b>Approve &amp; activate</b>; reject or request
+                info on any section, then return the submission to the submitter.
               </Note>
             )}
           </div>
@@ -487,7 +748,7 @@ export function ApprovalReviewPage() {
               <PanelBody className="flex flex-col gap-3">
                 <div className="flex flex-col gap-[9px]">
                   {sections.map((s) => {
-                    const dec = decisions[s.k]
+                    const dec = statusDecision(s)
                     const Ico =
                       dec === "ok"
                         ? CheckIcon
@@ -497,7 +758,7 @@ export function ApprovalReviewPage() {
                             ? AlertTriangleIcon
                             : MinusIcon
                     return (
-                      <div key={s.k} className="flex items-center gap-2.5">
+                      <div key={s.key} className="flex items-center gap-2.5">
                         <span
                           className={cn(
                             "grid size-5 shrink-0 place-items-center rounded-full",
@@ -517,17 +778,17 @@ export function ApprovalReviewPage() {
                 <Button
                   className="w-full justify-center bg-brand text-brand-foreground hover:bg-brand/90"
                   disabled={
-                    !canDecide ||
-                    provisioningIncomplete ||
-                    !allDecided ||
-                    anyReject ||
-                    anyInfo ||
-                    busy
+                    !canDecide || provisioningIncomplete || !allApproved || busy
                   }
-                  title={lockTip || undefined}
+                  title={
+                    !allApproved && canDecide && !provisioningIncomplete
+                      ? "Approve every section first"
+                      : lockTip || undefined
+                  }
                   onClick={() =>
-                    decide(
+                    runPayer(
                       "approve",
+                      undefined,
                       `${head?.name ?? "Submission"} approved — auto-activation triggered.`
                     )
                   }
@@ -542,11 +803,9 @@ export function ApprovalReviewPage() {
                 <Button
                   variant="outline"
                   className="w-full justify-center"
-                  disabled={!canDecide || !anyInfo || anyReject || !comment.trim() || busy}
+                  disabled={!canDecide || !anyInfo || busy}
                   title={lockTip || undefined}
-                  onClick={() =>
-                    decide("request-info", "Returned to submitter — info requested.")
-                  }
+                  onClick={() => setPending({ scope: "payer", action: "request-info" })}
                 >
                   <AlertTriangleIcon data-icon="inline-start" />
                   Return for info
@@ -554,9 +813,9 @@ export function ApprovalReviewPage() {
                 <Button
                   variant="destructive"
                   className="w-full justify-center"
-                  disabled={!canDecide || !anyReject || !comment.trim() || busy}
+                  disabled={!canDecide || !anyReject || busy}
                   title={lockTip || undefined}
-                  onClick={() => decide("reject", "Submission rejected. Submitter notified.")}
+                  onClick={() => setPending({ scope: "payer", action: "reject" })}
                 >
                   <XIcon data-icon="inline-start" />
                   Reject
@@ -571,6 +830,24 @@ export function ApprovalReviewPage() {
           )}
         </div>
       )}
+
+      <CommentDialog
+        key={
+          pending
+            ? pending.scope === "section"
+              ? `s:${pending.key}:${pending.action}`
+              : `p:${pending.action}`
+            : "none"
+        }
+        open={pending != null}
+        title={dialogCopy?.title ?? ""}
+        description={dialogCopy?.description}
+        submitLabel={dialogCopy?.submitLabel ?? "Submit"}
+        destructive={dialogCopy?.destructive}
+        busy={busy}
+        onCancel={() => setPending(null)}
+        onSubmit={onDialogSubmit}
+      />
     </div>
   )
 }

@@ -113,6 +113,7 @@ export function StepPrimary({
   const err = {
     legal: showErrors && !form.legal.trim(),
     trading: showErrors && !form.trading.trim(),
+    country: showErrors && !form.country.trim(),
     tax: showErrors && !form.tax.trim(),
     c0name: showErrors && !(c0.name || "").trim(),
     c0email: showErrors && !emailOk(c0.email),
@@ -158,11 +159,17 @@ export function StepPrimary({
               onChange={(e) => set("trading", e.target.value)}
             />
           </Field>
-          <Field label="Primary country of operation" required>
+          <Field
+            label="Primary country of operation"
+            required
+            hint={err.country ? "Country of operation is required." : undefined}
+            hintTone="error"
+          >
             <ConsoleSelect
               value={form.country}
               onChange={(v) => set("country", v)}
               options={COUNTRIES}
+              className={cn(err.country && "border-destructive")}
             />
           </Field>
           <Field

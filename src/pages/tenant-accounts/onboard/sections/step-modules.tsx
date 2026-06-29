@@ -65,9 +65,12 @@ function removeWithDependents(m: ModuleCatalogueItem, set: Set<string>, code: st
 export function StepModules({
   form,
   set,
+  showErrors = false,
 }: {
   form: OnboardingForm
   set: SetField
+  /** Reveal the "select at least one module" error (set once Continue is tried). */
+  showErrors?: boolean
 }) {
   const { data, isLoading, isError, refetch } = useModuleCatalogue()
   const modules = data ?? []
@@ -170,6 +173,13 @@ export function StepModules({
 
   return (
     <div className="flex flex-col gap-4">
+      {showErrors && modCount === 0 ? (
+        <Note tone="err" icon={<TriangleAlertIcon />}>
+          <b>Select at least one module.</b> This tenant needs at least one module
+          entitlement before you can continue.
+        </Note>
+      ) : null}
+
       <div className="flex items-center justify-between">
         <span className="text-[12.5px] text-muted-foreground">
           {modCount} {modCount === 1 ? "module" : "modules"} · {subCount} sub-

@@ -5,11 +5,13 @@ import { payerKeys } from "@/features/payers/queries"
 
 import {
   approvePayer,
+  decideSection,
   fetchApprovalReview,
   fetchApprovals,
   rejectPayer,
   requestInfo,
 } from "./api"
+import type { ApprovalDecision, ApprovalReview } from "./types"
 import { approvalKeys } from "./queries"
 
 /** Don't retry a 4xx — a 403 (e.g. caller isn't an approver) is terminal. */
@@ -34,6 +36,24 @@ export function useApprovalReview(payerId: number | null) {
     queryFn: () => fetchApprovalReview(payerId as number),
     enabled: payerId != null,
     retry: retry4xx,
+  })
+}
+
+/** Record one review section's decision. The endpoint returns the refreshed
+   review payload, so we write it straight into the review cache — the checklist
+   (and `allSectionsApproved`) update without a refetch. The page owns toasts. */
+export function useDecideSection() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (v: {
+      payerId: number
+      sectionKey: string
+      action: ApprovalDecision
+      comment?: string
+    }) => decideSection(v.payerId, v.sectionKey, v.action, v.comment),
+    onSuccess: (review: ApprovalReview, v) => {
+      qc.setQueryData(approvalKeys.review(v.payerId), review)
+    },
   })
 }
 
