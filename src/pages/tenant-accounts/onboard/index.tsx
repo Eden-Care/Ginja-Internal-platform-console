@@ -176,7 +176,8 @@ function OnboardWizard({
   const { form, set, step, setStep, assignees, setAssignees } = wiz
 
   // Real platform members back the "Section owner" picker (no more mock roster).
-  const membersQ = useMembers()
+  // Only ACTIVE members are assignable (skip INVITED/SUSPENDED).
+  const membersQ = useMembers({ status: "ACTIVE" })
   const teamOptions = React.useMemo<OwnerOption[]>(
     () => (membersQ.data?.items ?? []).map(toOwnerOption),
     [membersQ.data]

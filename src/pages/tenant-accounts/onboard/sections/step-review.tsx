@@ -119,7 +119,7 @@ export function StepReview({
 }) {
   const { data: modules } = useModuleCatalogue()
   const { data: structures } = useTenantPricingOptions()
-  const { data: membersPage } = useMembers()
+  const { data: membersPage } = useMembers({ status: "ACTIVE" })
   const ownerByEmail = React.useMemo(() => {
     const m = new Map<string, OwnerOption>()
     for (const mb of membersPage?.items ?? []) m.set(mb.email, toOwnerOption(mb))

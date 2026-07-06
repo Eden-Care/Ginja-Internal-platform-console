@@ -37,7 +37,8 @@ export function AssignTeamPanel({
   draft: DraftVM
   onBack: () => void
 }) {
-  const membersQ = useMembers()
+  // Only ACTIVE members are assignable (an INVITED/SUSPENDED member can't own work).
+  const membersQ = useMembers({ status: "ACTIVE" })
   const members = React.useMemo(
     () => membersQ.data?.items ?? [],
     [membersQ.data]
@@ -71,10 +72,24 @@ export function AssignTeamPanel({
   )
 
   const teamOptions: OwnerOption[] = roster.map(resolve)
+  // Every platform member is directly pickable as a section owner (same as the
+  // onboarding wizard), plus any already-assigned owner no longer in the member
+  // list — resolved by email so they still render.
+  const pickerOptions = React.useMemo<OwnerOption[]>(() => {
+    const byEmail = new Map<string, OwnerOption>()
+    for (const mb of members) byEmail.set(mb.email, toOwnerOption(mb))
+    for (const e of roster) if (!byEmail.has(e)) byEmail.set(e, resolve(e))
+    return Array.from(byEmail.values())
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [members, roster, optByEmail])
   const counts = (email: string) =>
     draft.sections.filter((s) => assign[s.key] === email).length
-  const setOwner = (k: string, email: string | null) =>
+  // Picking an owner also adds them to the team roster, so the Team list and
+  // per-section counts stay in sync with the assignment.
+  const setOwner = (k: string, email: string | null) => {
     setAssign((a) => ({ ...a, [k]: email }))
+    if (email) addPerson(email)
+  }
   const removePerson = (email: string) => {
     setRoster((r) => r.filter((e) => e !== email))
     setAssign((a) =>
@@ -265,7 +280,7 @@ export function AssignTeamPanel({
                   </div>
                   <OwnerSelect
                     value={assign[s.key] ?? null}
-                    team={teamOptions}
+                    team={pickerOptions}
                     onChange={(email) => setOwner(s.key, email)}
                   />
                 </div>

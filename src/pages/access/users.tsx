@@ -13,6 +13,7 @@ import {
   InfoIcon,
   KeyRoundIcon,
   LayersIcon,
+  Loader2Icon,
   MailIcon,
   PauseIcon,
   PencilIcon,
@@ -62,6 +63,7 @@ import { useAccess } from "@/contexts/access-context"
 import {
   useMember,
   useMemberActivity,
+  useMemberMetrics,
   useMembers,
 } from "@/features/access/use-members"
 import { useRoles } from "@/features/access/use-roles"
@@ -102,8 +104,15 @@ function paletteFor(key: string, system = false): string {
   return PALETTE_KEYS[h % PALETTE_KEYS.length]
 }
 
-const STATUS_TONE: Record<MemberStatus, "success" | "info" | "warning" | "error"> =
-  { ACTIVE: "success", INVITED: "info", SUSPENDED: "warning", DISABLED: "error" }
+const STATUS_TONE: Record<
+  MemberStatus,
+  "success" | "info" | "warning" | "error"
+> = {
+  ACTIVE: "success",
+  INVITED: "info",
+  SUSPENDED: "warning",
+  DISABLED: "error",
+}
 const STATUS_LABEL: Record<MemberStatus, string> = {
   ACTIVE: "Active",
   INVITED: "Invited",
@@ -189,8 +198,17 @@ function RolePick({
         on ? "border-primary/55 bg-primary/5" : "hover:border-primary/40"
       )}
     >
-      <input type="checkbox" checked={on} onChange={onToggle} className="hidden" />
-      <RoleIcon color={paletteFor(role.code, role.system)} size={iconSize ?? 30} iconSize={14} />
+      <input
+        type="checkbox"
+        checked={on}
+        onChange={onToggle}
+        className="hidden"
+      />
+      <RoleIcon
+        color={paletteFor(role.code, role.system)}
+        size={iconSize ?? 30}
+        iconSize={14}
+      />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5 text-[13px] font-semibold">
           {role.name}
@@ -218,7 +236,12 @@ function InviteDrawer({
   roles: Role[]
   saving: boolean
   onClose: () => void
-  onInvite: (p: { name: string; email: string; roleIds: number[]; expiryDays: number }) => void
+  onInvite: (p: {
+    name: string
+    email: string
+    roleIds: number[]
+    expiryDays: number
+  }) => void
 }) {
   const [name, setName] = React.useState("")
   const [email, setEmail] = React.useState("")
@@ -258,7 +281,9 @@ function InviteDrawer({
               <UserPlusIcon />
             </span>
             <div>
-              <SheetTitle className="text-base font-bold">Invite user</SheetTitle>
+              <SheetTitle className="text-base font-bold">
+                Invite user
+              </SheetTitle>
               <SheetDescription className="mt-0.5 text-xs">
                 Send a secure invitation to a Ginja staff member.
               </SheetDescription>
@@ -358,7 +383,11 @@ function InviteDrawer({
               })
             }
           >
-            <MailIcon data-icon="inline-start" />
+            {saving ? (
+              <Loader2Icon data-icon="inline-start" className="animate-spin" />
+            ) : (
+              <MailIcon data-icon="inline-start" />
+            )}
             {saving ? "Sending…" : "Send invitation"}
           </Button>
         </div>
@@ -381,6 +410,9 @@ function UserDrawer({
   rolesById,
   canManage,
   busy,
+  resending,
+  reactivating,
+  savingRoles,
   onClose,
   onResend,
   onReactivate,
@@ -391,11 +423,18 @@ function UserDrawer({
   roles: Role[]
   rolesById: Map<number, Role>
   canManage: boolean
+  /** Any member mutation in flight — cross-locks the footer actions. */
   busy: boolean
+  /** This member's invite is being resent. */
+  resending: boolean
+  /** This member is being reactivated. */
+  reactivating: boolean
+  /** This member's roles are being saved. */
+  savingRoles: boolean
   onClose: () => void
   onResend: (m: Member) => void
   onReactivate: (m: Member) => void
-  onSetRoles: (m: Member, roleIds: number[]) => void
+  onSetRoles: (m: Member, roleIds: number[], onDone?: () => void) => void
   onModal: (type: ModalType) => void
 }) {
   const navigate = useNavigate()
@@ -437,7 +476,9 @@ function UserDrawer({
             <div className="flex items-start gap-[13px]">
               <MemberAvatar m={m} lg />
               <div>
-                <SheetTitle className="text-[17px] font-bold">{m.name}</SheetTitle>
+                <SheetTitle className="text-[17px] font-bold">
+                  {m.name}
+                </SheetTitle>
                 <SheetDescription className="mono mt-px text-xs">
                   {m.email}
                 </SheetDescription>
@@ -498,7 +539,8 @@ function UserDrawer({
                 </>
               ) : (
                 <>
-                  <b>Invitation pending.</b> Awaiting acceptance of the setup link.
+                  <b>Invitation pending.</b> Awaiting acceptance of the setup
+                  link.
                   {m.inviteExpiresAt && (
                     <span className="mt-1.5 flex items-center gap-1.5 text-[11.5px] text-muted-foreground">
                       <ClockIcon className="size-3 shrink-0" />
@@ -578,7 +620,9 @@ function UserDrawer({
                           )}
                         >
                           <button
-                            onClick={() => setExpandedRole(open ? null : ref.id)}
+                            onClick={() =>
+                              setExpandedRole(open ? null : ref.id)
+                            }
                             className="flex w-full items-center gap-3 p-[13px_14px] text-left transition-colors hover:bg-muted/40"
                           >
                             <RoleIcon
@@ -586,10 +630,14 @@ function UserDrawer({
                               iconSize={15}
                             />
                             <div className="min-w-0 flex-1">
-                              <div className="text-sm font-semibold">{ref.name}</div>
+                              <div className="text-sm font-semibold">
+                                {ref.name}
+                              </div>
                               <div className="text-[11.5px] text-muted-foreground">
                                 {perms.length}{" "}
-                                {perms.length === 1 ? "permission" : "permissions"}
+                                {perms.length === 1
+                                  ? "permission"
+                                  : "permissions"}
                               </div>
                             </div>
                             <ChevronDownIcon
@@ -676,9 +724,12 @@ function UserDrawer({
                             iconSize={13}
                           />
                           <div className="flex-1">
-                            <div className="text-[13px] font-semibold">{ref.name}</div>
+                            <div className="text-[13px] font-semibold">
+                              {ref.name}
+                            </div>
                             <div className="text-[11px] text-muted-foreground">
-                              {count} {count === 1 ? "permission" : "permissions"}
+                              {count}{" "}
+                              {count === 1 ? "permission" : "permissions"}
                             </div>
                           </div>
                         </div>
@@ -686,7 +737,8 @@ function UserDrawer({
                     })}
                     {m.roles.length === 0 && (
                       <p className="text-[12.5px] text-muted-foreground">
-                        No roles assigned — this user can sign in but see nothing.
+                        No roles assigned — this user can sign in but see
+                        nothing.
                       </p>
                     )}
                   </div>
@@ -709,20 +761,26 @@ function UserDrawer({
                         variant="ghost"
                         size="sm"
                         onClick={() => setEditRoles(false)}
-                        disabled={busy}
+                        disabled={savingRoles}
                       >
                         Cancel
                       </Button>
                       <Button
                         size="sm"
-                        disabled={busy}
-                        onClick={() => {
-                          onSetRoles(m, [...draft])
-                          setEditRoles(false)
-                        }}
+                        disabled={savingRoles}
+                        onClick={() =>
+                          onSetRoles(m, [...draft], () => setEditRoles(false))
+                        }
                       >
-                        <CheckIcon data-icon="inline-start" />
-                        Save roles
+                        {savingRoles ? (
+                          <Loader2Icon
+                            data-icon="inline-start"
+                            className="animate-spin"
+                          />
+                        ) : (
+                          <CheckIcon data-icon="inline-start" />
+                        )}
+                        {savingRoles ? "Saving…" : "Save roles"}
                       </Button>
                     </div>
                   </>
@@ -745,7 +803,9 @@ function UserDrawer({
                       </Tagpill>
                     ))}
                     {effectivePerms.size === 0 && (
-                      <span className="text-[12.5px] text-muted-foreground">None</span>
+                      <span className="text-[12.5px] text-muted-foreground">
+                        None
+                      </span>
                     )}
                   </div>
                 </div>
@@ -772,7 +832,9 @@ function UserDrawer({
             ) : (activityQuery.data?.length ?? 0) === 0 ? (
               <div className="flex flex-col items-center gap-2 rounded-[14px] border border-dashed bg-muted/30 px-6 py-12 text-center text-muted-foreground">
                 <HistoryIcon className="size-[22px]" />
-                <p className="text-[13px]">No recorded activity for this user yet.</p>
+                <p className="text-[13px]">
+                  No recorded activity for this user yet.
+                </p>
               </div>
             ) : (
               <MemberTimeline events={activityQuery.data ?? []} />
@@ -783,36 +845,79 @@ function UserDrawer({
           <div className="flex flex-wrap items-center gap-2 border-t p-3.5">
             {isInvited ? (
               <>
-                <Button variant="outline" size="sm" onClick={() => onResend(m)} disabled={busy}>
-                  <RotateCcwIcon data-icon="inline-start" />
-                  Resend invite
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onResend(m)}
+                  disabled={busy}
+                >
+                  {resending ? (
+                    <Loader2Icon
+                      data-icon="inline-start"
+                      className="animate-spin"
+                    />
+                  ) : (
+                    <RotateCcwIcon data-icon="inline-start" />
+                  )}
+                  {resending ? "Resending…" : "Resend invite"}
                 </Button>
                 <span className="flex-1" />
-                <Button variant="destructive" size="sm" onClick={() => onModal("revoke")}>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => onModal("revoke")}
+                  disabled={busy}
+                >
                   <BanIcon data-icon="inline-start" />
                   Revoke invite
                 </Button>
               </>
             ) : isSuspended ? (
               <>
-                <Button size="sm" onClick={() => onReactivate(m)} disabled={busy}>
-                  <PlayIcon data-icon="inline-start" />
-                  Reactivate
+                <Button
+                  size="sm"
+                  onClick={() => onReactivate(m)}
+                  disabled={busy}
+                >
+                  {reactivating ? (
+                    <Loader2Icon
+                      data-icon="inline-start"
+                      className="animate-spin"
+                    />
+                  ) : (
+                    <PlayIcon data-icon="inline-start" />
+                  )}
+                  {reactivating ? "Reactivating…" : "Reactivate"}
                 </Button>
                 <span className="flex-1" />
-                <Button variant="destructive" size="sm" onClick={() => onModal("delete")}>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => onModal("delete")}
+                  disabled={busy}
+                >
                   <Trash2Icon data-icon="inline-start" />
                   Delete user
                 </Button>
               </>
             ) : (
               <>
-                <Button variant="outline" size="sm" onClick={() => onModal("suspend")}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onModal("suspend")}
+                  disabled={busy}
+                >
                   <PauseIcon data-icon="inline-start" />
                   Suspend
                 </Button>
                 <span className="flex-1" />
-                <Button variant="destructive" size="sm" onClick={() => onModal("delete")}>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => onModal("delete")}
+                  disabled={busy}
+                >
                   <Trash2Icon data-icon="inline-start" />
                   Delete user
                 </Button>
@@ -879,7 +984,9 @@ function DetailRow({
     <div className="flex items-center gap-[11px] border-b p-[13px_15px] last:border-0 [&>svg]:size-[15px] [&>svg]:shrink-0 [&>svg]:text-muted-foreground">
       {icon}
       <span className="text-[13px] text-muted-foreground">{k}</span>
-      <span className="ml-auto text-right text-[13px] font-semibold">{children}</span>
+      <span className="ml-auto text-right text-[13px] font-semibold">
+        {children}
+      </span>
     </div>
   )
 }
@@ -913,7 +1020,9 @@ function MemberTimeline({ events }: { events: MemberActivity[] }) {
               >
                 <AccessGlyph name={g.glyph} />
               </span>
-              {i < events.length - 1 && <span className="w-px flex-1 bg-border" />}
+              {i < events.length - 1 && (
+                <span className="w-px flex-1 bg-border" />
+              )}
             </div>
             <div className="min-w-0 flex-1 pb-4">
               <div className="flex items-center justify-between gap-2">
@@ -951,9 +1060,26 @@ export function AccessUsersPage() {
   const { hasPermission } = useAccess()
   const canManage = hasPermission("access-users")
 
-  const membersQuery = useMembers({})
+  const [q, setQ] = React.useState("")
+  const [filter, setFilter] = React.useState<MemberStatus | "All">("All")
+  // Search is debounced before it hits the server-side `q` param.
+  const [dq, setDq] = React.useState("")
+  React.useEffect(() => {
+    const t = setTimeout(() => setDq(q.trim()), 300)
+    return () => clearTimeout(t)
+  }, [q])
+
+  // Status + search are applied SERVER-SIDE (forwarded to GET /members).
+  const membersQuery = useMembers({
+    status: filter === "All" ? undefined : filter,
+    q: dq || undefined,
+  })
+  const metricsQuery = useMemberMetrics()
   const rolesQuery = useRoles()
-  const members = React.useMemo(() => membersQuery.data?.items ?? [], [membersQuery.data])
+  const members = React.useMemo(
+    () => membersQuery.data?.items ?? [],
+    [membersQuery.data]
+  )
   const roles = React.useMemo(() => rolesQuery.data ?? [], [rolesQuery.data])
   const rolesById = React.useMemo(
     () => new Map(roles.map((r) => [r.id, r])),
@@ -968,36 +1094,43 @@ export function AccessUsersPage() {
   const deleteMut = useDeleteMember()
   const busy = statusMut.isPending || rolesMut.isPending || resendMut.isPending
 
-  const [q, setQ] = React.useState("")
-  const [filter, setFilter] = React.useState<MemberStatus | "All">("All")
   const [openId, setOpenId] = React.useState<number | null>(null)
   const [invite, setInvite] = React.useState(false)
   const [bulk, setBulk] = React.useState(false)
-  const [modal, setModal] = React.useState<{ type: ModalType; member: Member } | null>(null)
+  const [modal, setModal] = React.useState<{
+    type: ModalType
+    member: Member
+  } | null>(null)
 
   // Opening a row fetches that member's full detail from GET /members/{id};
   // the already-loaded list row seeds the drawer while the request is in flight.
   const detailQuery = useMember(openId)
 
-  const counts: Record<string, number> = { All: members.length }
-  ;(["ACTIVE", "INVITED", "SUSPENDED"] as MemberStatus[]).forEach(
-    (s) => (counts[s] = members.filter((m) => m.status === s).length)
-  )
-  const list = members.filter(
-    (m) =>
-      (filter === "All" || m.status === filter) &&
-      (m.name.toLowerCase().includes(q.toLowerCase()) ||
-        m.email.toLowerCase().includes(q.toLowerCase()))
-  )
+  // Filter-tab counts come from GET /members/metrics (absolute per-status totals,
+  // independent of the search box) — not derived from the loaded page.
+  const metrics = metricsQuery.data
+  const counts: Record<string, number> = {
+    All: metrics?.total ?? 0,
+    ACTIVE: metrics?.byStatus.ACTIVE ?? 0,
+    INVITED: metrics?.byStatus.INVITED ?? 0,
+    SUSPENDED: metrics?.byStatus.SUSPENDED ?? 0,
+  }
+  // Rows are already filtered server-side (status + q) — render as-is.
+  const list = members
   const open =
     openId == null
       ? null
-      : detailQuery.data ?? members.find((m) => m.id === openId) ?? null
+      : (detailQuery.data ?? members.find((m) => m.id === openId) ?? null)
 
   const errToast = (e: unknown, fallback: string) =>
     toast.error(e instanceof Error ? e.message : fallback)
 
-  const doInvite = (p: { name: string; email: string; roleIds: number[]; expiryDays: number }) =>
+  const doInvite = (p: {
+    name: string
+    email: string
+    roleIds: number[]
+    expiryDays: number
+  }) =>
     inviteMut.mutate(p, {
       onSuccess: () => {
         toast.success(`Invitation sent to ${p.email}.`)
@@ -1053,11 +1186,14 @@ export function AccessUsersPage() {
       onError: (e) => errToast(e, "Could not delete the user."),
     })
 
-  const setRoles = (m: Member, roleIds: number[]) =>
+  const setRoles = (m: Member, roleIds: number[], onDone?: () => void) =>
     rolesMut.mutate(
       { member: m, roleIds },
       {
-        onSuccess: () => toast.success(`Roles updated for ${m.name}.`),
+        onSuccess: () => {
+          toast.success(`Roles updated for ${m.name}.`)
+          onDone?.()
+        },
         onError: (e) => errToast(e, "Could not update roles."),
       }
     )
@@ -1134,16 +1270,24 @@ export function AccessUsersPage() {
                         : "bg-border text-muted-foreground"
                     )}
                   >
-                    {counts[t.status] || 0}
+                    {metrics ? (counts[t.status] ?? 0) : "–"}
                   </span>
                 </button>
               ))}
             </div>
+            {membersQuery.isFetching && (
+              <Loader2Icon className="size-4 animate-spin text-muted-foreground" />
+            )}
           </div>
 
           <Panel className="overflow-hidden">
-            <Table>
-              <TableHeader className={hifiTableHead}>
+            <Table containerClassName="max-h-[600px] overflow-y-auto pt-0">
+              <TableHeader
+                className={cn(
+                  hifiTableHead,
+                  "sticky top-0 z-10 [&_th]:bg-card"
+                )}
+              >
                 <TableRow className="hover:bg-transparent">
                   <TableHead>User</TableHead>
                   <TableHead>Roles</TableHead>
@@ -1154,94 +1298,112 @@ export function AccessUsersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {list.map((m) => (
-                  <TableRow
-                    key={m.id}
-                    onClick={() => setOpenId(m.id)}
-                    className="cursor-pointer"
-                  >
-                    <TableCell>
-                      <div className="flex items-center gap-[11px]">
-                        <MemberAvatar m={m} />
-                        <div>
-                          <div className="text-[13px] font-semibold">{m.name}</div>
-                          <div className="mono text-[11.5px] text-muted-foreground">
-                            {m.email}
+                {list.map((m) => {
+                  const rowResending =
+                    resendMut.isPending && resendMut.variables === m.id
+                  return (
+                    <TableRow
+                      key={m.id}
+                      onClick={() => setOpenId(m.id)}
+                      className="cursor-pointer"
+                    >
+                      <TableCell>
+                        <div className="flex items-center gap-[11px]">
+                          <MemberAvatar m={m} />
+                          <div>
+                            <div className="text-[13px] font-semibold">
+                              {m.name}
+                            </div>
+                            <div className="mono text-[11.5px] text-muted-foreground">
+                              {m.email}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1.5">
-                        {m.roles.length === 0 ? (
-                          <span className="text-xs text-muted-foreground">No roles</span>
-                        ) : (
-                          <>
-                            {m.roles.slice(0, 2).map((r) => (
-                              <RoleChip key={r.id} name={r.name} size="sm" />
-                            ))}
-                            {m.roles.length > 2 && (
-                              <span
-                                title={m.roles.slice(2).map((r) => r.name).join(", ")}
-                                className="shrink-0 rounded-full border bg-muted px-2 py-[3px] text-[10.5px] font-semibold whitespace-nowrap text-muted-foreground"
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1.5">
+                          {m.roles.length === 0 ? (
+                            <span className="text-xs text-muted-foreground">
+                              No roles
+                            </span>
+                          ) : (
+                            <>
+                              {m.roles.slice(0, 2).map((r) => (
+                                <RoleChip key={r.id} name={r.name} size="sm" />
+                              ))}
+                              {m.roles.length > 2 && (
+                                <span
+                                  title={m.roles
+                                    .slice(2)
+                                    .map((r) => r.name)
+                                    .join(", ")}
+                                  className="shrink-0 rounded-full border bg-muted px-2 py-[3px] text-[10.5px] font-semibold whitespace-nowrap text-muted-foreground"
+                                >
+                                  +{m.roles.length - 2} more
+                                </span>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {m.status === "INVITED" && m.inviteExpired ? (
+                          <div className="flex flex-col items-start gap-1">
+                            <MiniBadge tone="error">Expired</MiniBadge>
+                            {canManage && (
+                              <button
+                                disabled={rowResending}
+                                className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary underline-offset-2 hover:underline disabled:opacity-60 disabled:hover:no-underline [&>svg]:size-[11px]"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  resend(m)
+                                }}
                               >
-                                +{m.roles.length - 2} more
+                                {rowResending ? (
+                                  <Loader2Icon className="animate-spin" />
+                                ) : (
+                                  <RotateCcwIcon />
+                                )}
+                                {rowResending
+                                  ? "Resending…"
+                                  : "Resend invitation"}
+                              </button>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-start gap-0.5">
+                            <MiniBadge tone={STATUS_TONE[m.status]}>
+                              {STATUS_LABEL[m.status]}
+                            </MiniBadge>
+                            {m.status === "INVITED" && m.inviteExpiresAt && (
+                              <span className="text-[10.5px] text-muted-foreground">
+                                expires {fmtExpiry(m.inviteExpiresAt)}
                               </span>
                             )}
-                          </>
+                          </div>
                         )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {m.status === "INVITED" && m.inviteExpired ? (
-                        <div className="flex flex-col items-start gap-1">
-                          <MiniBadge tone="error">Expired</MiniBadge>
-                          {canManage && (
-                            <button
-                              className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary underline-offset-2 hover:underline [&>svg]:size-[11px]"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                resend(m)
-                              }}
-                            >
-                              <RotateCcwIcon />
-                              Resend invitation
-                            </button>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="flex flex-col items-start gap-0.5">
-                          <MiniBadge tone={STATUS_TONE[m.status]}>
-                            {STATUS_LABEL[m.status]}
-                          </MiniBadge>
-                          {m.status === "INVITED" && m.inviteExpiresAt && (
-                            <span className="text-[10.5px] text-muted-foreground">
-                              expires {fmtExpiry(m.inviteExpiresAt)}
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {fmtLastActive(m.lastActive)}
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {m.invitedBy ?? "—"}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="outline"
-                        size="icon-sm"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setOpenId(m.id)
-                        }}
-                      >
-                        <ChevronRightIcon />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {fmtLastActive(m.lastActive)}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {m.invitedBy ?? "—"}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="outline"
+                          size="icon-sm"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setOpenId(m.id)
+                          }}
+                        >
+                          <ChevronRightIcon />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
               </TableBody>
             </Table>
           </Panel>
@@ -1280,6 +1442,11 @@ export function AccessUsersPage() {
           rolesById={rolesById}
           canManage={canManage}
           busy={busy}
+          resending={resendMut.isPending && resendMut.variables === open.id}
+          reactivating={
+            statusMut.isPending && statusMut.variables?.status === "ACTIVE"
+          }
+          savingRoles={rolesMut.isPending}
           onClose={() => setOpenId(null)}
           onResend={resend}
           onReactivate={reactivate}
@@ -1293,7 +1460,8 @@ export function AccessUsersPage() {
           icon={<PauseIcon />}
           tone="warn"
           title={`Suspend ${modal.member.name}?`}
-          confirmLabel="Suspend user"
+          confirmLabel={statusMut.isPending ? "Suspending…" : "Suspend user"}
+          busy={statusMut.isPending}
           reasonRequired
           reasonLabel="Reason for suspension"
           onConfirm={(r) => suspend(modal.member, r)}
@@ -1301,12 +1469,17 @@ export function AccessUsersPage() {
           body={
             <>
               <p>
-                The user is signed out of all sessions immediately and cannot sign
-                back in until reactivated. Their roles are preserved.
+                The user is signed out of all sessions immediately and cannot
+                sign back in until reactivated. Their roles are preserved.
               </p>
               <ImpactBox tone="warn" heading="What happens">
-                <li>All active sessions end and API tokens stop working at once.</li>
-                <li>{modal.member.roles.length} role(s) are retained for reactivation.</li>
+                <li>
+                  All active sessions end and API tokens stop working at once.
+                </li>
+                <li>
+                  {modal.member.roles.length} role(s) are retained for
+                  reactivation.
+                </li>
               </ImpactBox>
             </>
           }
@@ -1318,18 +1491,24 @@ export function AccessUsersPage() {
           icon={<BanIcon />}
           tone="danger"
           title="Revoke invitation?"
-          confirmLabel="Revoke invitation"
+          confirmLabel={revokeMut.isPending ? "Revoking…" : "Revoke invitation"}
+          busy={revokeMut.isPending}
           onConfirm={() => revoke(modal.member)}
           onCancel={() => setModal(null)}
           body={
             <>
               <p>
-                The pending invitation to <b>{modal.member.email}</b> is cancelled.
-                The secure link stops working immediately.
+                The pending invitation to <b>{modal.member.email}</b> is
+                cancelled. The secure link stops working immediately.
               </p>
               <ImpactBox tone="warn" heading="What happens">
-                <li>The invite link is invalidated — the recipient can no longer accept.</li>
-                <li>The user record is removed. You can re-invite them later.</li>
+                <li>
+                  The invite link is invalidated — the recipient can no longer
+                  accept.
+                </li>
+                <li>
+                  The user record is removed. You can re-invite them later.
+                </li>
               </ImpactBox>
             </>
           }
@@ -1341,15 +1520,16 @@ export function AccessUsersPage() {
           icon={<Trash2Icon />}
           tone="danger"
           title={`Delete ${modal.member.name}?`}
-          confirmLabel="Delete user"
+          confirmLabel={deleteMut.isPending ? "Deleting…" : "Delete user"}
+          busy={deleteMut.isPending}
           confirmWord={modal.member.name}
           onConfirm={() => remove(modal.member)}
           onCancel={() => setModal(null)}
           body={
             <>
               <p>
-                <b>This is permanent.</b> The user and their access are removed from
-                the platform.
+                <b>This is permanent.</b> The user and their access are removed
+                from the platform.
               </p>
               <ImpactBox tone="danger" heading="Downstream impact">
                 <li>

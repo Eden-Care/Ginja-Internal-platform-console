@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/sidebar"
 import { useAuth } from "@/contexts/auth-context"
 import { LoginPage } from "@/pages/login"
+import { AcceptInvitePage } from "@/pages/accept-invite"
 import { ConsoleDashboardPage } from "@/pages/platform-dashboard"
 import { ApprovalsPage } from "@/pages/approvals"
 import { ApprovalReviewPage } from "@/pages/approvals/review"
@@ -129,6 +130,7 @@ export function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/accept-invite" element={<AcceptInvitePage />} />
       <Route element={<RequireAuth />}>
         <Route path="/*" element={<AppShell />} />
       </Route>

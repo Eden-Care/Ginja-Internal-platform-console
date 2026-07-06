@@ -42,22 +42,23 @@ All endpoints require this scheme unless noted otherwise (the `/dev/token` helpe
 
 - [Authentication & Sessions](#authentication-sessions) (15)
 - [Dev Tools](#dev-tools) (1)
-- [Members](#members) (13)
-- [Roles](#roles) (8)
+- [Members](#members) (14)
+- [Roles](#roles) (9)
 - [Permissions](#permissions) (7)
-- [Module Registry](#module-registry) (10)
+- [Module Registry](#module-registry) (11)
 - [Audit Log](#audit-log) (3)
 - [Activity Timelines](#activity-timelines) (5)
 - [Pricing Structures](#pricing-structures) (7)
-- [Payer Onboarding](#payer-onboarding) (14)
+- [Payer Onboarding](#payer-onboarding) (15)
 - [Onboarding Steps](#onboarding-steps) (4)
-- [Approvals](#approvals) (8)
+- [Approvals](#approvals) (9)
 - [Payer Lifecycle](#payer-lifecycle) (6)
-- [Tenant Provisioning & Technical Review](#tenant-provisioning-technical-review) (11)
+- [Tenant Provisioning & Technical Review](#tenant-provisioning-technical-review) (12)
 - [Platform Settings · Localization](#platform-settings-localization) (9)
 - [Platform Settings · Security](#platform-settings-security) (14)
 - [Platform Settings · Provisioning Tiers](#platform-settings-provisioning-tiers) (5)
 - [Platform Settings · Data Residency](#platform-settings-data-residency) (5)
+- [My Account](#my-account) (16)
 - [Dashboard](#dashboard) (1)
 - [Schemas](#schemas)
 
@@ -830,6 +831,7 @@ _Internal Platform Console users: onboard, search, status, password, roles, invi
 | `GET` | `/platform/organization/members/{memberId}` | Get a member |
 | `DELETE` | `/platform/organization/members/{memberId}` | Delete a member |
 | `GET` | `/platform/organization/members/{memberId}/sessions` | List member sessions |
+| `GET` | `/platform/organization/members/metrics` | Members metrics (by status + MFA adoption) |
 | `DELETE` | `/platform/organization/members/{memberId}/roles/{roleId}` | Un-assign a role from a member |
 
 ### `PUT` `/platform/organization/members/{memberId}/status`
@@ -1546,6 +1548,20 @@ Returns the member's currently active sessions (Users → Sessions tab).
 
 ---
 
+### `GET` `/platform/organization/members/metrics`
+
+**Members metrics (by status + MFA adoption)**
+
+`operationId: metrics_4`
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK |
+
+---
+
 ### `DELETE` `/platform/organization/members/{memberId}/roles/{roleId}`
 
 **Un-assign a role from a member**
@@ -1619,6 +1635,7 @@ _SYSTEM (immutable) and CUSTOM roles; map functionalities, permissions, and regi
 | `GET` | `/platform/organization/roles/{roleId}` | Get a role |
 | `PATCH` | `/platform/organization/roles/{roleId}` | Edit a role |
 | `DELETE` | `/platform/organization/roles/{roleId}` | Delete a role |
+| `GET` | `/platform/organization/roles/metrics` | Roles metrics (counts + members-per-role) |
 | `DELETE` | `/platform/organization/roles/{roleId}/permissions/{permissionCode}` | Un-assign a permission from a role |
 
 ### `PUT` `/platform/organization/roles/{roleId}/region-scopes`
@@ -2032,6 +2049,20 @@ Deletes a CUSTOM role. Mapped role→permission and region-scope rows cascade.
 ```
 
 </details>
+
+---
+
+### `GET` `/platform/organization/roles/metrics`
+
+**Roles metrics (counts + members-per-role)**
+
+`operationId: metrics_2`
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK |
 
 ---
 
@@ -2470,6 +2501,7 @@ _The Configuration-library module catalogue (register, list/filter, search, upda
 | `GET` | `/platform/organization/modules/{moduleId}/versions/compare` | Compare two module versions |
 | `GET` | `/platform/organization/modules/{moduleId}/activity` | Module activity timeline |
 | `GET` | `/platform/organization/modules/search` | Search modules |
+| `GET` | `/platform/organization/modules/metrics` | Module registry metrics (by status, sub-modules, versions, top by tenants) |
 | `GET` | `/platform/organization/modules/availability` | Check module name / code availability (real-time duplicate check) |
 
 ### `GET` `/platform/organization/modules`
@@ -2951,6 +2983,20 @@ paged envelope.
 ```
 
 </details>
+
+---
+
+### `GET` `/platform/organization/modules/metrics`
+
+**Module registry metrics (by status, sub-modules, versions, top by tenants)**
+
+`operationId: metrics_3`
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK |
 
 ---
 
@@ -4097,6 +4143,7 @@ _Build a payer + its tenants incrementally in DRAFT: lookups, create, entitlemen
 | `GET` | `/platform/payers/{payerId}/tenants/{tenantId}/documents/{documentId}` | Download a tenant document |
 | `GET` | `/platform/payers/tenant-lookup` | Duplicate tenant lookup |
 | `GET` | `/platform/payers/subdomain-check` | Check subdomain availability |
+| `GET` | `/platform/payers/metrics` | Payer directory metrics (by status + type) |
 
 ### `PUT` `/platform/payers/{payerId}/subscription`
 
@@ -4967,6 +5014,20 @@ step (§8.7) before persisting a subdomain.
 
 ---
 
+### `GET` `/platform/payers/metrics`
+
+**Payer directory metrics (by status + type)**
+
+`operationId: metrics_1`
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK |
+
+---
+
 ## Onboarding Steps
 
 _Per-payer onboarding step tracker: progress, per-step assignment, and manual completion._
@@ -5283,6 +5344,7 @@ _Approver queue and approve / reject / request-info decisions (separation of dut
 | `POST` | `/platform/payers/{payerId}/approve` | Approve a payer → auto-activate |
 | `GET` | `/platform/approvals` | Approval queue (Pending / Approved / All) |
 | `GET` | `/platform/approvals/{payerId}` | Approval review (by id) |
+| `GET` | `/platform/approvals/metrics` | Reviewer metrics (Role · Technical Reviewer) |
 
 ### `POST` `/platform/payers/{payerId}/sections/{sectionKey}/request-info`
 
@@ -5673,6 +5735,26 @@ Decisions themselves use `POST /platform/payers/{payerId}/approve|reject|request
 
 ---
 
+### `GET` `/platform/approvals/metrics`
+
+**Reviewer metrics (Role · Technical Reviewer)**
+
+`operationId: metrics_5`
+
+Single combined metrics feed for the Technical Reviewer landing: approvals-queue counts (pending,
+approved, awaiting-provisioning) plus technical-review counts (sections awaiting review, open
+remarks, tenants ready to approve). `high_priority` is 0 until priority is modelled.
+
+**Roles:** `PLATFORM_APPROVER` or `PLATFORM_ADMIN`.
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK. |
+
+---
+
 ## Payer Lifecycle
 
 _Post-activation transitions: suspend, reactivate, retire._
@@ -5931,6 +6013,7 @@ _Provisioning queue + config sections (Database, Domains/SSL, Email, SMS, Data m
 | `GET` | `/platform/provisioning/{tenantId}` | Get a tenant's provisioning detail |
 | `GET` | `/platform/provisioning/{tenantId}/remarks` | List a tenant's review remarks |
 | `GET` | `/platform/provisioning/mine` | List my provisioning assignments |
+| `GET` | `/platform/provisioning/metrics` | Provisioning queue metrics (by stage, sections, remarks, engineer load) |
 
 ### `PUT` `/platform/provisioning/{tenantId}/sections/{section}`
 
@@ -6610,6 +6693,20 @@ an admin assigns them via `POST /platform/provisioning/{tenant_id}/assign`.
 
 ---
 
+### `GET` `/platform/provisioning/metrics`
+
+**Provisioning queue metrics (by stage, sections, remarks, engineer load)**
+
+`operationId: metrics`
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK |
+
+---
+
 ## Platform Settings · Localization
 
 | Method | Path | Summary |
@@ -7139,7 +7236,7 @@ Returns the template mapping for one notification type. **Roles:** `PLATFORM_ADM
 
 | Name | In | Req | Type | Description |
 |---|---|---|---|---|
-| `type` | path | ✓ | string enum: `MEMBER_INVITE`, `TENANT_ADMIN_INVITE`, `SMS_OTP` | Notification type. |
+| `type` | path | ✓ | string enum: `MEMBER_INVITE`, `TENANT_ADMIN_INVITE`, `SMS_OTP`, `EMAIL_OTP` | Notification type. |
 
 **Responses**
 
@@ -7167,7 +7264,7 @@ fields are applied. Audited as `NOTIFICATION_TEMPLATE_UPDATED`.
 
 | Name | In | Req | Type | Description |
 |---|---|---|---|---|
-| `type` | path | ✓ | string enum: `MEMBER_INVITE`, `TENANT_ADMIN_INVITE`, `SMS_OTP` | Notification type. |
+| `type` | path | ✓ | string enum: `MEMBER_INVITE`, `TENANT_ADMIN_INVITE`, `SMS_OTP`, `EMAIL_OTP` | Notification type. |
 
 **Request body** (required): [`UpdateNotificationTemplateRequest`](#schema-updatenotificationtemplaterequest)
 
@@ -7982,6 +8079,293 @@ Removes a data-residency region from the catalogue.
 
 ---
 
+## My Account
+
+| Method | Path | Summary |
+|---|---|---|
+| `POST` | `/platform/organization/me/sessions/{sessionId}/revoke` | Sign out one of my other sessions |
+| `POST` | `/platform/organization/me/sessions/revoke-others` | Sign out all my other devices |
+| `POST` | `/platform/organization/me/password` | Change my password (verifies current; signs out other sessions) |
+| `POST` | `/platform/organization/me/mfa/{method}/disable` | Disable one of my MFA methods (totp/sms/email/webauthn) |
+| `POST` | `/platform/organization/me/mfa/email/verify` | Confirm email-OTP enrolment |
+| `POST` | `/platform/organization/me/mfa/email/enroll` | Begin email-OTP enrolment (emails a verification code) |
+| `POST` | `/platform/organization/me/avatar` | Upload/replace my profile photo |
+| `DELETE` | `/platform/organization/me/avatar` | Remove my profile photo |
+| `GET` | `/platform/organization/me/profile` | Get my profile |
+| `PATCH` | `/platform/organization/me/profile` | Update my profile (email is read-only) |
+| `GET` | `/platform/organization/me/sessions` | My active sessions |
+| `GET` | `/platform/organization/me/security-activity` | My recent security activity (read-only) |
+| `GET` | `/platform/organization/me/roles` | My roles & access (view only) |
+| `GET` | `/platform/organization/me/password/status` | My password status (up to date / expiring / expired) |
+| `GET` | `/platform/organization/me/password/policy` | Active password policy (for the change-password checklist) |
+| `GET` | `/platform/organization/me/mfa` | My MFA status (enabled methods + which the policy allows + mandatory) |
+
+### `POST` `/platform/organization/me/sessions/{sessionId}/revoke`
+
+**Sign out one of my other sessions**
+
+`operationId: revokeSession_1`
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `sessionId` | path | ✓ | string | The session id (sid) to sign out. |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK |
+
+---
+
+### `POST` `/platform/organization/me/sessions/revoke-others`
+
+**Sign out all my other devices**
+
+`operationId: revokeOthers`
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK |
+
+---
+
+### `POST` `/platform/organization/me/password`
+
+**Change my password (verifies current; signs out other sessions)**
+
+`operationId: changePassword`
+
+**Request body** (required): [`ChangePasswordRequest`](#schema-changepasswordrequest)
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `current_password` | string | ✓ |  |
+| `new_password` | string | ✓ |  |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK |
+
+---
+
+### `POST` `/platform/organization/me/mfa/{method}/disable`
+
+**Disable one of my MFA methods (totp/sms/email/webauthn)**
+
+`operationId: disableMfa`
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `method` | path | ✓ | string | totp \| sms \| email \| webauthn |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK |
+
+---
+
+### `POST` `/platform/organization/me/mfa/email/verify`
+
+**Confirm email-OTP enrolment**
+
+`operationId: verifyEmailMfa`
+
+**Request body** (required): [`MeCodeRequest`](#schema-mecoderequest)
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `code` | string | ✓ |  |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK |
+
+---
+
+### `POST` `/platform/organization/me/mfa/email/enroll`
+
+**Begin email-OTP enrolment (emails a verification code)**
+
+`operationId: enrollEmailMfa`
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK |
+
+---
+
+### `POST` `/platform/organization/me/avatar`
+
+**Upload/replace my profile photo**
+
+`operationId: uploadAvatar`
+
+**Request body**: `object`
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `file` | string (binary) | ✓ | Image file (JPG/PNG). |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK |
+
+---
+
+### `DELETE` `/platform/organization/me/avatar`
+
+**Remove my profile photo**
+
+`operationId: removeAvatar`
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK |
+
+---
+
+### `GET` `/platform/organization/me/profile`
+
+**Get my profile**
+
+`operationId: profile`
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK |
+
+---
+
+### `PATCH` `/platform/organization/me/profile`
+
+**Update my profile (email is read-only)**
+
+`operationId: updateProfile`
+
+**Request body** (required): [`UpdateProfileRequest`](#schema-updateprofilerequest)
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `full_name` | string |  |  |
+| `phone` | string |  |  |
+| `job_title` | string |  |  |
+| `bio` | string |  |  |
+| `timezone` | string |  |  |
+| `language` | string |  |  |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK |
+
+---
+
+### `GET` `/platform/organization/me/sessions`
+
+**My active sessions**
+
+`operationId: sessions`
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK |
+
+---
+
+### `GET` `/platform/organization/me/security-activity`
+
+**My recent security activity (read-only)**
+
+`operationId: securityActivity`
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK |
+
+---
+
+### `GET` `/platform/organization/me/roles`
+
+**My roles & access (view only)**
+
+`operationId: roles`
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK |
+
+---
+
+### `GET` `/platform/organization/me/password/status`
+
+**My password status (up to date / expiring / expired)**
+
+`operationId: passwordStatus`
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK |
+
+---
+
+### `GET` `/platform/organization/me/password/policy`
+
+**Active password policy (for the change-password checklist)**
+
+`operationId: passwordPolicy`
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK |
+
+---
+
+### `GET` `/platform/organization/me/mfa`
+
+**My MFA status (enabled methods + which the policy allows + mandatory)**
+
+`operationId: mfa`
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK |
+
+---
+
 ## Dashboard
 
 | Method | Path | Summary |
@@ -8161,6 +8545,7 @@ A single entry in the append-only audit/activity trail.
 | `reason` | string |  | Reason captured with the action (e.g. a suspension reason). |
 | `created_at` | string (date-time) |  | When the entry was recorded. _(e.g. `2026-06-17T04:00:00Z`)_ |
 | `kind` | string |  | UI category derived from the action: create, edit, publish, approve, danger, system or neutral (drives the icon/tone). _(e.g. `create`)_ |
+| `description` | string |  | Human-readable summary of the event (the activity feed's detail line): the humanised action, the fields that changed, and any reason. _(e.g. `Module updated (name, owner team)`)_ |
 
 ### BankDetailsRequest
 <a id="schema-bankdetailsrequest"></a>
@@ -8174,6 +8559,16 @@ Bank account details, supplied nested under a tenant. All fields are WRITE-ONLY:
 | `account_number` | string |  | Account number. Write-only/encrypted — never returned. _(e.g. `123456`)_ |
 | `branch_code` | string |  | Branch / routing code. Write-only/encrypted — never returned. _(e.g. `250655`)_ |
 | `swift_bic` | string |  | SWIFT / BIC. Write-only/encrypted — never returned. _(e.g. `FIRNZAJJ`)_ |
+
+### ChangePasswordRequest
+<a id="schema-changepasswordrequest"></a>
+
+Current + new password for a self-service change.
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `current_password` | string | ✓ |  |
+| `new_password` | string | ✓ |  |
 
 ### ConfigSectionResponse
 <a id="schema-configsectionresponse"></a>
@@ -8369,6 +8764,15 @@ MFA challenge token + TOTP code to finish login.
 |---|---|---|---|
 | `challenge_token` | string | ✓ | The challenge_token returned by /auth/login. _(e.g. `0428a10b14e94e98ab3047573d294365`)_ |
 | `code` | string | ✓ | The 6-digit code from the authenticator app. _(e.g. `123456`)_ |
+
+### MeCodeRequest
+<a id="schema-mecoderequest"></a>
+
+A one-time verification code.
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `code` | string | ✓ |  |
 
 ### MemberResponse
 <a id="schema-memberresponse"></a>
@@ -9048,6 +9452,20 @@ Partial (PATCH) update of a DRAFT pricing structure. Only non-null fields are ap
 | `platform_fee_annual` | number |  | Annual platform fee. _(e.g. `0`)_ |
 | `savings_capture_pct` | number |  | Savings-capture percentage. _(e.g. `15.0`)_ |
 | `components` | array&lt;[`PricingComponentRequest`](#schema-pricingcomponentrequest)&gt; |  | If provided, fully replaces the structure's components[] (each with its tiers[]); if omitted, the existing set is left unchanged. |
+
+### UpdateProfileRequest
+<a id="schema-updateprofilerequest"></a>
+
+Partial self-profile update.
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `full_name` | string |  |  |
+| `phone` | string |  |  |
+| `job_title` | string |  |  |
+| `bio` | string |  |  |
+| `timezone` | string |  |  |
+| `language` | string |  |  |
 
 ### UpdateProvisioningTierRequest
 <a id="schema-updateprovisioningtierrequest"></a>

@@ -7,6 +7,7 @@ import {
   InfoIcon,
   KeyRoundIcon,
   LayersIcon,
+  Loader2Icon,
   PaletteIcon,
   PlusIcon,
   SearchIcon,
@@ -267,7 +268,9 @@ function RoleEditor({
                 title="Custom colour"
                 className={cn(
                   "relative grid size-6 place-items-center rounded-full border border-dashed text-muted-foreground",
-                  editable ? "cursor-pointer hover:border-primary" : "opacity-50"
+                  editable
+                    ? "cursor-pointer hover:border-primary"
+                    : "opacity-50"
                 )}
               >
                 <PaletteIcon className="size-3.5" />
@@ -337,11 +340,15 @@ function RoleEditor({
                       onClick={() => toggleGroup(codes)}
                       className={cn(
                         "flex w-full items-center gap-[11px] bg-muted/35 px-4 py-2.5 text-left",
-                        editable ? "cursor-pointer hover:bg-muted/55" : "cursor-default"
+                        editable
+                          ? "cursor-pointer hover:bg-muted/55"
+                          : "cursor-default"
                       )}
                     >
                       <span className="grid size-[26px] shrink-0 place-items-center rounded-[7px] bg-primary/10 text-primary [&>svg]:size-[14px]">
-                        <AccessGlyph name={GROUP_ICON[group.code] ?? "layers"} />
+                        <AccessGlyph
+                          name={GROUP_ICON[group.code] ?? "layers"}
+                        />
                       </span>
                       <span className="flex-1 text-[12px] font-semibold">
                         {group.label}
@@ -406,7 +413,11 @@ function RoleEditor({
             Cancel
           </Button>
           <Button disabled={!valid || saving} onClick={submit}>
-            <CheckIcon data-icon="inline-start" />
+            {saving ? (
+              <Loader2Icon data-icon="inline-start" className="animate-spin" />
+            ) : (
+              <CheckIcon data-icon="inline-start" />
+            )}
             {saving
               ? isNew
                 ? "Creating…"
@@ -430,8 +441,8 @@ function RoleEditor({
           body={
             <p>
               This permanently removes the role. Members currently holding it
-              lose its access immediately. A role that is still assigned can’t be
-              deleted.
+              lose its access immediately. A role that is still assigned can’t
+              be deleted.
             </p>
           }
         />
