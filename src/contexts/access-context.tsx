@@ -32,9 +32,11 @@ const AccessContext = React.createContext<AccessContextValue | undefined>(
   undefined
 )
 
-/** Best-effort display name from an email local-part ("amara.okeke" → "Amara Okeke"). */
-function displayNameFromEmail(email: string): string {
-  const local = email.split("@")[0] ?? email
+/** Best-effort display name from an email local-part ("amara.okeke" → "Amara Okeke").
+   Tolerates a missing/empty email (the login payload may omit it). */
+function displayNameFromEmail(email?: string | null): string {
+  if (!email) return ""
+  const local = email.split("@")[0] || email
   return (
     local
       .split(/[._-]+/)
@@ -55,7 +57,7 @@ export function AccessProvider({ children }: { children: React.ReactNode }) {
       role,
       roleKey,
       user: {
-        fullName: session ? displayNameFromEmail(session.email) : "",
+        fullName: displayNameFromEmail(session?.email),
         email: session?.email ?? "",
         role: role.label,
       },

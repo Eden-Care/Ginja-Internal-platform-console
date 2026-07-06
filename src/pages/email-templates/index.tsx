@@ -20,11 +20,6 @@ import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "@/components/ui/input-group"
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -43,7 +38,10 @@ import {
 } from "@/features/email-templates/use-email-templates"
 import { ConsolePageHeader } from "@/components/console/page-header"
 import { Note } from "@/components/console/note"
-import { MiniBadge, Tagpill } from "@/components/console/tagpill"
+import { Tagpill } from "@/components/console/tagpill"
+import { MBadge } from "@/components/hifi/badge"
+import { HiIcon } from "@/components/hifi/icon"
+import { hifiBtn } from "@/components/hifi/button"
 import { CopyId } from "@/components/console/copy-id"
 import { LoadingSpinner } from "@/components/common/loading"
 import { LoadMore } from "@/components/common/load-more"
@@ -175,13 +173,24 @@ export function EmailTemplatesPage() {
     )
 
   return (
-    <div className="flex flex-col gap-5">
+    // Explicit v3 spacing (no uniform gap): page-head mb 18, note mb 14, search
+    // toolbar pt 10 / pb 14 — matches Ginja Console-v3.html around the search.
+    <div className="flex flex-col [&_svg]:[stroke-width:1.75]">
       <ConsolePageHeader
+        className="mb-[18px]"
         title="Email templates"
-        sub="Transactional email templates triggered by platform events."
+        sub={
+          <span className="text-[13px]">
+            Transactional email templates triggered by platform events.
+          </span>
+        }
         actions={
           <>
-            <Button variant="ghost" size="sm" onClick={toggleArchivedView}>
+            <Button
+              variant="ghost"
+              className={hifiBtn}
+              onClick={toggleArchivedView}
+            >
               {showArchived ? (
                 <MailIcon data-icon="inline-start" />
               ) : (
@@ -193,13 +202,13 @@ export function EmailTemplatesPage() {
             </Button>
             <Button
               variant="outline"
-              size="sm"
+              className={hifiBtn}
               onClick={() => setGlobalsOpen(true)}
             >
               <BracesIcon data-icon="inline-start" />
               Global placeholders
             </Button>
-            <Button size="sm" onClick={() => setCreating(true)}>
+            <Button className={hifiBtn} onClick={() => setCreating(true)}>
               <PlusIcon data-icon="inline-start" />
               New template
             </Button>
@@ -213,23 +222,22 @@ export function EmailTemplatesPage() {
         onClose={() => setGlobalsOpen(false)}
       />
 
-      <Note tone="info" icon={<BookOpenIcon />}>
+      <Note tone="info" icon={<BookOpenIcon />} className="mb-[14px]">
         These are <b>platform-level templates</b>. Tenants inherit them
         automatically and may override their own copy without affecting the
         library.
       </Note>
 
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-        <InputGroup className="lg:max-w-xs">
-          <InputGroupAddon>
-            <SearchIcon />
-          </InputGroupAddon>
-          <InputGroupInput
+      <div className="flex flex-col gap-3 pt-[10px] pb-[14px] lg:flex-row lg:items-center">
+        <div className="flex h-[34px] items-center gap-2 rounded-[8px] border border-input bg-background px-2.5 lg:max-w-xs lg:flex-1">
+          <SearchIcon className="size-[15px] shrink-0 text-muted-foreground" />
+          <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search templates…"
+            className="min-w-0 flex-1 bg-transparent text-[13px] text-foreground outline-none placeholder:text-muted-foreground"
           />
-        </InputGroup>
+        </div>
         <div className="flex flex-wrap items-center gap-1.5">
           {SCOPE_FILTERS.map((c) => (
             <button
@@ -265,7 +273,7 @@ export function EmailTemplatesPage() {
           .
         </Note>
       ) : rows.length === 0 ? (
-        <div className="rounded-xl border border-dashed px-6 py-14 text-center text-sm text-muted-foreground">
+        <div className="rounded-[12px] border border-dashed px-6 py-14 text-center text-sm text-muted-foreground">
           {showArchived ? "No archived templates." : "No templates found."}
         </div>
       ) : (
@@ -287,13 +295,13 @@ export function EmailTemplatesPage() {
                   }
                 }}
                 className={cn(
-                  "flex cursor-pointer flex-col gap-2.5 rounded-xl border bg-card p-4 text-left shadow-xs transition-[border-color,box-shadow] hover:border-input hover:shadow-sm",
+                  "flex cursor-pointer flex-col gap-2.5 rounded-[12px] border bg-card p-4 text-left shadow-xs transition-[border-color,box-shadow] hover:border-input hover:shadow-sm",
                   t.active === false && !isArchived && "opacity-60"
                 )}
               >
                 <div className="flex items-start gap-[11px]">
                   <span className="grid size-[38px] shrink-0 place-items-center rounded-[10px] bg-muted text-muted-foreground [&>svg]:size-[18px]">
-                    <MailIcon />
+                    <HiIcon name="mail" />
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="text-[13.5px] font-semibold">{t.name}</div>
@@ -301,7 +309,7 @@ export function EmailTemplatesPage() {
                       {t.trigger || "—"}
                     </div>
                   </div>
-                  <MiniBadge tone={badge.tone}>{badge.label}</MiniBadge>
+                  <MBadge tone={badge.tone}>{badge.label}</MBadge>
                   <div onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -368,11 +376,13 @@ export function EmailTemplatesPage() {
       )}
 
       {!tplQuery.isLoading && !tplQuery.isError ? (
-        <LoadMore
-          hasMore={tplQuery.hasNextPage}
-          loading={tplQuery.isFetchingNextPage}
-          onLoadMore={() => tplQuery.fetchNextPage()}
-        />
+        <div className="mt-4">
+          <LoadMore
+            hasMore={tplQuery.hasNextPage}
+            loading={tplQuery.isFetchingNextPage}
+            onLoadMore={() => tplQuery.fetchNextPage()}
+          />
+        </div>
       ) : null}
     </div>
   )

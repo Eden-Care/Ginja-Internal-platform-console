@@ -2,6 +2,7 @@
 
 export const registryKeys = {
   all: ["module-registry"] as const,
+  metrics: () => [...registryKeys.all, "metrics"] as const,
   lists: () => [...registryKeys.all, "list"] as const,
   catalogue: () => [...registryKeys.all, "catalogue"] as const,
   infinite: () => [...registryKeys.all, "infinite"] as const,

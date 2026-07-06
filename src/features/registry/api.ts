@@ -27,6 +27,38 @@ const MODULES = "/platform/organization/modules"
 
 type ModuleListDTO = PagedDTO<ModuleDTO> | ModuleDTO[]
 
+/* Dashboard KPI metrics for the module registry. */
+export type ModuleMetricsDTO = {
+  total_modules: number
+  published: number
+  in_beta: number
+  total_sub_modules: number
+  total_versions: number
+  top_by_tenants: unknown[]
+}
+export type ModuleMetrics = {
+  totalModules: number
+  published: number
+  inBeta: number
+  totalSubModules: number
+  totalVersions: number
+  topByTenants: unknown[]
+}
+
+/** GET /platform/organization/modules/metrics → dashboard KPI counts. */
+export async function fetchModuleMetrics(): Promise<ModuleMetrics> {
+  const res = await apiGet<ModuleMetricsDTO>(`${MODULES}/metrics`)
+  console.log("[GET /platform/organization/modules/metrics]", res)
+  return {
+    totalModules: res.total_modules ?? 0,
+    published: res.published ?? 0,
+    inBeta: res.in_beta ?? 0,
+    totalSubModules: res.total_sub_modules ?? 0,
+    totalVersions: res.total_versions ?? 0,
+    topByTenants: res.top_by_tenants ?? [],
+  }
+}
+
 /** Rows out of either a Spring page envelope or a plain array. */
 function rowsOf(res: ModuleListDTO): ModuleDTO[] {
   return Array.isArray(res) ? res : (res.content ?? [])

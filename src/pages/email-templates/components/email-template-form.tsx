@@ -37,6 +37,8 @@ import { Panel, PanelBody, PanelHead } from "@/components/console/panel"
 import { Seg } from "@/components/console/form-atoms"
 import { Note } from "@/components/console/note"
 import { Tagpill } from "@/components/console/tagpill"
+import { MField } from "@/components/hifi/field"
+import { hifiBtn } from "@/components/hifi/button"
 import { useCreateEmailTemplate } from "@/features/email-templates/use-email-templates"
 import { useGlobalPlaceholders } from "@/features/global-placeholders/use-global-placeholders"
 import type {
@@ -55,7 +57,9 @@ type Att = {
   exts: string[]
 }
 
-/** A labelled form field with the hi-fi `.field` look + error state. */
+/** A labelled form field with the hi-fi `.field` look + error state. Wraps the
+   shared `MField` (10px uppercase eyebrow), surfacing `error` as a destructive
+   hint so existing call sites keep working unchanged. */
 function FormField({
   label,
   required,
@@ -72,21 +76,15 @@ function FormField({
   children: React.ReactNode
 }) {
   return (
-    <div className={cn("flex flex-col gap-1.5", className)}>
-      <label className="flex items-center gap-1.5 text-[12.5px] font-medium">
-        {label}
-        {required ? <span className="text-destructive">*</span> : null}
-      </label>
+    <MField
+      label={label}
+      required={required}
+      hint={error || hint}
+      hintTone={error ? "error" : "muted"}
+      className={className}
+    >
       {children}
-      {error ? (
-        <span className="inline-flex items-center gap-1 text-[11.5px] font-medium text-destructive [&>svg]:size-3">
-          <TriangleAlertIcon />
-          {error}
-        </span>
-      ) : hint ? (
-        <span className="text-[11.5px] text-muted-foreground">{hint}</span>
-      ) : null}
-    </div>
+    </MField>
   )
 }
 
@@ -344,19 +342,13 @@ export const EmailTemplateForm = React.forwardRef<
       ) : null}
 
       {/* Template details */}
-      <Panel>
+      <Panel className="rounded-[12px]">
         <PanelHead icon={<InfoIcon />} title="Template details" />
         <PanelBody className="flex flex-col gap-3.5">
           <div className="grid grid-cols-1 gap-x-[18px] gap-y-3.5 sm:grid-cols-2">
-            <FormField
-              label="Template name"
-              required
-              error={err("name")}
-              hint={dt ? "Can't be changed after creation." : undefined}
-            >
+            <FormField label="Template name" required error={err("name")}>
               <Input
                 value={name}
-                disabled={!!dt}
                 onChange={(e) => setName(e.target.value)}
                 aria-invalid={!!err("name")}
                 placeholder="e.g. Policy Confirmation Mail"
@@ -527,7 +519,7 @@ export const EmailTemplateForm = React.forwardRef<
       </Panel>
 
       {/* Attachments */}
-      <Panel>
+      <Panel className="rounded-[12px]">
         <PanelHead
           icon={<PaperclipIcon />}
           title="Attachments"
@@ -631,7 +623,7 @@ export const EmailTemplateForm = React.forwardRef<
       </Panel>
 
       {/* Placeholders & sample data */}
-      <Panel>
+      <Panel className="rounded-[12px]">
         <PanelHead
           icon={<BracesIcon />}
           title="Placeholders & sample data"
@@ -669,7 +661,11 @@ export const EmailTemplateForm = React.forwardRef<
                   Optional preview values — leave blank to show the raw
                   placeholder.
                 </p>
-                <Button variant="outline" size="sm" onClick={aiFill}>
+                <Button
+                  variant="outline"
+                  className={hifiBtn}
+                  onClick={aiFill}
+                >
                   <SparklesIcon data-icon="inline-start" />
                   Auto-fill with AI
                 </Button>
@@ -746,7 +742,7 @@ export const EmailTemplateForm = React.forwardRef<
 
       {/* HTML content + live preview */}
       <div className="grid grid-cols-1 items-stretch gap-4 min-[1100px]:grid-cols-2">
-        <Panel>
+        <Panel className="rounded-[12px]">
           <PanelHead
             icon={<CodeIcon />}
             title="HTML content"
@@ -827,7 +823,7 @@ export const EmailTemplateForm = React.forwardRef<
           </PanelBody>
         </Panel>
 
-        <Panel className="flex flex-col">
+        <Panel className="flex flex-col rounded-[12px]">
           <PanelHead
             icon={<EyeIcon />}
             title="Live preview"
@@ -845,7 +841,7 @@ export const EmailTemplateForm = React.forwardRef<
       </div>
 
       {/* Plain-text */}
-      <Panel>
+      <Panel className="rounded-[12px]">
         <PanelHead
           icon={<FileTextIcon />}
           title="Plain-text content"
@@ -875,7 +871,7 @@ export const EmailTemplateForm = React.forwardRef<
   if (embedded) return formBody
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 [&_svg]:[stroke-width:1.75]">
       <button
         type="button"
         onClick={onBack}
@@ -888,21 +884,31 @@ export const EmailTemplateForm = React.forwardRef<
       <ConsolePageHeader
         crumbs={[]}
         title="Create email template"
-        sub="Add a reusable template to the library. Tenants inherit it and may override their own copy."
+        sub={
+          <span className="text-[13px]">
+            Add a reusable template to the library. Tenants inherit it and may
+            override their own copy.
+          </span>
+        }
         actions={
           <>
-            <Button variant="ghost" onClick={onBack}>
+            <Button variant="ghost" className={hifiBtn} onClick={onBack}>
               Cancel
             </Button>
             <Button
               variant="outline"
+              className={hifiBtn}
               disabled={createMut.isPending}
               onClick={() => onSave(false)}
             >
               <SaveIcon data-icon="inline-start" />
               Save draft
             </Button>
-            <Button disabled={createMut.isPending} onClick={() => onSave(true)}>
+            <Button
+              className={hifiBtn}
+              disabled={createMut.isPending}
+              onClick={() => onSave(true)}
+            >
               <CheckIcon data-icon="inline-start" />
               {createMut.isPending ? "Saving…" : "Save & publish"}
             </Button>

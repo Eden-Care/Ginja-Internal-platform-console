@@ -15,7 +15,7 @@ import {
   type MfaDetailDTO,
   type SecurityPolicy,
   type SecurityPolicyDTO,
-  type SessionDTO,
+  type SessionGroupDTO,
   type SessionUser,
   type ValidationRuleset,
   type ValidationRulesDTO,
@@ -58,9 +58,9 @@ export async function fetchValidationRules(): Promise<ValidationRuleset> {
   return toValidationRuleset(res)
 }
 
-/** GET /platform/settings/sessions — every active device session, grouped by user. */
+/** GET /platform/settings/sessions — active device sessions, grouped by user. */
 export async function fetchSessions(): Promise<SessionUser[]> {
-  const res = await apiGet<SessionDTO[]>("/platform/settings/sessions")
+  const res = await apiGet<SessionGroupDTO[]>("/platform/settings/sessions")
   console.log("[GET /platform/settings/sessions]", res)
   return toSessionUsers(res ?? [])
 }

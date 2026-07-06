@@ -1,22 +1,18 @@
 import * as React from "react"
-import {
-  CheckCircle2Icon,
-  EyeIcon,
-  InfoIcon,
-  Loader2Icon,
-  SendIcon,
-  SparklesIcon,
-} from "lucide-react"
+import { EyeIcon, InfoIcon, Loader2Icon, SendIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { cn } from "@/lib/utils"
 import { type EmailTemplate, type EmailVersion } from "@/lib/console-data"
-import { aiSampleFor, detectPlaceholders, emailOk } from "@/lib/console-format"
+import { detectPlaceholders, emailOk, isGlobalPh } from "@/lib/console-format"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
-import { Seg } from "@/components/console/form-atoms"
+import { HiIcon } from "@/components/hifi/icon"
+import { hifiBtn } from "@/components/hifi/button"
 import { Note } from "@/components/console/note"
+import { useSendTestEmail } from "@/features/email-templates/use-email-templates"
+import type { EmailTemplateDetail } from "@/features/email-templates/types"
 
 /**
  * Centered "Send test email" modal — configure recipient + placeholder values,
@@ -27,65 +23,77 @@ export function SendTestModal({
   open,
   tpl,
   cur,
+  detail,
   initialSent,
   onClose,
 }: {
   open: boolean
   tpl: EmailTemplate
   cur: EmailVersion
+  /** Real template detail (merge fields + subject) — drives the test render. */
+  detail?: EmailTemplateDetail
   initialSent?: boolean
   onClose: () => void
 }) {
-  const placeholders = detectPlaceholders(cur.subject + " " + cur.body)
+  // Placeholders are detected from the real template content (subject + body)
+  // — the API's merge-fields list is unreliable. Globals are auto-injected, so
+  // they're excluded (the user only fills template-specific placeholders).
+  const subjectSrc = detail?.subject || cur.subject
+  const phSource = detail
+    ? [detail.subject, detail.htmlContent, detail.plainTextContent].join(" ")
+    : cur.subject + " " + cur.body
+  const placeholders = detectPlaceholders(phSource).filter(
+    (p) => !isGlobalPh(p)
+  )
   const [email, setEmail] = React.useState(
     initialSent ? "amara.okeke@ginja.ai" : ""
   )
-  const [sampleMode, setSampleMode] = React.useState<"ai" | "configure">("ai")
   const [vals, setVals] = React.useState<Record<string, string>>({})
-  const [aiLoading, setAiLoading] = React.useState(false)
-  const [sending, setSending] = React.useState(false)
   const [sent, setSent] = React.useState(!!initialSent)
+  const sendMut = useSendTestEmail()
 
   const valid = emailOk(email)
-  const resolve = (p: string) =>
-    sampleMode === "ai"
-      ? aiSampleFor(p)
-      : vals[p] != null && vals[p] !== ""
-        ? vals[p]
-        : aiSampleFor(p)
-  const previewSubject = cur.subject.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, k) =>
-    resolve(k)
+  // Preview substitutes the manually-entered value, or the raw token if blank.
+  const previewSubject = subjectSrc.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, k) =>
+    (vals[k] ?? "").trim() ? vals[k] : `{{${k}}}`
   )
 
-  const goAi = () => {
-    setSampleMode("ai")
-    setAiLoading(true)
-    window.setTimeout(() => setAiLoading(false), 1100)
-  }
-  const aiFill = () => {
-    setAiLoading(true)
-    window.setTimeout(() => {
-      const n: Record<string, string> = {}
-      placeholders.forEach((p) => (n[p] = aiSampleFor(p)))
-      setVals(n)
-      setSampleMode("configure")
-      setAiLoading(false)
-    }, 1100)
-  }
+  // Every placeholder must be filled manually before the test can be sent.
+  const sentValue = (p: string) => (vals[p] ?? "").trim()
+  const missingValues = placeholders.filter((p) => !sentValue(p))
+  const canSend = valid && missingValues.length === 0
+
   const send = () => {
-    setSending(true)
-    window.setTimeout(() => {
-      setSending(false)
-      setSent(true)
-      toast(`Test email sent to ${email.trim()}.`)
-    }, 1200)
+    if (tpl.templateId == null) {
+      toast.error("This template has no id yet — save it first.")
+      return
+    }
+    const data = Object.fromEntries(placeholders.map((p) => [p, sentValue(p)]))
+    sendMut.mutate(
+      {
+        template_id: tpl.templateId,
+        to_email: email.trim(),
+        data,
+        template_code: detail?.functionalCode,
+      },
+      {
+        onSuccess: () => {
+          setSent(true)
+          toast.success(`Test email queued to ${email.trim()}.`)
+        },
+        onError: (e) =>
+          toast.error("Couldn't send the test", {
+            description: e instanceof Error ? e.message : undefined,
+          }),
+      }
+    )
   }
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent
         showCloseButton
-        className="flex max-h-[86vh] w-[520px] max-w-[calc(100vw-32px)] flex-col gap-0 overflow-hidden p-0"
+        className="flex max-h-[86vh] w-[520px] max-w-[calc(100vw-32px)] flex-col gap-0 overflow-hidden p-0 [&_svg]:[stroke-width:1.75]"
       >
         <div className="flex shrink-0 items-center gap-[11px] border-b px-[18px] py-4">
           <span className="grid size-[38px] place-items-center rounded-[10px] bg-primary/[0.12] text-primary [&>svg]:size-[17px]">
@@ -105,7 +113,7 @@ export function SendTestModal({
           <>
             <div className="flex flex-col items-center gap-0.5 overflow-y-auto p-[18px] text-center">
               <span className="grid size-16 place-items-center rounded-[18px] bg-success-subtle text-success-subtle-foreground [&>svg]:size-[30px]">
-                <CheckCircle2Icon />
+                <HiIcon name="checkCircle" />
               </span>
               <h3 className="mt-3.5 mb-1 text-[17px] font-semibold">
                 Test email sent
@@ -126,10 +134,16 @@ export function SendTestModal({
             </div>
             <div className="flex shrink-0 items-center gap-2 border-t px-[18px] py-3">
               <span className="flex-1" />
-              <Button variant="ghost" onClick={() => setSent(false)}>
+              <Button
+                variant="ghost"
+                className={hifiBtn}
+                onClick={() => setSent(false)}
+              >
                 Send another
               </Button>
-              <Button onClick={onClose}>Done</Button>
+              <Button className={hifiBtn} onClick={onClose}>
+                Done
+              </Button>
             </div>
           </>
         ) : (
@@ -159,64 +173,30 @@ export function SendTestModal({
               </div>
 
               <div>
-                <div className="mb-2 flex items-center gap-2">
-                  <div className="flex-1 text-[10px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
-                    Placeholder values · {placeholders.length}
-                  </div>
-                  <Seg
-                    value={sampleMode}
-                    options={[
-                      { v: "configure", l: "Configure" },
-                      { v: "ai", l: "AI sample" },
-                    ]}
-                    onChange={(v) => {
-                      if (v === "ai") goAi()
-                      else setSampleMode("configure")
-                    }}
-                  />
+                <div className="mb-2 text-[10px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+                  Placeholder values · {placeholders.length}
                 </div>
-                {aiLoading ? (
-                  <div className="flex items-center gap-2.5 px-3.5 py-[22px] text-[13px] font-medium text-muted-foreground">
-                    <Loader2Icon className="size-[18px] animate-spin text-primary" />
-                    <span>Generating sample data with AI…</span>
-                  </div>
-                ) : sampleMode === "ai" ? (
-                  <>
-                    <p className="mb-2 text-[11.5px] text-muted-foreground">
-                      AI-generated values are used for the test. Switch to
-                      Configure to set your own.
-                    </p>
-                    <div className="grid grid-cols-1 gap-[7px]">
-                      {placeholders.map((p) => (
-                        <PhRow key={p} k={p}>
-                          <span className="text-[12px] text-muted-foreground">
-                            {aiSampleFor(p)}
-                          </span>
-                        </PhRow>
-                      ))}
-                    </div>
-                  </>
+                {placeholders.length === 0 ? (
+                  <p className="text-[12px] text-muted-foreground">
+                    This template has no placeholders.
+                  </p>
                 ) : (
                   <>
-                    <div className="mb-2 flex items-center gap-2">
-                      <p className="flex-1 text-[11.5px] text-muted-foreground">
-                        Set the values used in this test send.
-                      </p>
-                      <Button variant="outline" size="sm" onClick={aiFill}>
-                        <SparklesIcon data-icon="inline-start" />
-                        Auto-fill with AI
-                      </Button>
-                    </div>
+                    <p className="mb-2 text-[11.5px] text-muted-foreground">
+                      Enter a value for each placeholder — required to send the
+                      test.
+                    </p>
                     <div className="grid grid-cols-1 gap-[7px]">
                       {placeholders.map((p) => (
                         <PhRow key={p} k={p}>
                           <Input
                             className="h-[34px]"
                             value={vals[p] || ""}
+                            aria-invalid={!(vals[p] ?? "").trim()}
                             onChange={(e) =>
                               setVals((v) => ({ ...v, [p]: e.target.value }))
                             }
-                            placeholder={aiSampleFor(p)}
+                            placeholder="Enter a value"
                           />
                         </PhRow>
                       ))}
@@ -225,7 +205,7 @@ export function SendTestModal({
                 )}
               </div>
 
-              <div className="rounded-xl border bg-muted/30">
+              <div className="rounded-[12px] border bg-muted/30">
                 <div className="flex items-center gap-3 border-b px-[18px] py-2.5 text-muted-foreground [&>svg]:size-[14px]">
                   <EyeIcon />
                   <h3 className="text-sm font-semibold text-foreground">
@@ -242,11 +222,15 @@ export function SendTestModal({
               <span className="flex-1 text-[11.5px] text-muted-foreground">
                 Sends one email now.
               </span>
-              <Button variant="ghost" onClick={onClose}>
+              <Button variant="ghost" className={hifiBtn} onClick={onClose}>
                 Cancel
               </Button>
-              <Button disabled={!valid || sending} onClick={send}>
-                {sending ? (
+              <Button
+                className={hifiBtn}
+                disabled={!canSend || sendMut.isPending}
+                onClick={send}
+              >
+                {sendMut.isPending ? (
                   <Loader2Icon
                     data-icon="inline-start"
                     className="animate-spin"
@@ -254,7 +238,7 @@ export function SendTestModal({
                 ) : (
                   <SendIcon data-icon="inline-start" />
                 )}
-                {sending ? "Sending…" : "Send test"}
+                {sendMut.isPending ? "Sending…" : "Send test"}
               </Button>
             </div>
           </>
