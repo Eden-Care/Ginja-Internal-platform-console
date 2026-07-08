@@ -57,6 +57,9 @@ export type DocumentDownloadDTO = {
 
 export type DocumentDownload = {
   documentId: string
+  /** Document-service file id — pass it back to `addDocument` to replace this
+     document's file in place (§8.5 "replace"). */
+  fileId: string
   category: string
   fileName: string
   contentType: string | null
@@ -68,6 +71,7 @@ export type DocumentDownload = {
 export function toDocumentDownload(d: DocumentDownloadDTO): DocumentDownload {
   return {
     documentId: d.document_id,
+    fileId: d.file_id,
     category: d.category,
     fileName: d.file_name,
     contentType: d.content_type,

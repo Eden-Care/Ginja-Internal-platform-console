@@ -1,4 +1,5 @@
 import * as React from "react"
+import { useQueryClient } from "@tanstack/react-query"
 import { format, formatDistanceToNow } from "date-fns"
 import {
   ArchiveIcon,
@@ -12,6 +13,7 @@ import {
   Loader2Icon,
   LockIcon,
   PlayIcon,
+  RefreshCwIcon,
   TriangleAlertIcon,
 } from "lucide-react"
 import { toast } from "sonner"
@@ -49,7 +51,8 @@ import { Note } from "@/components/console/note"
 import { MiniBadge, Tagpill } from "@/components/console/tagpill"
 import { StatusPill } from "@/components/console/status-pill"
 import { LoadingSpinner } from "@/components/common/loading"
-import { fetchDocumentDownload } from "@/features/payers/api"
+import { fetchDocumentDownload, replaceDocument } from "@/features/payers/api"
+import { payerKeys } from "@/features/payers/queries"
 import { usePayerActivity } from "@/features/payers/use-payer-record"
 import type {
   EntitlementDTO,
@@ -422,15 +425,25 @@ const DOC_TONE: Record<string, "success" | "warning" | "neutral"> = {
   REJECTED: "neutral",
 }
 
+/** Accepted KYB file types + size cap (matches the document upload contract). */
+const DOC_ACCEPT = ".pdf,.jpg,.jpeg,.png"
+const MAX_DOC_BYTES = 25 * 1024 * 1024
+
 export function RecDocuments({
   payerId,
   primary,
+  actAllowed,
+  lockTip,
 }: {
   payerId: number
   primary: TenantDTO | undefined
+  actAllowed: boolean
+  lockTip: string
 }) {
+  const qc = useQueryClient()
   const docs = primary?.documents ?? []
   const [busyId, setBusyId] = React.useState<string | null>(null)
+  const [replacingId, setReplacingId] = React.useState<string | null>(null)
 
   const view = async (documentId: string) => {
     if (!primary) return
@@ -442,6 +455,24 @@ export function RecDocuments({
       toast.error(e instanceof Error ? e.message : "Couldn’t open the document.")
     } finally {
       setBusyId(null)
+    }
+  }
+
+  const replace = async (documentId: string, file?: File | null) => {
+    if (!primary || !file) return
+    if (file.size > MAX_DOC_BYTES) {
+      toast.error(`${file.name} is over the 25 MB limit.`)
+      return
+    }
+    setReplacingId(documentId)
+    try {
+      await replaceDocument(payerId, primary.id, documentId, file)
+      qc.invalidateQueries({ queryKey: payerKeys.detail(payerId) })
+      toast.success("Document replaced — back to Pending review.")
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn’t replace this document.")
+    } finally {
+      setReplacingId(null)
     }
   }
 
@@ -461,7 +492,7 @@ export function RecDocuments({
             <TableHead>Document</TableHead>
             <TableHead>Category</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead className="w-24" />
+            <TableHead className="w-44" />
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -482,19 +513,42 @@ export function RecDocuments({
                 </MiniBadge>
               </TableCell>
               <TableCell>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={busyId === d.document_id}
-                  onClick={() => view(d.document_id)}
-                >
-                  {busyId === d.document_id ? (
-                    <Loader2Icon data-icon="inline-start" className="animate-spin" />
-                  ) : (
-                    <EyeIcon data-icon="inline-start" />
-                  )}
-                  View
-                </Button>
+                <div className="flex items-center justify-end gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={busyId === d.document_id}
+                    onClick={() => view(d.document_id)}
+                  >
+                    {busyId === d.document_id ? (
+                      <Loader2Icon data-icon="inline-start" className="animate-spin" />
+                    ) : (
+                      <EyeIcon data-icon="inline-start" />
+                    )}
+                    View
+                  </Button>
+                  <label
+                    className={cn(
+                      "inline-flex h-7 shrink-0 cursor-pointer items-center gap-1.5 rounded-[min(var(--radius-md),12px)] px-2.5 text-[0.8rem] font-medium transition-colors hover:bg-muted hover:text-foreground",
+                      (!actAllowed || replacingId === d.document_id) &&
+                        "pointer-events-none opacity-50"
+                    )}
+                    title={actAllowed ? "Replace file" : lockTip}
+                  >
+                    <input
+                      type="file"
+                      accept={DOC_ACCEPT}
+                      className="hidden"
+                      onChange={(e) => replace(d.document_id, e.target.files?.[0])}
+                    />
+                    {replacingId === d.document_id ? (
+                      <Loader2Icon className="size-3.5 animate-spin" />
+                    ) : (
+                      <RefreshCwIcon className="size-3.5" />
+                    )}
+                    Replace
+                  </label>
+                </div>
               </TableCell>
             </TableRow>
           ))}

@@ -43,9 +43,13 @@ import {
 /** A document to upload (multipart). `file` carries the bytes. */
 export type UploadDocumentInput = {
   file: File
-  category: string
+  /** Required when creating; ignored when replacing via `fileId`. */
+  category?: string
   description?: string
   expiryDate?: string
+  /** Existing document's document-service file id — replaces that document's
+     file in place instead of creating a new one. §8.5 "replace". */
+  fileId?: string
 }
 
 const BASE = "/platform/payers"
@@ -227,14 +231,20 @@ export async function setSubscription(
 }
 
 /** POST …/{payerId}/tenants/{tenantId}/documents → upload a document
-   (multipart/form-data; the `file` part carries the bytes). §8.5. */
+   (multipart/form-data; the `file` part carries the bytes). Create mode
+   (no `fileId`) requires `category`; replace mode (`fileId` set) swaps the
+   bytes behind that document in place and ignores `category`. §8.5. */
 export async function addDocument(
   payerId: number,
   tenantId: number,
   doc: UploadDocumentInput
 ): Promise<Payer> {
   const fd = new FormData()
-  fd.append("category", doc.category)
+  if (doc.fileId) {
+    fd.append("file_id", doc.fileId)
+  } else if (doc.category) {
+    fd.append("category", doc.category)
+  }
   if (doc.description) fd.append("description", doc.description)
   if (doc.expiryDate) fd.append("expiry_date", doc.expiryDate)
   fd.append("file", doc.file, doc.file.name)
@@ -258,6 +268,20 @@ export async function fetchDocumentDownload(
       `${BASE}/${payerId}/tenants/${tenantId}/documents/${documentId}`
     )
   )
+}
+
+/** Replace the file behind an already-uploaded document (e.g. the wrong file
+   was attached): looks up its file_id, then re-uploads the new bytes against
+   it in place — same document_id/category, status resets to PENDING_REVIEW.
+   §8.5 "replace". */
+export async function replaceDocument(
+  payerId: number,
+  tenantId: number,
+  documentId: string,
+  file: File
+): Promise<Payer> {
+  const { fileId } = await fetchDocumentDownload(payerId, tenantId, documentId)
+  return addDocument(payerId, tenantId, { file, fileId })
 }
 
 /** POST …/{payerId}/submit → validate + submit for approval. */
