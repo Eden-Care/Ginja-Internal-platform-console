@@ -5,6 +5,12 @@ export type LoginRequest = {
   password: string
 }
 
+/** Body for POST /platform/organization/auth/accept-invite (public). */
+export type AcceptInviteRequest = {
+  token: string
+  password: string
+}
+
 /** The `result` payload returned by the login endpoint (snake_case, as the API sends it). */
 export type LoginResult = {
   access_token: string

@@ -7,6 +7,7 @@ import { toPaged, type Paged, type PagedDTO } from "@/lib/api/paged"
 import {
   toMember,
   toMemberActivity,
+  toMemberMetrics,
   toPermission,
   toRole,
   type CreateRoleRequest,
@@ -14,6 +15,8 @@ import {
   type MemberActivity,
   type MemberActivityDTO,
   type MemberDTO,
+  type MemberMetrics,
+  type MemberMetricsDTO,
   type MemberStatus,
   type OnboardMemberRequest,
   type Permission,
@@ -114,6 +117,13 @@ export async function fetchMembers(
   const dto = await apiGet<PagedDTO<MemberDTO>>(MEMBERS, { params })
   console.log("[GET /platform/organization/members]", { params, response: dto })
   return toPaged(dto, toMember)
+}
+
+/** GET /platform/organization/members/metrics → directory aggregates
+    (grand total, per-status counts, MFA adoption). Powers the filter-tab counts. */
+export async function fetchMemberMetrics(): Promise<MemberMetrics> {
+  const dto = await apiGet<MemberMetricsDTO>(`${MEMBERS}/metrics`)
+  return toMemberMetrics(dto)
 }
 
 /** GET /platform/organization/members/{id} → one member (full detail). */
