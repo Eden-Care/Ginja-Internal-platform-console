@@ -23,6 +23,9 @@ export type PricingTierDTO = {
 export type PricingComponentDTO = {
   component_id?: string
   component_type: string
+  /** Backend display name for the component — shown as the tab text in the
+     Volume discount schedules section. */
+  label?: string | null
   unit: string
   sort_order: number
   tiers?: PricingTierDTO[] | null
@@ -54,6 +57,8 @@ export type PricingTier = {
 
 export type PricingComponent = {
   componentType: string
+  /** Backend display name for the component (tab text). "" when absent. */
+  label: string
   unit: string
   sortOrder: number
   tiers: PricingTier[]
@@ -92,6 +97,7 @@ export function toPricingTier(d: PricingTierDTO): PricingTier {
 export function toPricingComponent(d: PricingComponentDTO): PricingComponent {
   return {
     componentType: d.component_type,
+    label: d.label ?? "",
     unit: d.unit,
     sortOrder: d.sort_order,
     tiers: (d.tiers ?? []).map(toPricingTier),

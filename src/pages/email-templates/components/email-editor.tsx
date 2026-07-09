@@ -62,13 +62,17 @@ const buildTabs = (versionsCount?: number): TabItem[] => [
 export function EmailEditor({
   tpl,
   readonly = false,
+  tab,
+  onTabChange,
   onBack,
 }: {
   tpl: EmailTemplate
   readonly?: boolean
+  /** Active tab, driven by the `?tab=` URL param (see EmailEditorPage). */
+  tab: string
+  onTabChange: (t: string) => void
   onBack: () => void
 }) {
-  const [tab, setTab] = React.useState("editor")
   const [rollback, setRollback] = React.useState<EmailVersionRow | null>(null)
   const [sendTest, setSendTest] = React.useState(false)
   const cur = EMAIL_VERSIONS.find((v) => v.current) ?? EMAIL_VERSIONS[0]
@@ -113,7 +117,7 @@ export function EmailEditor({
             `Rolled back ${tpl.name} to v${v.versionNumber}. A new draft version was created.`
           )
           setRollback(null)
-          setTab("versions")
+          onTabChange("versions")
         },
         onError: (e) =>
           toast.error("Couldn't roll back", {
@@ -178,7 +182,7 @@ export function EmailEditor({
         </div>
       </div>
 
-      <TabBar tabs={TABS} value={tab} onChange={setTab} />
+      <TabBar tabs={TABS} value={tab} onChange={onTabChange} />
 
       {tab === "editor" ? (
         detailQuery.isLoading ? (

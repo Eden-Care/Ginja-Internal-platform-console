@@ -1,4 +1,5 @@
 import * as React from "react"
+import { useNavigate } from "react-router-dom"
 import { PlusIcon, SearchIcon, TriangleAlertIcon } from "lucide-react"
 
 import {
@@ -18,10 +19,7 @@ import { LoadMore } from "@/components/common/load-more"
 import { useModuleRegistry } from "@/features/registry/use-module-registry"
 import { useModuleMetrics } from "@/features/registry/use-module-metrics"
 import { useModuleSearch } from "@/features/registry/use-module-search"
-import { useModule } from "@/features/registry/use-module"
 import { MODULE_TONE } from "./status"
-import { ModuleRecord } from "./components/module-record"
-import { ModuleForm } from "./components/module-form"
 
 /** Compact KPI tile: icon left, big mono value over an uppercase label. */
 function StatTile({
@@ -71,16 +69,9 @@ export function ModuleRegistryPage() {
   const searchQuery = useModuleSearch(dq)
   const rows = searching ? (searchQuery.data ?? []) : all
 
-  // Navigation: list → record → create/edit form.
-  const [openId, setOpenId] = React.useState<string | null>(null)
-  const [creating, setCreating] = React.useState(false)
-  const [editing, setEditing] = React.useState(false)
-  const detailQuery = useModule(openId)
-  const recordModule =
-    detailQuery.data ??
-    rows.find((m) => m.id === openId) ??
-    all.find((m) => m.id === openId) ??
-    null
+  // Detail / create / edit are their own routes (see App.tsx); the list just
+  // navigates to them so the URL is addressable and survives a refresh.
+  const navigate = useNavigate()
 
   // KPI tiles use the authoritative metrics endpoint; while it loads, fall back
   // to counts derived from the loaded pages so the tiles aren't empty.
@@ -92,23 +83,18 @@ export function ModuleRegistryPage() {
   const subs =
     metrics?.totalSubModules ?? all.reduce((n, m) => n + m.subs.length, 0)
 
-  if (creating) return <ModuleForm onBack={() => setCreating(false)} />
-  if (editing && recordModule)
-    return (
-      <ModuleForm existing={recordModule} onBack={() => setEditing(false)} />
-    )
-  if (openId && recordModule)
-    return (
-      <ModuleRecord
-        key={recordModule.id}
-        module={recordModule}
-        onBack={() => {
-          setOpenId(null)
-          setEditing(false)
-        }}
-        onEdit={() => setEditing(true)}
-      />
-    )
+  // Diagnostic: shows whether the KPI tiles are driven by the /metrics response
+  // or the loaded-pages fallback (fallback = the metrics query hasn't resolved
+  // or errored). Logs once the metrics query settles.
+  React.useEffect(() => {
+    console.log("[Module registry] KPI tiles:", {
+      source: metrics ? "GET /platform/organization/modules/metrics" : "fallback (loaded pages)",
+      metricsError: metricsQuery.error ?? null,
+      metricsResponse: metrics ?? null,
+      tiles: { totalModules: total, published, inBeta: beta, subModules: subs },
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [metrics, metricsQuery.error])
 
   return (
     // Lucide icons here are drawn at the hi-fi's 1.75 stroke (vs the app's
@@ -129,7 +115,10 @@ export function ModuleRegistryPage() {
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <Button className={hifiBtn} onClick={() => setCreating(true)}>
+          <Button
+            className={hifiBtn}
+            onClick={() => navigate("/module-registry/new")}
+          >
             <PlusIcon data-icon="inline-start" />
             Register module
           </Button>
@@ -226,7 +215,7 @@ export function ModuleRegistryPage() {
                     <TableRow
                       key={m.id}
                       className="cursor-pointer"
-                      onClick={() => setOpenId(m.id)}
+                      onClick={() => navigate(`/module-registry/${m.id}`)}
                     >
                       <TableCell className="h-11 px-3 py-0">
                         <div className="flex items-center gap-[11px]">

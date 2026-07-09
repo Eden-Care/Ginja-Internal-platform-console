@@ -51,13 +51,17 @@ const buildTabs = (versionsCount?: number): TabItem[] => [
 export function SmsEditor({
   tpl,
   readonly = false,
+  tab,
+  onTabChange,
   onBack,
 }: {
   tpl: SmsTemplate
   readonly?: boolean
+  /** Active tab, driven by the `?tab=` URL param (see SmsEditorPage). */
+  tab: string
+  onTabChange: (t: string) => void
   onBack: () => void
 }) {
-  const [tab, setTab] = React.useState("editor")
   const [rollback, setRollback] = React.useState<SmsVersionRow | null>(null)
   const [sendTest, setSendTest] = React.useState(false)
 
@@ -96,7 +100,7 @@ export function SmsEditor({
             `Rolled back ${tpl.name} to v${v.versionNumber}. A new draft version was created.`
           )
           setRollback(null)
-          setTab("versions")
+          onTabChange("versions")
         },
         onError: (e) =>
           toast.error("Couldn't roll back", {
@@ -161,7 +165,7 @@ export function SmsEditor({
         </div>
       </div>
 
-      <TabBar tabs={TABS} value={tab} onChange={setTab} />
+      <TabBar tabs={TABS} value={tab} onChange={onTabChange} />
 
       {tab === "editor" ? (
         detailQuery.isLoading ? (

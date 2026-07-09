@@ -3,9 +3,7 @@ import {
   BracesIcon,
   CheckIcon,
   InfoIcon,
-  PencilIcon,
   PlusIcon,
-  TrashIcon,
   TriangleAlertIcon,
 } from "lucide-react"
 import { toast } from "sonner"
@@ -17,6 +15,7 @@ import { Switch } from "@/components/ui/switch"
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
 import { MBadge } from "@/components/hifi/badge"
 import { hifiBtn } from "@/components/hifi/button"
+import { HiIcon } from "@/components/hifi/icon"
 import { Note } from "@/components/console/note"
 import { LoadingSpinner } from "@/components/common/loading"
 import {
@@ -279,7 +278,7 @@ export function GlobalPlaceholdersDrawer({
                             }}
                             className="grid size-[30px] place-items-center rounded-[8px] border border-input bg-card text-muted-foreground hover:bg-muted hover:text-foreground [&>svg]:size-[14px]"
                           >
-                            <PencilIcon />
+                            <HiIcon name="pencil" />
                           </button>
                         ) : null}
                         {!readonly ? (
@@ -293,7 +292,7 @@ export function GlobalPlaceholdersDrawer({
                             onClick={() => remove(r.id, r.key)}
                             className="grid size-[30px] place-items-center rounded-[8px] border border-input bg-card text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50 [&>svg]:size-[14px]"
                           >
-                            <TrashIcon />
+                            <HiIcon name="trash" />
                           </button>
                         ) : null}
                       </div>

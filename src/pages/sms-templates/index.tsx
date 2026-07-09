@@ -1,4 +1,5 @@
 import * as React from "react"
+import { useNavigate } from "react-router-dom"
 import {
   ArchiveIcon,
   BanIcon,
@@ -7,7 +8,6 @@ import {
   CheckCheckIcon,
   CheckIcon,
   CopyIcon,
-  EllipsisVerticalIcon,
   HistoryIcon,
   PlusIcon,
   SearchIcon,
@@ -44,8 +44,6 @@ import { hifiBtn } from "@/components/hifi/button"
 import { CopyId } from "@/components/console/copy-id"
 import { LoadingSpinner } from "@/components/common/loading"
 import { LoadMore } from "@/components/common/load-more"
-import { SmsEditor } from "./components/sms-editor"
-import { SmsTemplateForm } from "./components/sms-template-form"
 
 const SCOPE_FILTERS = ["All", "Internal console", "Tenant platforms"]
 const scopeLabel = (usedBy?: string) =>
@@ -67,8 +65,7 @@ function statusBadge(t: SmsTemplate): {
 }
 
 export function SmsTemplatesPage() {
-  const [open, setOpen] = React.useState<string | null>(null)
-  const [creating, setCreating] = React.useState(false)
+  const navigate = useNavigate()
   const [query, setQuery] = React.useState("")
   const [scope, setScope] = React.useState("All")
   const [showArchived, setShowArchived] = React.useState(false)
@@ -148,14 +145,6 @@ export function SmsTemplatesPage() {
     )
   }
 
-  if (creating) return <SmsTemplateForm onBack={() => setCreating(false)} />
-
-  const editing = open ? (templates.find((t) => t.id === open) ?? null) : null
-  if (editing)
-    return (
-      <SmsEditor key={editing.id} tpl={editing} onBack={() => setOpen(null)} />
-    )
-
   return (
     // Explicit v3 spacing (no uniform gap): page-head mb 18, note mb 14, search
     // toolbar pt 10 / pb 14 — matches Ginja Console-v3.html around the search.
@@ -184,7 +173,10 @@ export function SmsTemplatesPage() {
                 ? "Active templates"
                 : `Archived${archivedCount ? ` (${archivedCount})` : ""}`}
             </Button>
-            <Button className={hifiBtn} onClick={() => setCreating(true)}>
+            <Button
+              className={hifiBtn}
+              onClick={() => navigate("/sms-templates/new")}
+            >
               <PlusIcon data-icon="inline-start" />
               New template
             </Button>
@@ -256,11 +248,11 @@ export function SmsTemplatesPage() {
                 key={t.id}
                 role="button"
                 tabIndex={0}
-                onClick={() => setOpen(t.id)}
+                onClick={() => navigate(`/sms-templates/${t.templateId}`)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault()
-                    setOpen(t.id)
+                    navigate(`/sms-templates/${t.templateId}`)
                   }
                 }}
                 className={cn(
@@ -285,9 +277,9 @@ export function SmsTemplatesPage() {
                         <button
                           type="button"
                           aria-label="Template actions"
-                          className="-mr-1 grid size-[30px] shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground [&>svg]:size-4"
+                          className="grid size-[30px] shrink-0 cursor-pointer place-items-center rounded-[8px] border border-input bg-card text-muted-foreground transition-colors hover:bg-muted hover:text-foreground [&>svg]:size-4"
                         >
-                          <EllipsisVerticalIcon />
+                          <HiIcon name="more" />
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">

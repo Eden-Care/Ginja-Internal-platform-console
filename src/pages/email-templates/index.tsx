@@ -1,4 +1,5 @@
 import * as React from "react"
+import { useNavigate } from "react-router-dom"
 import {
   ArchiveIcon,
   BanIcon,
@@ -8,7 +9,6 @@ import {
   CheckCheckIcon,
   CheckIcon,
   CopyIcon,
-  EllipsisVerticalIcon,
   HistoryIcon,
   MailIcon,
   PlusIcon,
@@ -45,8 +45,6 @@ import { hifiBtn } from "@/components/hifi/button"
 import { CopyId } from "@/components/console/copy-id"
 import { LoadingSpinner } from "@/components/common/loading"
 import { LoadMore } from "@/components/common/load-more"
-import { EmailEditor } from "./components/email-editor"
-import { EmailTemplateForm } from "./components/email-template-form"
 import { GlobalPlaceholdersDrawer } from "./components/global-placeholders-drawer"
 
 const SCOPE_FILTERS = ["All", "Internal console", "Tenant platforms"]
@@ -72,8 +70,7 @@ function statusBadge(
 }
 
 export function EmailTemplatesPage() {
-  const [open, setOpen] = React.useState<string | null>(null)
-  const [creating, setCreating] = React.useState(false)
+  const navigate = useNavigate()
   const [globalsOpen, setGlobalsOpen] = React.useState(false)
   const [query, setQuery] = React.useState("")
   const [scope, setScope] = React.useState("All")
@@ -160,18 +157,6 @@ export function EmailTemplatesPage() {
     )
   }
 
-  if (creating) return <EmailTemplateForm onBack={() => setCreating(false)} />
-
-  const editing = open ? (templates.find((t) => t.id === open) ?? null) : null
-  if (editing)
-    return (
-      <EmailEditor
-        key={editing.id}
-        tpl={editing}
-        onBack={() => setOpen(null)}
-      />
-    )
-
   return (
     // Explicit v3 spacing (no uniform gap): page-head mb 18, note mb 14, search
     // toolbar pt 10 / pb 14 — matches Ginja Console-v3.html around the search.
@@ -208,7 +193,10 @@ export function EmailTemplatesPage() {
               <BracesIcon data-icon="inline-start" />
               Global placeholders
             </Button>
-            <Button className={hifiBtn} onClick={() => setCreating(true)}>
+            <Button
+              className={hifiBtn}
+              onClick={() => navigate("/email-templates/new")}
+            >
               <PlusIcon data-icon="inline-start" />
               New template
             </Button>
@@ -287,11 +275,11 @@ export function EmailTemplatesPage() {
                 key={t.id}
                 role="button"
                 tabIndex={0}
-                onClick={() => setOpen(t.id)}
+                onClick={() => navigate(`/email-templates/${t.templateId}`)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault()
-                    setOpen(t.id)
+                    navigate(`/email-templates/${t.templateId}`)
                   }
                 }}
                 className={cn(
@@ -316,9 +304,9 @@ export function EmailTemplatesPage() {
                         <button
                           type="button"
                           aria-label="Template actions"
-                          className="-mr-1 grid size-[30px] shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground [&>svg]:size-4"
+                          className="grid size-[30px] shrink-0 cursor-pointer place-items-center rounded-[8px] border border-input bg-card text-muted-foreground transition-colors hover:bg-muted hover:text-foreground [&>svg]:size-4"
                         >
-                          <EllipsisVerticalIcon />
+                          <HiIcon name="more" />
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">

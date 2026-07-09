@@ -5,6 +5,8 @@ import { apiGet, apiPatch, apiPost } from "@/lib/api/client"
 import {
   toLocalization,
   toMfaDetail,
+  toPasswordStatus,
+  toPasswordSummary,
   toSecurityPolicy,
   toSecurityPolicyPatch,
   toSessionUsers,
@@ -13,6 +15,10 @@ import {
   type LocalizationDTO,
   type MfaDetail,
   type MfaDetailDTO,
+  type PasswordStatus,
+  type PasswordStatusDTO,
+  type PasswordStatusList,
+  type PasswordStatusListDTO,
   type SecurityPolicy,
   type SecurityPolicyDTO,
   type SessionGroupDTO,
@@ -91,4 +97,44 @@ export async function remindMfa(memberId: number): Promise<void> {
     {}
   )
   console.log(`[POST /platform/settings/mfa-status/${memberId}/remind]`, res)
+}
+
+/** GET /platform/settings/password-status — `{ summary, users }`: the KPI-tile
+   counts plus the per-member breakdown. Tolerates a bare array too. */
+export async function fetchPasswordStatuses(): Promise<PasswordStatusList> {
+  const res = await apiGet<PasswordStatusListDTO | PasswordStatusDTO[]>(
+    "/platform/settings/password-status"
+  )
+  console.log("[GET /platform/settings/password-status]", res)
+  const rows = Array.isArray(res) ? res : (res?.users ?? [])
+  const statuses = rows.map(toPasswordStatus)
+  const summary = toPasswordSummary(
+    Array.isArray(res) ? undefined : res?.summary,
+    statuses
+  )
+  return { summary, statuses }
+}
+
+/** GET /platform/settings/password-status/{memberId} — one member's detail. */
+export async function fetchPasswordDetail(
+  memberId: number
+): Promise<PasswordStatus> {
+  const res = await apiGet<PasswordStatusDTO>(
+    `/platform/settings/password-status/${memberId}`
+  )
+  console.log(`[GET /platform/settings/password-status/${memberId}]`, res)
+  return toPasswordStatus({ ...res, member_id: res?.member_id ?? memberId })
+}
+
+/** POST /platform/settings/password-status/{memberId}/force-reset — send the
+   member a password-reset link (PLATFORM_ADMIN; audit-logged). */
+export async function forcePasswordReset(memberId: number): Promise<void> {
+  const res = await apiPost(
+    `/platform/settings/password-status/${memberId}/force-reset`,
+    {}
+  )
+  console.log(
+    `[POST /platform/settings/password-status/${memberId}/force-reset]`,
+    res
+  )
 }

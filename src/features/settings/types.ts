@@ -443,3 +443,153 @@ export function toMfaDetail(d: MfaDetailDTO): MfaDetail {
     enabledOn: d.enabled_on ?? null,
   }
 }
+
+/* --------------------------------------------------- password status --- */
+
+/** Per-member password health (90-day rotation policy). */
+export type PasswordState = "OK" | "EXPIRING" | "EXPIRED" | "PENDING"
+
+/** Derive a state from days-until-expiry when the API doesn't send an explicit
+   one (mirrors the mock policy): invited / no-password → PENDING; <0 → EXPIRED;
+   ≤14 → EXPIRING; else OK. */
+export function derivePasswordState(
+  daysLeft: number | null,
+  pending: boolean
+): PasswordState {
+  if (pending || daysLeft == null) return "PENDING"
+  if (daysLeft < 0) return "EXPIRED"
+  if (daysLeft <= 14) return "EXPIRING"
+  return "OK"
+}
+
+/** Normalise an API status string to a PasswordState (null if unrecognised so
+   the caller falls back to deriving from daysLeft). */
+function normPasswordState(s?: string | null): PasswordState | null {
+  const u = (s ?? "").toUpperCase().replace(/[\s_-]+/g, "_")
+  if (!u) return null
+  if (u.includes("EXPIRING") || u.includes("SOON")) return "EXPIRING"
+  if (u.includes("EXPIRED") || u.includes("OVERDUE")) return "EXPIRED"
+  if (u.includes("PENDING") || u.includes("INVITED") || u.includes("NONE"))
+    return "PENDING"
+  if (
+    u.includes("OK") ||
+    u.includes("HEALTHY") ||
+    u.includes("ACTIVE") ||
+    u.includes("GOOD") ||
+    u.includes("CURRENT")
+  )
+    return "OK"
+  return null
+}
+
+/* snake_case as the API returns it (API_REFERENCE.md → GET
+   /platform/settings/password-status). A few alternate key names are tolerated
+   defensively. */
+export type PasswordStatusDTO = {
+  member_id?: number | null
+  member?: { id?: number | null } | null
+  account?: string | null
+  user?: string | null
+  status?: string | null
+  pending?: boolean | null
+  last_changed_at?: string | null
+  last_changed?: string | null
+  changed_at?: string | null
+  password_last_changed?: string | null
+  expires_at?: string | null
+  expires_on?: string | null
+  expiry_date?: string | null
+  days_until_expiry?: number | null
+  days_left?: number | null
+}
+
+export type PasswordStatus = {
+  memberId: number
+  /** Display name (DTO `user`). */
+  name: string
+  /** Login / email (DTO `account`). */
+  email: string
+  state: PasswordState
+  /** ISO / display string of the last change; "" when unknown. */
+  lastChanged: string
+  /** ISO / display string of the expiry; "" when unknown. */
+  expiresOn: string
+  daysLeft: number | null
+}
+
+export function toPasswordStatus(d: PasswordStatusDTO): PasswordStatus {
+  const daysLeft = d.days_until_expiry ?? d.days_left ?? null
+  const lastChanged =
+    d.last_changed_at ??
+    d.last_changed ??
+    d.changed_at ??
+    d.password_last_changed ??
+    ""
+  const expiresOn = d.expires_at ?? d.expires_on ?? d.expiry_date ?? ""
+  const pending = !!d.pending || (!lastChanged && daysLeft == null)
+  const state =
+    normPasswordState(d.status) ?? derivePasswordState(daysLeft, pending)
+  return {
+    memberId: d.member_id ?? d.member?.id ?? -1,
+    name: d.user ?? "",
+    email: d.account ?? "",
+    state,
+    lastChanged,
+    expiresOn,
+    daysLeft,
+  }
+}
+
+/* ---- summary (KPI tiles) + the list envelope `{ summary, users }` ---- */
+
+export type PasswordSummaryDTO = {
+  total_users?: number | null
+  ok?: number | null
+  expiring_soon?: number | null
+  expired?: number | null
+  pending?: number | null
+}
+
+export type PasswordSummary = {
+  totalUsers: number
+  ok: number
+  expiringSoon: number
+  expired: number
+  pending: number
+}
+
+/** GET /platform/settings/password-status → `{ summary, users }`. */
+export type PasswordStatusListDTO = {
+  summary?: PasswordSummaryDTO | null
+  users?: PasswordStatusDTO[] | null
+}
+
+export type PasswordStatusList = {
+  summary: PasswordSummary
+  statuses: PasswordStatus[]
+}
+
+/** Map the API summary; when absent, derive the counts from the rows so the
+   tiles still populate. */
+export function toPasswordSummary(
+  dto: PasswordSummaryDTO | null | undefined,
+  rows: PasswordStatus[]
+): PasswordSummary {
+  if (dto) {
+    return {
+      totalUsers: dto.total_users ?? rows.length,
+      ok: dto.ok ?? 0,
+      expiringSoon: dto.expiring_soon ?? 0,
+      expired: dto.expired ?? 0,
+      pending: dto.pending ?? 0,
+    }
+  }
+  const count = (s: PasswordState) => rows.filter((r) => r.state === s).length
+  return {
+    totalUsers: rows.length,
+    ok: count("OK"),
+    expiringSoon: count("EXPIRING"),
+    expired: count("EXPIRED"),
+    pending: count("PENDING"),
+  }
+}

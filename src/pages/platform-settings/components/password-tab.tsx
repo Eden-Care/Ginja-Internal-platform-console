@@ -16,55 +16,84 @@ import { MiniBadge } from "@/components/console/tagpill"
 import { Note } from "@/components/console/note"
 import { StatTile } from "@/components/console/stat-tile"
 import { LoadingSpinner } from "@/components/common/loading"
-import { useMembers } from "@/features/access/use-members"
-import type { Member } from "@/features/access/types"
+import {
+  useForcePasswordReset,
+  usePasswordStatuses,
+} from "@/features/settings/use-password"
+import type { PasswordStatus } from "@/features/settings/types"
 import {
   EmptyTile,
-  MEMBER_STATUS_TONE,
+  PWD_STATE,
   PendingBadge,
   SearchBox,
+  SegToggle,
   Toolbar,
   UserIdCell,
   initialsOf,
-  memberAccountLabel,
+  passwordExpires,
+  passwordLastChanged,
 } from "./ua-shared"
 import { PasswordDetailDrawer } from "./password-detail-drawer"
 
 const GRID =
   "grid grid-cols-[minmax(0,1.4fr)_130px_130px_150px] items-center gap-3.5 lg:grid-cols-[minmax(0,1.4fr)_110px_140px_120px_110px_168px]"
 
+// Filter tabs mirror the hi-fi Password status seg-toggle (keys are our
+// PasswordState values; "All" shows everyone incl. pending).
+const FILTERS = [
+  { k: "All", label: "All" },
+  { k: "OK", label: "OK" },
+  { k: "EXPIRING", label: "Expiring" },
+  { k: "EXPIRED", label: "Expired" },
+]
+
 export function PasswordTab({ readonly }: { readonly: boolean }) {
-  const membersQuery = useMembers({})
-  const users = membersQuery.data?.items ?? []
+  // Single source of truth: the password-status endpoint returns the summary
+  // (KPI tiles) plus the per-member rows.
+  const statusesQuery = usePasswordStatuses()
+  const summary = statusesQuery.data?.summary
+  const statuses = statusesQuery.data?.statuses ?? []
 
   const [q, setQ] = React.useState("")
-  const [detail, setDetail] = React.useState<Member | null>(null)
+  const [filter, setFilter] = React.useState("All")
+  const [detail, setDetail] = React.useState<PasswordStatus | null>(null)
   const [reset, setReset] = React.useState<Set<number>>(() => new Set())
 
-  const list = users.filter((u) =>
-    (u.name + u.email).toLowerCase().includes(q.toLowerCase())
-  )
+  const list = statuses.filter((ps) => {
+    if (!(ps.name + ps.email).toLowerCase().includes(q.toLowerCase()))
+      return false
+    if (filter === "All") return true
+    return ps.state === filter
+  })
 
-  // No reset-link endpoint yet — client-only acknowledgement (flagged gap).
-  const forceReset = (u: Member) => {
-    setReset((s) => new Set(s).add(u.id))
-    toast(`Password reset link sent to ${u.name}.`)
+  const resetMut = useForcePasswordReset()
+  const forceReset = (ps: PasswordStatus) => {
+    resetMut.mutate(ps.memberId, {
+      onSuccess: () => {
+        setReset((s) => new Set(s).add(ps.memberId))
+        toast.success(`Password reset link sent to ${ps.name}.`)
+      },
+      onError: (e) =>
+        toast.error("Couldn't send the reset link", {
+          description: e instanceof Error ? e.message : undefined,
+        }),
+    })
   }
 
-  if (membersQuery.isLoading) {
+  if (statusesQuery.isLoading) {
     return (
       <div className="grid place-items-center py-20">
         <LoadingSpinner />
       </div>
     )
   }
-  if (membersQuery.isError) {
+  if (statusesQuery.isError) {
     return (
       <Note tone="err" icon={<TriangleAlertIcon />}>
-        Couldn’t load users.{" "}
+        Couldn’t load password status.{" "}
         <button
           className="font-semibold underline underline-offset-2"
-          onClick={() => membersQuery.refetch()}
+          onClick={() => statusesQuery.refetch()}
         >
           Try again
         </button>
@@ -76,32 +105,38 @@ export function PasswordTab({ readonly }: { readonly: boolean }) {
   return (
     <>
       <Note tone="info" icon={<ShieldCheckIcon />} className="mb-4">
-        <b>Admin-only.</b> The user directory is live. Password health — last
-        changed, expiry and rotation status — isn’t exposed by the API yet, so
-        those columns show <b>Pending backend</b>.
+        <b>Admin-only.</b> Password health (status, last changed and expiry) for
+        every Platform Console user, from the platform API. Account status is
+        shown as a static value.
       </Note>
 
       <div className="mb-[18px] grid grid-cols-3 gap-3">
         <StatTile
           icon={<CheckCircle2Icon />}
-          value={<PendingBadge />}
+          tone="success"
+          value={summary ? summary.ok : <PendingBadge />}
           label="OK"
         />
         <StatTile
           icon={<ClockIcon />}
-          value={<PendingBadge />}
+          tone={summary && summary.expiringSoon ? "warning" : "neutral"}
+          value={summary ? summary.expiringSoon : <PendingBadge />}
           label="Expiring soon"
         />
         <StatTile
           icon={<TriangleAlertIcon />}
-          value={<PendingBadge />}
+          tone={summary && summary.expired ? "error" : "neutral"}
+          value={summary ? summary.expired : <PendingBadge />}
           label="Expired"
         />
       </div>
 
       <Toolbar
         search={<SearchBox value={q} onChange={setQ} />}
-        count={`${list.length} of ${users.length}`}
+        filter={
+          <SegToggle value={filter} options={FILTERS} onChange={setFilter} />
+        }
+        count={`${list.length} of ${statuses.length}`}
       />
 
       <div className="overflow-hidden rounded-xl border bg-card shadow-xs">
@@ -119,29 +154,41 @@ export function PasswordTab({ readonly }: { readonly: boolean }) {
           <span />
         </div>
 
-        {list.map((u) => {
-          const canReset = u.status === "ACTIVE" && !readonly
-          const done = reset.has(u.id)
+        {list.map((ps) => {
+          const canReset =
+            !readonly && (ps.state === "EXPIRING" || ps.state === "EXPIRED")
+          const done = reset.has(ps.memberId)
+          const lastChanged = passwordLastChanged(ps)
+          const expires = passwordExpires(ps)
           return (
-            <div key={u.id} className={cn(GRID, "border-t px-4 py-3")}>
+            <div key={ps.memberId} className={cn(GRID, "border-t px-4 py-3")}>
               <UserIdCell
-                initials={initialsOf(u.name)}
-                name={u.name}
-                email={u.email}
+                initials={initialsOf(ps.name)}
+                name={ps.name}
+                email={ps.email}
               />
               <div>
-                <MiniBadge tone={MEMBER_STATUS_TONE[u.status]}>
-                  {memberAccountLabel(u)}
-                </MiniBadge>
+                {/* Account status isn't in the password-status API — static. */}
+                <MiniBadge tone="success">Active</MiniBadge>
               </div>
               <div>
-                <PendingBadge />
+                <MiniBadge tone={PWD_STATE[ps.state].tone}>
+                  {PWD_STATE[ps.state].label}
+                </MiniBadge>
               </div>
               <div className="hidden lg:block">
-                <PendingBadge />
+                {lastChanged ? (
+                  <span className="text-[13px]">{lastChanged}</span>
+                ) : (
+                  <PendingBadge />
+                )}
               </div>
               <div className="hidden lg:block">
-                <PendingBadge />
+                {expires ? (
+                  <span className="text-[13px]">{expires}</span>
+                ) : (
+                  <PendingBadge />
+                )}
               </div>
               <div className="flex items-center justify-end gap-2">
                 {canReset &&
@@ -154,13 +201,14 @@ export function PasswordTab({ readonly }: { readonly: boolean }) {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => forceReset(u)}
+                      disabled={resetMut.isPending}
+                      onClick={() => forceReset(ps)}
                     >
                       <RotateCcwIcon data-icon="inline-start" />
                       Force reset
                     </Button>
                   ))}
-                <Button variant="ghost" size="sm" onClick={() => setDetail(u)}>
+                <Button variant="ghost" size="sm" onClick={() => setDetail(ps)}>
                   View details
                 </Button>
               </div>
@@ -178,9 +226,9 @@ export function PasswordTab({ readonly }: { readonly: boolean }) {
       </div>
 
       <PasswordDetailDrawer
-        user={detail}
+        ps={detail}
         readonly={readonly}
-        done={detail ? reset.has(detail.id) : false}
+        done={detail ? reset.has(detail.memberId) : false}
         onForceReset={forceReset}
         onClose={() => setDetail(null)}
       />

@@ -60,7 +60,7 @@ export function SmsSendTestModal({
     >
       <DialogContent
         showCloseButton
-        className="flex max-h-[86vh] w-[480px] max-w-[calc(100vw-32px)] flex-col gap-0 overflow-hidden p-0 [&_svg]:[stroke-width:1.75]"
+        className="flex max-h-[86vh] w-[520px] max-w-[calc(100vw-32px)] flex-col gap-0 overflow-hidden p-0 sm:max-w-[calc(100vw-32px)] [&_svg]:[stroke-width:1.75]"
       >
         <div className="flex shrink-0 items-center gap-[11px] border-b px-[18px] py-4">
           <span className="grid size-[38px] place-items-center rounded-[10px] bg-primary/[0.12] text-primary [&>svg]:size-[17px]">

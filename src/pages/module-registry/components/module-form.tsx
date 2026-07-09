@@ -6,7 +6,6 @@ import {
   InfoIcon,
   PlusIcon,
   SaveIcon,
-  TrashIcon,
   TriangleAlertIcon,
 } from "lucide-react"
 import { toast } from "sonner"
@@ -30,7 +29,8 @@ import { Note } from "@/components/console/note"
 import { Tagpill } from "@/components/console/tagpill"
 import { IconPicker } from "./icon-picker"
 import { hifiBtn } from "@/components/hifi/button"
-import { MField } from "@/components/hifi/field"
+import { HiIcon } from "@/components/hifi/icon"
+import { MField, fieldInput } from "@/components/hifi/field"
 
 const MODULE_OWNERS = [
   "Claims Platform",
@@ -239,6 +239,7 @@ export function ModuleForm({
               hintTone="error"
             >
               <Input
+                className={fieldInput}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 aria-invalid={!!err("name")}
@@ -257,7 +258,7 @@ export function ModuleForm({
               hintTone={err("code") ? "error" : "muted"}
             >
               <Input
-                className="mono text-[12.5px]"
+                className={cn(fieldInput, "mono text-[12.5px]")}
                 value={effCode}
                 disabled={!!ex}
                 aria-invalid={!!err("code")}
@@ -272,7 +273,7 @@ export function ModuleForm({
 
           <MField label="Description">
             <Textarea
-              className="min-h-14 text-[13px]"
+              className="min-h-[80px] rounded-[8px] border-input bg-background px-[11px] py-[9px] text-[13px] focus-visible:border-primary focus-visible:ring-ring/[0.16]"
               value={desc}
               maxLength={100}
               onChange={(e) => setDesc(e.target.value.slice(0, 100))}
@@ -309,6 +310,7 @@ export function ModuleForm({
             </MField>
             <MField label="Owner team">
               <ConsoleSelect
+                className={fieldInput}
                 value={owner}
                 onChange={setOwner}
                 options={ownerOptions}
@@ -316,7 +318,7 @@ export function ModuleForm({
             </MField>
             <MField label="Module URL">
               <Input
-                className="mono text-[12.5px]"
+                className={cn(fieldInput, "mono text-[12.5px]")}
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder="/claims"
@@ -342,16 +344,17 @@ export function ModuleForm({
               key={i}
               className="grid grid-cols-1 items-end gap-[10px] rounded-[10px] border bg-card p-[11px] sm:grid-cols-[1.2fr_1fr_1.3fr_auto]"
             >
-              <MField label="Sub-module name">
+              <MField label="Sub-module name" eyebrow>
                 <Input
+                  className={fieldInput}
                   value={s.name}
                   onChange={(e) => patchSub(i, { name: e.target.value })}
                   placeholder="Adjudication engine"
                 />
               </MField>
-              <MField label="Code">
+              <MField label="Code" eyebrow>
                 <Input
-                  className="mono text-[12px]"
+                  className={cn(fieldInput, "mono text-[12px]")}
                   value={s.codeEdited ? s.code : templateCode(s.name)}
                   onChange={(e) =>
                     patchSub(i, { code: e.target.value, codeEdited: true })
@@ -359,25 +362,22 @@ export function ModuleForm({
                   placeholder="ADJUDICATION_ENGINE"
                 />
               </MField>
-              <MField label="Description">
+              <MField label="Description" eyebrow>
                 <Input
+                  className={fieldInput}
                   value={s.desc}
                   onChange={(e) => patchSub(i, { desc: e.target.value })}
                   placeholder="What it does"
                 />
               </MField>
-              {subs.length > 1 ? (
-                <button
-                  type="button"
-                  title="Remove sub-module"
-                  onClick={() => removeSub(i)}
-                  className="grid size-[30px] shrink-0 cursor-pointer place-items-center self-end rounded-[8px] border bg-card text-destructive transition-colors hover:border-destructive/30 hover:bg-destructive/10 [&>svg]:size-[14px]"
-                >
-                  <TrashIcon />
-                </button>
-              ) : (
-                <span className="hidden sm:block sm:size-[30px] sm:self-end" />
-              )}
+              <button
+                type="button"
+                title="Remove sub-module"
+                onClick={() => removeSub(i)}
+                className="mb-1 grid size-[30px] shrink-0 cursor-pointer place-items-center self-end rounded-[8px] border border-input bg-card text-muted-foreground transition-colors hover:bg-muted hover:text-foreground [&>svg]:size-[14px]"
+              >
+                <HiIcon name="trash" />
+              </button>
             </div>
           ))}
           <button

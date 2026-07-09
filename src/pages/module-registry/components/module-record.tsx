@@ -72,15 +72,19 @@ function DL({ label, children }: { label: string; children: React.ReactNode }) {
 export function ModuleRecord({
   module: m,
   readonly = false,
+  tab,
+  onTabChange,
   onBack,
   onEdit,
 }: {
   module: RegistryModule
   readonly?: boolean
+  /** Active tab, driven by the `?tab=` URL param (see ModuleRecordPage). */
+  tab: string
+  onTabChange: (t: string) => void
   onBack: () => void
   onEdit: () => void
 }) {
-  const [tab, setTab] = React.useState("overview")
   const [published, setPublished] = React.useState(m.status === "Published")
   const [confirmPub, setConfirmPub] = React.useState(false)
   const [rollback, setRollback] = React.useState<ModuleVersion | null>(null)
@@ -187,7 +191,7 @@ export function ModuleRecord({
         </div>
       </div>
 
-      <TabBar tabs={TABS} value={tab} onChange={setTab} />
+      <TabBar tabs={TABS} value={tab} onChange={onTabChange} />
 
       {tab === "overview" ? (
         <div className="flex flex-col gap-4">

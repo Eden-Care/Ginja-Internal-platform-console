@@ -37,7 +37,7 @@ import { Panel, PanelBody, PanelHead } from "@/components/console/panel"
 import { Seg } from "@/components/console/form-atoms"
 import { Note } from "@/components/console/note"
 import { Tagpill } from "@/components/console/tagpill"
-import { MField } from "@/components/hifi/field"
+import { MField, fieldInput } from "@/components/hifi/field"
 import { hifiBtn } from "@/components/hifi/button"
 import { useCreateEmailTemplate } from "@/features/email-templates/use-email-templates"
 import { useGlobalPlaceholders } from "@/features/global-placeholders/use-global-placeholders"
@@ -348,6 +348,7 @@ export const EmailTemplateForm = React.forwardRef<
           <div className="grid grid-cols-1 gap-x-[18px] gap-y-3.5 sm:grid-cols-2">
             <FormField label="Template name" required error={err("name")}>
               <Input
+                className={fieldInput}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 aria-invalid={!!err("name")}
@@ -372,7 +373,7 @@ export const EmailTemplateForm = React.forwardRef<
               }
             >
               <Input
-                className="mono text-[12.5px]"
+                className={cn(fieldInput, "mono text-[12.5px]")}
                 value={effCode}
                 disabled={!!dt}
                 aria-invalid={!!err("code")}
@@ -411,6 +412,7 @@ export const EmailTemplateForm = React.forwardRef<
             hint="Optional. The short preview most inboxes show next to the subject. Supports placeholders."
           >
             <Input
+              className={fieldInput}
               value={preheader}
               onChange={(e) => setPreheader(e.target.value)}
               placeholder="Preview snippet shown after the subject in the inbox"
@@ -425,6 +427,7 @@ export const EmailTemplateForm = React.forwardRef<
               hint="The platform event that sends this email."
             >
               <Input
+                className={fieldInput}
                 value={trigger}
                 aria-invalid={!!err("trigger")}
                 onChange={(e) => setTrigger(e.target.value)}
@@ -449,7 +452,7 @@ export const EmailTemplateForm = React.forwardRef<
 
           <FormField label="Description">
             <Textarea
-              className="min-h-16 text-[13px]"
+              className="min-h-16 rounded-[8px] border-input bg-background px-[11px] py-[9px] text-[13px] focus-visible:border-primary focus-visible:ring-ring/[0.16]"
               value={desc}
               maxLength={100}
               onChange={(e) => setDesc(e.target.value.slice(0, 100))}
@@ -485,6 +488,7 @@ export const EmailTemplateForm = React.forwardRef<
             hint="Tags help organise and search the library."
           >
             <Input
+              className={fieldInput}
               value={tagDraft}
               onChange={(e) => setTagDraft(e.target.value)}
               onKeyDown={(e) => {
@@ -557,6 +561,7 @@ export const EmailTemplateForm = React.forwardRef<
                 </FormField>
                 <FormField label="Max attachments">
                   <Input
+                    className={fieldInput}
                     type="number"
                     min={1}
                     max={20}
@@ -572,13 +577,13 @@ export const EmailTemplateForm = React.forwardRef<
                       type="number"
                       min={1}
                       max={100}
-                      className="rounded-r-none"
+                      className={cn(fieldInput, "rounded-r-none")}
                       value={att.size}
                       onChange={(e) =>
                         setAtt((a) => ({ ...a, size: e.target.value }))
                       }
                     />
-                    <span className="inline-flex items-center rounded-r-lg border border-l-0 border-input bg-muted px-3 text-[12.5px] font-semibold text-muted-foreground">
+                    <span className="inline-flex items-center rounded-r-[8px] border border-l-0 border-input bg-muted px-3 text-[12.5px] font-semibold text-muted-foreground">
                       MB
                     </span>
                   </div>

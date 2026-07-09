@@ -26,7 +26,7 @@ import { Panel, PanelBody, PanelHead } from "@/components/console/panel"
 import { Seg } from "@/components/console/form-atoms"
 import { Note } from "@/components/console/note"
 import { Tagpill } from "@/components/console/tagpill"
-import { MField } from "@/components/hifi/field"
+import { MField, fieldInput } from "@/components/hifi/field"
 import { hifiBtn } from "@/components/hifi/button"
 import { useGlobalPlaceholders } from "@/features/global-placeholders/use-global-placeholders"
 import { useCreateSmsTemplate } from "@/features/sms-templates/use-sms-templates"
@@ -204,6 +204,7 @@ export const SmsTemplateForm = React.forwardRef<
               hintTone={err("name") ? "error" : "muted"}
             >
               <Input
+                className={fieldInput}
                 value={name}
                 disabled={!!dt}
                 onChange={(e) => setName(e.target.value)}
@@ -230,7 +231,7 @@ export const SmsTemplateForm = React.forwardRef<
               hintTone={err("code") ? "error" : "muted"}
             >
               <Input
-                className="mono text-[12.5px]"
+                className={cn(fieldInput, "mono text-[12.5px]")}
                 value={effCode}
                 disabled={!!dt}
                 aria-invalid={!!err("code")}
@@ -245,7 +246,7 @@ export const SmsTemplateForm = React.forwardRef<
 
           <MField label="Description">
             <Textarea
-              className="min-h-14 text-[13px]"
+              className="min-h-[80px] rounded-[8px] border-input bg-background px-[11px] py-[9px] text-[13px] focus-visible:border-primary focus-visible:ring-ring/[0.16]"
               value={desc}
               maxLength={100}
               onChange={(e) => setDesc(e.target.value.slice(0, 100))}
@@ -284,6 +285,7 @@ export const SmsTemplateForm = React.forwardRef<
               hintTone={err("trigger") ? "error" : "muted"}
             >
               <Input
+                className={fieldInput}
                 value={trigger}
                 aria-invalid={!!err("trigger")}
                 onChange={(e) => setTrigger(e.target.value)}
@@ -311,6 +313,7 @@ export const SmsTemplateForm = React.forwardRef<
             hint="Tags help organise and search the library."
           >
             <Input
+              className={fieldInput}
               value={tagDraft}
               onChange={(e) => setTagDraft(e.target.value)}
               onKeyDown={(e) => {
@@ -387,20 +390,25 @@ export const SmsTemplateForm = React.forwardRef<
               </span>
             )}
             {placeholders.length > 0 ? (
-              <div className="mt-1 flex flex-wrap gap-1.5">
-                {placeholders.map((p) => (
-                  <code
-                    key={p}
-                    className={cn(
-                      "rounded-md px-2 py-[3px] font-mono text-[11.5px] font-semibold",
-                      isGlobalPh(p)
-                        ? "bg-ph-global/10 text-ph-global"
-                        : "bg-info-subtle text-info-subtle-foreground"
-                    )}
-                  >
-                    {`{{${p}}}`}
-                  </code>
-                ))}
+              <div className="mt-1">
+                <span className="mb-1.5 block text-[10px] font-semibold tracking-[0.04em] text-muted-foreground uppercase">
+                  Placeholders
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {placeholders.map((p) => (
+                    <code
+                      key={p}
+                      className={cn(
+                        "rounded-md px-2 py-[3px] font-mono text-[11.5px] font-semibold",
+                        isGlobalPh(p)
+                          ? "bg-ph-global/10 text-ph-global"
+                          : "bg-info-subtle text-info-subtle-foreground"
+                      )}
+                    >
+                      {`{{${p}}}`}
+                    </code>
+                  ))}
+                </div>
               </div>
             ) : null}
           </PanelBody>
