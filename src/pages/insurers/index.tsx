@@ -15,12 +15,12 @@ import { HiIcon } from "@/components/hifi/icon"
 import { hifiBtn } from "@/components/hifi/button"
 import { useInsurersDirectory } from "@/features/insurers/use-insurers"
 import type { Insurer } from "@/features/insurers/types"
-import { InsurerCreate } from "./components/insurer-create"
+import { InsurerForm } from "./components/insurer-form"
 import { InsurerCreated } from "./components/insurer-created"
 import { InsurerDrawer } from "./components/insurer-drawer"
 import { InsurerAvatar, InsurerStatus, RegionPill, insGrid } from "./components/shared"
 
-type View = "list" | "create" | "created"
+type View = "list" | "create" | "created" | "edit"
 
 /**
  * Insurers directory (hi-fi `InsurersDirectory`) — the "Claim Clean-up (LAMU)"
@@ -34,6 +34,7 @@ export function InsurersPage() {
   const [view, setView] = React.useState<View>("list")
   const [selected, setSelected] = React.useState<Insurer | null>(null)
   const [created, setCreated] = React.useState<Insurer | null>(null)
+  const [editing, setEditing] = React.useState<Insurer | null>(null)
   const [q, setQ] = React.useState("")
   const [qDebounced, setQDebounced] = React.useState("")
   const [status, setStatus] = React.useState("All")
@@ -50,11 +51,25 @@ export function InsurersPage() {
 
   if (view === "create")
     return (
-      <InsurerCreate
+      <InsurerForm
         onBack={() => setView("list")}
         onCreated={(rec) => {
           setCreated(rec)
           setView("created")
+        }}
+      />
+    )
+  if (view === "edit" && editing)
+    return (
+      <InsurerForm
+        initial={editing}
+        onBack={() => {
+          setSelected(editing)
+          setView("list")
+        }}
+        onUpdated={(rec) => {
+          setSelected(rec)
+          setView("list")
         }}
       />
     )
@@ -238,6 +253,11 @@ export function InsurersPage() {
         insurer={selected}
         readonly={readonly}
         onClose={() => setSelected(null)}
+        onEdit={(rec) => {
+          setEditing(rec)
+          setSelected(null)
+          setView("edit")
+        }}
       />
     </div>
   )

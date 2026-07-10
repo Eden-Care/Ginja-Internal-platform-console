@@ -2,7 +2,7 @@
  * endpoints. Each function returns mapped client types (never raw DTOs) and
  * logs the raw response to the console for diagnostics. */
 
-import { apiGet, apiPost } from "@/lib/api/client"
+import { apiGet, apiPatch, apiPost } from "@/lib/api/client"
 import {
   type DirectoryDTO,
   type Insurer,
@@ -76,9 +76,10 @@ export type CreateInsurerInput = {
   phone: string
 }
 
-/** POST create an insurer profile → the created insurer (mapped). */
-export async function createInsurer(input: CreateInsurerInput): Promise<Insurer> {
-  const body = {
+/** Map the form input → the snake_case request body (create + update share it).
+   Blank optional fields become null (partial PATCH ignores nulls). */
+function toRequestBody(input: CreateInsurerInput) {
+  return {
     name: input.name.trim(),
     country: input.country,
     company_type: COMPANY_TYPE[input.type] ?? input.type,
@@ -90,8 +91,25 @@ export async function createInsurer(input: CreateInsurerInput): Promise<Insurer>
     contact_email: input.email.trim() || null,
     contact_phone: input.phone.trim() || null,
   }
-  const dto = await apiPost<InsurerDTO>(BASE, body)
+}
+
+/** POST create an insurer profile → the created insurer (mapped). */
+export async function createInsurer(input: CreateInsurerInput): Promise<Insurer> {
+  const dto = await apiPost<InsurerDTO>(BASE, toRequestBody(input))
   console.log(`[POST ${BASE}] create`, dto)
+  return toInsurer(dto)
+}
+
+/** PATCH update an insurer profile (partial) → the updated insurer (mapped). */
+export async function updateInsurer(
+  accountId: string,
+  input: CreateInsurerInput
+): Promise<Insurer> {
+  const dto = await apiPatch<InsurerDTO>(
+    `${BASE}/${accountId}`,
+    toRequestBody(input)
+  )
+  console.log(`[PATCH ${BASE}/${accountId}] update`, dto)
   return toInsurer(dto)
 }
 
