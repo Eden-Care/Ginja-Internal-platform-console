@@ -48,10 +48,12 @@ export function InsurerDrawer({
   insurer,
   readonly,
   onClose,
+  onEdit,
 }: {
   insurer: Insurer | null
   readonly: boolean
   onClose: () => void
+  onEdit: (insurer: Insurer) => void
 }) {
   const open = !!insurer
   const accountId = insurer?.accountId ?? ""
@@ -266,7 +268,15 @@ export function InsurerDrawer({
 
               {/* Footer */}
               {!readonly ? (
-                <div className="mt-auto flex shrink-0 justify-end border-t px-[18px] py-3.5">
+                <div className="mt-auto flex shrink-0 items-center justify-between border-t px-[18px] py-3.5">
+                  <Button
+                    variant="outline"
+                    className={hifiBtn}
+                    onClick={() => onEdit(rec)}
+                  >
+                    <HiIcon name="pencil" />
+                    Edit
+                  </Button>
                   {rec.status === "Active" ? (
                     <Button
                       variant="outline"

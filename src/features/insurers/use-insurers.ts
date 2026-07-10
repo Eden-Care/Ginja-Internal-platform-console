@@ -17,6 +17,7 @@ import {
   fetchInsurerProfile,
   fetchInsurersDirectory,
   reactivateInsurer,
+  updateInsurer,
   type CreateInsurerInput,
   type ListInsurersParams,
 } from "./api"
@@ -64,6 +65,15 @@ export function useCreateInsurer() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: CreateInsurerInput) => createInsurer(input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: insurerKeys.all }),
+  })
+}
+
+export function useUpdateInsurer() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (v: { accountId: string; input: CreateInsurerInput }) =>
+      updateInsurer(v.accountId, v.input),
     onSuccess: () => qc.invalidateQueries({ queryKey: insurerKeys.all }),
   })
 }
