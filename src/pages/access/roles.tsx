@@ -4,9 +4,12 @@ import {
   ArrowRightIcon,
   CheckIcon,
   ChevronLeftIcon,
+  ClockIcon,
+  CopyIcon,
   InfoIcon,
   KeyRoundIcon,
   LayersIcon,
+  Loader2Icon,
   PaletteIcon,
   PlusIcon,
   SearchIcon,
@@ -105,39 +108,69 @@ function SensitiveBadge() {
   )
 }
 
+/* Dashed, muted pill marking a value the backend doesn't power yet (mirrors the
+   PendingBadge convention in platform-settings/ua-shared). The per-role member
+   count + assignee avatars have no API yet — see GET /roles/metrics (undocumented
+   response shape). Kept visible + flagged rather than dropped. */
+function PendingBadge({ children = "API pending" }: { children?: React.ReactNode }) {
+  return (
+    <span
+      title="Not returned by the API yet — pending backend support"
+      className="inline-flex items-center gap-1 rounded-full border border-dashed bg-muted/50 px-2 py-[2px] text-[10.5px] font-medium text-muted-foreground [&>svg]:size-2.5"
+    >
+      <ClockIcon />
+      {children}
+    </span>
+  )
+}
+
 /* ============================================================ role editor === */
 
 function RoleEditor({
   base,
+  cloneFrom,
+  canManage,
   permissions,
   permsLoading,
   permsError,
   saving,
   deleting,
   onCancel,
+  onClone,
   onSubmit,
   onDelete,
 }: {
   base: Role | null
+  /** When set (and base is null), seed a NEW role from this one — the "clone a
+     system role" flow. The result is created via POST /roles like any new role. */
+  cloneFrom: Role | null
+  /** Whether the acting role may author roles (gates the "Clone to edit" action). */
+  canManage: boolean
   permissions: Permission[]
   permsLoading: boolean
   permsError: boolean
   saving: boolean
   deleting: boolean
   onCancel: () => void
+  onClone: (source: Role) => void
   onSubmit: (payload: EditorPayload) => void
   onDelete: (role: Role) => void
 }) {
   const isNew = base === null
   const isSystem = base?.system ?? false
+  const isClone = isNew && cloneFrom !== null
   // SYSTEM roles are immutable; new + CUSTOM roles are editable.
   const editable = isNew || !isSystem
+  // A clone seeds its fields from the source role; a blank new role from nothing.
+  const seed = base ?? cloneFrom
 
-  const [name, setName] = React.useState(base?.name ?? "")
-  const [desc, setDesc] = React.useState(base?.description ?? "")
-  const [color, setColor] = React.useState(base?.hexColor ?? DEFAULT_ROLE_COLOR)
+  const [name, setName] = React.useState(
+    isClone ? `${cloneFrom!.name} (copy)` : (base?.name ?? "")
+  )
+  const [desc, setDesc] = React.useState(seed?.description ?? "")
+  const [color, setColor] = React.useState(seed?.hexColor ?? DEFAULT_ROLE_COLOR)
   const [selected, setSelected] = React.useState<Set<string>>(
-    () => new Set(base?.permissionCodes ?? [])
+    () => new Set(seed?.permissionCodes ?? [])
   )
   const [confirmDel, setConfirmDel] = React.useState(false)
   const valid = name.trim().length > 0
@@ -192,14 +225,21 @@ function RoleEditor({
         <ConsolePageHeader
           title={isNew ? "Create role" : base.name}
           sub={
-            isNew
-              ? "Name the role and grant the permissions it can use. Permissions can be changed later."
-              : isSystem
-                ? "Built-in system role — view the permissions it grants."
-                : "Edit the role’s details and the permissions it grants."
+            isClone
+              ? `Cloned from “${cloneFrom!.name}”. Edit and save as a new custom role.`
+              : isNew
+                ? "Name the role and grant the permissions it can use. Permissions can be changed later."
+                : isSystem
+                  ? "Built-in system role — view the permissions it grants, or clone it to create an editable copy."
+                  : "Edit the role’s details and the permissions it grants."
           }
           actions={
-            base && !isSystem ? (
+            isSystem && canManage ? (
+              <Button onClick={() => onClone(base!)}>
+                <CopyIcon data-icon="inline-start" />
+                Clone to edit
+              </Button>
+            ) : base && !isSystem ? (
               <Button
                 variant="outline"
                 onClick={() => setConfirmDel(true)}
@@ -216,7 +256,8 @@ function RoleEditor({
       {isSystem && (
         <Note tone="info" icon={<InfoIcon />}>
           This is a built-in system role. Its permissions are fixed and can’t be
-          edited.
+          edited — <b>clone it</b> to create an editable custom role with the
+          same permissions.
         </Note>
       )}
 
@@ -267,7 +308,9 @@ function RoleEditor({
                 title="Custom colour"
                 className={cn(
                   "relative grid size-6 place-items-center rounded-full border border-dashed text-muted-foreground",
-                  editable ? "cursor-pointer hover:border-primary" : "opacity-50"
+                  editable
+                    ? "cursor-pointer hover:border-primary"
+                    : "opacity-50"
                 )}
               >
                 <PaletteIcon className="size-3.5" />
@@ -337,11 +380,15 @@ function RoleEditor({
                       onClick={() => toggleGroup(codes)}
                       className={cn(
                         "flex w-full items-center gap-[11px] bg-muted/35 px-4 py-2.5 text-left",
-                        editable ? "cursor-pointer hover:bg-muted/55" : "cursor-default"
+                        editable
+                          ? "cursor-pointer hover:bg-muted/55"
+                          : "cursor-default"
                       )}
                     >
                       <span className="grid size-[26px] shrink-0 place-items-center rounded-[7px] bg-primary/10 text-primary [&>svg]:size-[14px]">
-                        <AccessGlyph name={GROUP_ICON[group.code] ?? "layers"} />
+                        <AccessGlyph
+                          name={GROUP_ICON[group.code] ?? "layers"}
+                        />
                       </span>
                       <span className="flex-1 text-[12px] font-semibold">
                         {group.label}
@@ -406,7 +453,11 @@ function RoleEditor({
             Cancel
           </Button>
           <Button disabled={!valid || saving} onClick={submit}>
-            <CheckIcon data-icon="inline-start" />
+            {saving ? (
+              <Loader2Icon data-icon="inline-start" className="animate-spin" />
+            ) : (
+              <CheckIcon data-icon="inline-start" />
+            )}
             {saving
               ? isNew
                 ? "Creating…"
@@ -430,8 +481,8 @@ function RoleEditor({
           body={
             <p>
               This permanently removes the role. Members currently holding it
-              lose its access immediately. A role that is still assigned can’t be
-              deleted.
+              lose its access immediately. A role that is still assigned can’t
+              be deleted.
             </p>
           }
         />
@@ -442,7 +493,18 @@ function RoleEditor({
 
 /* ============================================================== roles list === */
 
-function RoleCard({ role, onOpen }: { role: Role; onOpen: () => void }) {
+function RoleCard({
+  role,
+  total,
+  canManage,
+  onOpen,
+}: {
+  role: Role
+  /** Size of the permission catalogue — the denominator in "granted / total". */
+  total: number
+  canManage: boolean
+  onOpen: () => void
+}) {
   const count = role.permissions.length
   return (
     <div
@@ -465,16 +527,43 @@ function RoleCard({ role, onOpen }: { role: Role; onOpen: () => void }) {
         </div>
       </div>
       <div className="mb-[11px] flex gap-6 border-y py-[11px]">
+        {/* permissions — real (granted / catalogue total) */}
         <div>
-          <b className="text-[17px] font-bold tabular-nums">{count}</b>
+          <b className="text-[17px] font-bold tabular-nums">
+            {count}
+            {total > 0 && (
+              <span className="font-semibold text-muted-foreground">
+                /{total}
+              </span>
+            )}
+          </b>
           <span className="mt-px block text-[10.5px] text-muted-foreground">
             {count === 1 ? "permission" : "permissions"}
           </span>
         </div>
+        {/* users assigned — no per-role member API yet; flagged, not faked */}
+        <div>
+          <span className="flex h-[22px] items-center">
+            <PendingBadge />
+          </span>
+          <span className="mt-px block text-[10.5px] text-muted-foreground">
+            users assigned
+          </span>
+        </div>
       </div>
-      <div className="flex items-center justify-end">
+      <div className="flex items-center justify-between">
+        {/* assignee avatars — placeholder silhouette until the members-per-role
+            API lands (kept to match the design; not real identities) */}
+        <div className="flex items-center -space-x-1.5" aria-hidden="true">
+          {[0, 1, 2].map((i) => (
+            <span
+              key={i}
+              className="size-[22px] rounded-full border border-dashed border-muted-foreground/30 bg-muted/40"
+            />
+          ))}
+        </div>
         <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary [&>svg]:size-[13px]">
-          {role.system ? "View" : "Edit"}
+          {role.system ? (canManage ? "View / clone" : "View") : "Edit"}
           <ArrowRightIcon />
         </span>
       </div>
@@ -499,6 +588,19 @@ export function AccessRolesPage() {
   const [editing, setEditing] = React.useState<Role | "new" | null>(
     editParam === "new" ? "new" : null
   )
+  // The system role a pending "new" editor is cloning from (null = blank new role).
+  const [cloneSource, setCloneSource] = React.useState<Role | null>(null)
+  // Permission-catalogue size — the "/ total" denominator on each card + toolbar.
+  const permTotal = permsQuery.data?.length ?? 0
+
+  const startCreate = () => {
+    setCloneSource(null)
+    setEditing("new")
+  }
+  const startClone = (source: Role) => {
+    setCloneSource(source)
+    setEditing("new")
+  }
 
   // A ?edit=<roleCode> deep-link resolves once roles load (derived, not state);
   // a local `editing` selection (card click / Create) takes precedence.
@@ -521,6 +623,7 @@ export function AccessRolesPage() {
 
   const close = () => {
     setEditing(null)
+    setCloneSource(null)
     if (editParam) navigate("/access-roles", { replace: true })
   }
 
@@ -583,13 +686,25 @@ export function AccessRolesPage() {
   if (active) {
     return (
       <RoleEditor
+        // Force a fresh mount per target so the editor's seeded useState resets
+        // when switching view↔clone↔another role (same JSX position otherwise).
+        key={
+          active === "new"
+            ? cloneSource
+              ? `clone-${cloneSource.id}`
+              : "new"
+            : `edit-${active.id}`
+        }
         base={active === "new" ? null : active}
+        cloneFrom={active === "new" ? cloneSource : null}
+        canManage={canManage}
         permissions={permsQuery.data ?? []}
         permsLoading={permsQuery.isLoading}
         permsError={permsQuery.isError}
         saving={createMut.isPending || updateMut.isPending}
         deleting={deleteMut.isPending}
         onCancel={close}
+        onClone={startClone}
         onSubmit={handleSubmit}
         onDelete={handleDelete}
       />
@@ -603,7 +718,7 @@ export function AccessRolesPage() {
         sub="Build roles from platform permissions, then assign them to users from the Users tab. Permissions can be changed anytime."
         actions={
           canManage && (
-            <Button onClick={() => setEditing("new")}>
+            <Button onClick={startCreate}>
               <PlusIcon data-icon="inline-start" />
               Create role
             </Button>
@@ -641,10 +756,13 @@ export function AccessRolesPage() {
                 placeholder="Search roles…"
               />
             </InputGroup>
-            <Tagpill>
-              <KeyRoundIcon />
-              {(roles ?? []).length} roles
-            </Tagpill>
+            <Tagpill>{(roles ?? []).length} roles</Tagpill>
+            {permTotal > 0 && (
+              <Tagpill>
+                <KeyRoundIcon />
+                {permTotal} permissions
+              </Tagpill>
+            )}
           </div>
 
           <div>
@@ -657,7 +775,13 @@ export function AccessRolesPage() {
             {system.length ? (
               <div className="grid [grid-template-columns:repeat(auto-fill,minmax(300px,1fr))] gap-3.5">
                 {system.map((r) => (
-                  <RoleCard key={r.id} role={r} onOpen={() => setEditing(r)} />
+                  <RoleCard
+                    key={r.id}
+                    role={r}
+                    total={permTotal}
+                    canManage={canManage}
+                    onOpen={() => setEditing(r)}
+                  />
                 ))}
               </div>
             ) : (
@@ -677,7 +801,13 @@ export function AccessRolesPage() {
             {custom.length ? (
               <div className="grid [grid-template-columns:repeat(auto-fill,minmax(300px,1fr))] gap-3.5">
                 {custom.map((r) => (
-                  <RoleCard key={r.id} role={r} onOpen={() => setEditing(r)} />
+                  <RoleCard
+                    key={r.id}
+                    role={r}
+                    total={permTotal}
+                    canManage={canManage}
+                    onOpen={() => setEditing(r)}
+                  />
                 ))}
               </div>
             ) : (
@@ -688,7 +818,7 @@ export function AccessRolesPage() {
                   your team.
                 </p>
                 {canManage && (
-                  <Button variant="outline" onClick={() => setEditing("new")}>
+                  <Button variant="outline" onClick={startCreate}>
                     <PlusIcon data-icon="inline-start" />
                     Create role
                   </Button>

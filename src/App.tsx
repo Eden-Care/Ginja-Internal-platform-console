@@ -15,6 +15,7 @@ import { LoginPage } from "@/pages/login"
 import { AuthLoginPage } from "@/pages/authentication/login"
 import { ForgotPasswordPage } from "@/pages/authentication/forgot-password"
 import { MfaEnrollPage } from "@/pages/authentication/mfa-enroll"
+import { AcceptInvitePage } from "@/pages/accept-invite"
 import { ConsoleDashboardPage } from "@/pages/platform-dashboard"
 import { ApprovalsPage } from "@/pages/approvals"
 import { ApprovalReviewPage } from "@/pages/approvals/review"
@@ -182,6 +183,7 @@ export function App() {
       <Route path="/auth/login" element={<AuthLoginPage />} />
       <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/auth/mfa" element={<MfaEnrollPage />} />
+      <Route path="/accept-invite" element={<AcceptInvitePage />} />
       <Route element={<RequireAuth />}>
         <Route path="/*" element={<AppShell />} />
       </Route>

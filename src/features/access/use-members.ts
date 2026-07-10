@@ -1,21 +1,35 @@
-import { useQuery } from "@tanstack/react-query"
+import { keepPreviousData, useQuery } from "@tanstack/react-query"
 
 import {
   fetchMember,
   fetchMemberActivity,
+  fetchMemberMetrics,
   fetchMembers,
   type MemberQuery,
 } from "./api"
 import { memberKeys } from "./queries"
 
-/** A page of members for the Users directory. Search + status filter are applied
-   client-side over the loaded page (kept simple for an internal console). The
-   endpoint is admin-only, so callers on non-admin screens pass `enabled: false`
-   to avoid a guaranteed 403 (names then fall back to the raw id/email). */
+/** A page of members for the Users directory. Search (`q`) and status filter are
+   applied SERVER-SIDE — both are forwarded as query params to GET /members.
+   `keepPreviousData` keeps the current rows on screen while a new filter/search
+   loads, so tab switches don't blank the table. The endpoint is admin-only, so
+   callers on non-admin screens pass `enabled: false` to avoid a guaranteed 403
+   (names then fall back to the raw id/email). */
 export function useMembers(query: MemberQuery = {}, enabled = true) {
   return useQuery({
     queryKey: memberKeys.list(query),
     queryFn: () => fetchMembers(query),
+    placeholderData: keepPreviousData,
+    enabled,
+  })
+}
+
+/** Directory aggregates (grand total, per-status counts, MFA adoption) for the
+   filter-tab counts. Invalidated alongside the list on any member mutation. */
+export function useMemberMetrics(enabled = true) {
+  return useQuery({
+    queryKey: memberKeys.metrics(),
+    queryFn: fetchMemberMetrics,
     enabled,
   })
 }

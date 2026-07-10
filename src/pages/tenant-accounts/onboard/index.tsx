@@ -40,6 +40,7 @@ import {
   type OnboardInput,
   type OnboardStep,
 } from "@/features/payers/onboarding"
+import { replaceDocument } from "@/features/payers/api"
 import {
   useAssignStep,
   useOnboardingSteps,
@@ -176,7 +177,8 @@ function OnboardWizard({
   const { form, set, step, setStep, assignees, setAssignees } = wiz
 
   // Real platform members back the "Section owner" picker (no more mock roster).
-  const membersQ = useMembers()
+  // Only ACTIVE members are assignable (skip INVITED/SUSPENDED).
+  const membersQ = useMembers({ status: "ACTIVE" })
   const teamOptions = React.useMemo<OwnerOption[]>(
     () => (membersQ.data?.items ?? []).map(toOwnerOption),
     [membersQ.data]
@@ -428,6 +430,29 @@ function OnboardWizard({
       }
     }
     set("secondaries", [])
+  }
+
+  /** Replace the file behind an already-uploaded KYC document (fixes a
+     wrongly-uploaded file without losing its category/review history). */
+  const replaceUploadedDocument = async (documentId: string, file: File) => {
+    if (!draft.payerId || !draft.tenantId) return
+    setSaving(true)
+    try {
+      await replaceDocument(draft.payerId, draft.tenantId, documentId, file)
+      qc.invalidateQueries({ queryKey: payerKeys.detail(draft.payerId) })
+      qc.invalidateQueries({ queryKey: payerKeys.steps(draft.payerId) })
+      set(
+        "documents",
+        form.documents.map((d) =>
+          d.documentId === documentId ? { ...d, fileName: file.name } : d
+        )
+      )
+      toast.success("Document replaced — back to Pending review.")
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn’t replace this document.")
+    } finally {
+      setSaving(false)
+    }
   }
 
   const submit = async () => {
@@ -748,6 +773,8 @@ function OnboardWizard({
                   form={form}
                   set={trackedSet}
                   showErrors={tried.has("documents")}
+                  onReplace={replaceUploadedDocument}
+                  busy={busy}
                 />
               )}
               {cur.k === "review" && (

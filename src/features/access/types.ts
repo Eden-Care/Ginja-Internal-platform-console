@@ -213,6 +213,39 @@ export function toMember(d: MemberDTO): Member {
   }
 }
 
+/** GET /platform/organization/members/metrics — directory aggregates: a grand
+   total, per-status counts, and MFA-adoption. Powers the filter-tab counts.
+   (Live-verified shape; not yet in the Postman collection.) */
+export type MemberMetricsDTO = {
+  total: number
+  by_status?: Partial<Record<MemberStatus, number>> | null
+  mfa_enabled?: number | null
+  mfa_adoption_pct?: number | null
+}
+
+export type MemberMetrics = {
+  total: number
+  /** Count per status — always all four keys (missing statuses default to 0). */
+  byStatus: Record<MemberStatus, number>
+  mfaEnabled: number
+  mfaAdoptionPct: number
+}
+
+export function toMemberMetrics(d: MemberMetricsDTO): MemberMetrics {
+  const bs = d.by_status ?? {}
+  return {
+    total: d.total ?? 0,
+    byStatus: {
+      INVITED: bs.INVITED ?? 0,
+      ACTIVE: bs.ACTIVE ?? 0,
+      SUSPENDED: bs.SUSPENDED ?? 0,
+      DISABLED: bs.DISABLED ?? 0,
+    },
+    mfaEnabled: d.mfa_enabled ?? 0,
+    mfaAdoptionPct: d.mfa_adoption_pct ?? 0,
+  }
+}
+
 /* ----------------------------------------------------- member activity --- */
 
 /** One row of a member's activity feed (GET /members/{id}/activity) — an

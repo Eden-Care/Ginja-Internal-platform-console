@@ -497,7 +497,12 @@ export function PayerRecordPage() {
             />
           )}
           {tab === "documents" && (
-            <RecDocuments payerId={payerId} primary={primary} />
+            <RecDocuments
+              payerId={payerId}
+              primary={primary}
+              actAllowed={actAllowed}
+              lockTip={lockTip}
+            />
           )}
           {tab === "activity" && (
             <div className="flex flex-col gap-3.5">

@@ -1,6 +1,9 @@
+import * as React from "react"
 import {
   FileCheck2Icon,
   FileTextIcon,
+  Loader2Icon,
+  RefreshCwIcon,
   TriangleAlertIcon,
   UploadIcon,
   XIcon,
@@ -34,13 +37,20 @@ export function StepDocuments({
   form,
   set,
   showErrors = false,
+  onReplace,
+  busy = false,
 }: {
   form: OnboardingForm
   set: SetField
   /** Escalate the "documents missing" note + highlight empty rows (set once
      Continue is tried). */
   showErrors?: boolean
+  /** Replace the file behind an already-uploaded document (server-backed —
+     resets it to Pending review). Only offered once `documentId` exists. */
+  onReplace?: (documentId: string, file: File) => void | Promise<void>
+  busy?: boolean
 }) {
+  const [replacingCat, setReplacingCat] = React.useState<string | null>(null)
   const docFor = (cat: string) => form.documents.find((d) => d.category === cat)
 
   const pickFile = (cat: string, file?: File | null) => {
@@ -66,6 +76,19 @@ export function StepDocuments({
     if (!cur) return
     const others = form.documents.filter((d) => d.category !== cat)
     set("documents", [...others, { ...cur, ...patch }])
+  }
+  const pickReplace = async (cat: string, documentId: string, file?: File | null) => {
+    if (!file || !onReplace) return
+    if (file.size > MAX_BYTES) {
+      toast.error(`${file.name} is over the 25 MB limit.`)
+      return
+    }
+    setReplacingCat(cat)
+    try {
+      await onReplace(documentId, file)
+    } finally {
+      setReplacingCat(null)
+    }
   }
 
   const missing = REQUIRED_DOC_CATEGORIES.filter((c) => !docFor(c)).length
@@ -124,6 +147,29 @@ export function StepDocuments({
                       >
                         <XIcon />
                       </Button>
+                    ) : onReplace && doc.documentId ? (
+                      <label
+                        className={cn(
+                          "inline-flex size-7 shrink-0 items-center justify-center rounded-[min(var(--radius-md),12px)] transition-colors hover:bg-muted/60",
+                          (busy || replacingCat === cat) &&
+                            "pointer-events-none opacity-50"
+                        )}
+                        title="Replace file"
+                      >
+                        <input
+                          type="file"
+                          accept={ACCEPT}
+                          className="hidden"
+                          onChange={(e) =>
+                            pickReplace(cat, doc.documentId!, e.target.files?.[0])
+                          }
+                        />
+                        {replacingCat === cat ? (
+                          <Loader2Icon className="size-4 animate-spin" />
+                        ) : (
+                          <RefreshCwIcon className="size-4" />
+                        )}
+                      </label>
                     ) : null}
                   </div>
                 ) : (

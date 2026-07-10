@@ -1,5 +1,11 @@
 import { apiPost } from "@/lib/api/client"
-import { toSession, type LoginRequest, type LoginResult, type Session } from "./types"
+import {
+  toSession,
+  type AcceptInviteRequest,
+  type LoginRequest,
+  type LoginResult,
+  type Session,
+} from "./types"
 
 /** POST /platform/organization/auth/login → a client Session. */
 export async function loginRequest(creds: LoginRequest): Promise<Session> {
@@ -8,6 +14,16 @@ export async function loginRequest(creds: LoginRequest): Promise<Session> {
     creds
   )
   return toSession(result)
+}
+
+/** POST /platform/organization/auth/accept-invite — validates the invite token,
+   sets the member's password and activates them. Public (no auth); the API's
+   `result` is null, so this resolves to void. The member then signs in via
+   `loginRequest`. */
+export async function acceptInviteRequest(
+  body: AcceptInviteRequest
+): Promise<void> {
+  await apiPost("/platform/organization/auth/accept-invite", body)
 }
 
 /** POST /platform/organization/auth/logout — revokes the current session.

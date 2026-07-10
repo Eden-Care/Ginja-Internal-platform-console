@@ -647,6 +647,8 @@ export const PAYERS: Payer[] = [
 export const REGISTRY: RegistryModule[] = [
   {
     id: "claims",
+    code: "CLAIMS",
+    url: "/claims",
     name: "Claims Management",
     icon: "claims",
     version: "4.2.0",
@@ -679,6 +681,8 @@ export const REGISTRY: RegistryModule[] = [
   },
   {
     id: "underwriting",
+    code: "UNDERWRITING",
+    url: "/underwriting",
     name: "Underwriting",
     icon: "underwriting",
     version: "3.1.4",
@@ -694,6 +698,8 @@ export const REGISTRY: RegistryModule[] = [
   },
   {
     id: "providers",
+    code: "PROVIDERS",
+    url: "/providers",
     name: "Provider Network",
     icon: "providers",
     version: "2.8.1",
@@ -713,6 +719,8 @@ export const REGISTRY: RegistryModule[] = [
   },
   {
     id: "members",
+    code: "MEMBERS",
+    url: "/members",
     name: "Member Management",
     icon: "crm",
     version: "3.5.0",
@@ -732,6 +740,8 @@ export const REGISTRY: RegistryModule[] = [
   },
   {
     id: "products",
+    code: "PRODUCTS",
+    url: "/products",
     name: "Products & Benefits",
     icon: "products",
     version: "4.0.2",
@@ -751,6 +761,8 @@ export const REGISTRY: RegistryModule[] = [
   },
   {
     id: "finance",
+    code: "FINANCE",
+    url: "/finance",
     name: "Finance & Billing",
     icon: "finance",
     version: "3.9.1",
@@ -766,6 +778,8 @@ export const REGISTRY: RegistryModule[] = [
   },
   {
     id: "reporting",
+    code: "REPORTING",
+    url: "/reporting",
     name: "Reporting & Analytics",
     icon: "analytics",
     version: "2.4.0",
@@ -790,6 +804,8 @@ export const REGISTRY: RegistryModule[] = [
   },
   {
     id: "reinsurance",
+    code: "REINSURANCE",
+    url: "/reinsurance",
     name: "Reinsurance",
     icon: "reinsurance",
     version: "1.6.0",
@@ -804,6 +820,8 @@ export const REGISTRY: RegistryModule[] = [
   },
   {
     id: "cases",
+    code: "CASES",
+    url: "/cases",
     name: "Case Management",
     icon: "inbox",
     version: "2.0.5",
@@ -822,6 +840,8 @@ export const REGISTRY: RegistryModule[] = [
   },
   {
     id: "wellness",
+    code: "WELLNESS",
+    url: "/wellness",
     name: "Wellness & Prevention",
     icon: "zap",
     version: "0.9.0",
