@@ -69,6 +69,13 @@ export function groupPermissions(perms: Permission[]): PermissionGroup[] {
   return groups
 }
 
+/** A capped preview of a member holding a role — powers the card avatar strip.
+   (Pending backend: `assignees_preview` on the role payload — see roles ticket.) */
+export type RoleAssigneeDTO = {
+  id: number
+  full_name: string | null
+}
+
 /** RoleResponse — `permissions` carries the role's granted capabilities; the
    role's display name is `role_name` (the `name` is the UPPER_SNAKE authority). */
 export type RoleDTO = {
@@ -83,6 +90,13 @@ export type RoleDTO = {
   hex_color: string | null
   permissions?: PermissionDTO[] | null
   region_scopes?: string[] | null
+  /** Total members holding this role. Backend enrichment — absent until the
+     roles ticket lands (card then shows the real count instead of "API pending"). */
+  assigned_member_count?: number | null
+  /** Capped (≤7) preview of assignees for the avatar strip. Backend enrichment. */
+  assignees_preview?: RoleAssigneeDTO[] | null
+  /** Convenience count of granted permissions; falls back to permissions.length. */
+  permission_count?: number | null
   created_at: string
 }
 
@@ -101,8 +115,17 @@ export type Role = {
   /** Permission codes this role grants. */
   permissionCodes: string[]
   permissions: Permission[]
+  /** Count of granted permissions (backend `permission_count` when present,
+     else derived from `permissions`). */
+  permissionCount: number
   /** Region codes the role is scoped to (empty = no restriction). */
   regionScopes: string[]
+  /** Total members holding this role — `null` until the backend returns it
+     (card shows "API pending" while null). */
+  assignedMemberCount: number | null
+  /** Capped preview of assignees for the avatar strip — `null` until the backend
+     returns it. */
+  assigneesPreview: { id: number; name: string }[] | null
   createdAt: string
 }
 
@@ -117,7 +140,14 @@ export function toRole(d: RoleDTO): Role {
     hexColor: d.hex_color,
     permissionCodes: permissions.map((p) => p.code),
     permissions,
+    permissionCount: d.permission_count ?? permissions.length,
     regionScopes: d.region_scopes ?? [],
+    assignedMemberCount: d.assigned_member_count ?? null,
+    assigneesPreview:
+      d.assignees_preview?.map((a) => ({
+        id: a.id,
+        name: a.full_name ?? "",
+      })) ?? null,
     createdAt: d.created_at,
   }
 }

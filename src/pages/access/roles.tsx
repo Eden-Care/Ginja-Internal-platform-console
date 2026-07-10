@@ -19,6 +19,7 @@ import {
 import { toast } from "sonner"
 
 import { cn } from "@/lib/utils"
+import { initials2 } from "@/lib/console-format"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -505,7 +506,14 @@ function RoleCard({
   canManage: boolean
   onOpen: () => void
 }) {
-  const count = role.permissions.length
+  const count = role.permissionCount
+  // Per-role member data is backend enrichment (assigned_member_count /
+  // assignees_preview). While the API omits it we render "API pending" rather
+  // than stitch it client-side; once present the card renders it verbatim.
+  const assigned = role.assignedMemberCount
+  const preview = role.assigneesPreview ?? []
+  const hasAssignData = assigned != null
+  const overflow = assigned != null ? assigned - preview.length : 0
   return (
     <div
       role="button"
@@ -541,27 +549,56 @@ function RoleCard({
             {count === 1 ? "permission" : "permissions"}
           </span>
         </div>
-        {/* users assigned — no per-role member API yet; flagged, not faked */}
+        {/* users assigned — real once the backend returns it; else API pending */}
         <div>
-          <span className="flex h-[22px] items-center">
-            <PendingBadge />
-          </span>
+          {hasAssignData ? (
+            <b className="text-[17px] font-bold tabular-nums">{assigned}</b>
+          ) : (
+            <span className="flex h-[22px] items-center">
+              <PendingBadge />
+            </span>
+          )}
           <span className="mt-px block text-[10.5px] text-muted-foreground">
-            users assigned
+            {hasAssignData && assigned === 1 ? "user assigned" : "users assigned"}
           </span>
         </div>
       </div>
       <div className="flex items-center justify-between">
-        {/* assignee avatars — placeholder silhouette until the members-per-role
-            API lands (kept to match the design; not real identities) */}
-        <div className="flex items-center -space-x-1.5" aria-hidden="true">
-          {[0, 1, 2].map((i) => (
-            <span
-              key={i}
-              className="size-[22px] rounded-full border border-dashed border-muted-foreground/30 bg-muted/40"
-            />
-          ))}
-        </div>
+        {/* assignee avatars — real preview when present; else a placeholder
+            silhouette flagging the pending backend data */}
+        {hasAssignData ? (
+          preview.length ? (
+            <div className="flex items-center -space-x-1.5">
+              {preview.slice(0, 7).map((u) => (
+                <span
+                  key={u.id}
+                  title={u.name}
+                  className="grid size-[22px] place-items-center rounded-full border-2 border-card bg-primary/10 text-[9px] font-semibold text-primary"
+                >
+                  {initials2(u.name)}
+                </span>
+              ))}
+              {overflow > 0 && (
+                <span className="grid size-[22px] place-items-center rounded-full border-2 border-card bg-muted text-[9px] font-semibold text-muted-foreground">
+                  +{overflow}
+                </span>
+              )}
+            </div>
+          ) : (
+            <span className="text-[11.5px] text-muted-foreground">
+              No users yet
+            </span>
+          )
+        ) : (
+          <div className="flex items-center -space-x-1.5" aria-hidden="true">
+            {[0, 1, 2].map((i) => (
+              <span
+                key={i}
+                className="size-[22px] rounded-full border border-dashed border-muted-foreground/30 bg-muted/40"
+              />
+            ))}
+          </div>
+        )}
         <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary [&>svg]:size-[13px]">
           {role.system ? (canManage ? "View / clone" : "View") : "Edit"}
           <ArrowRightIcon />
