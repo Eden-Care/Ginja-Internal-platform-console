@@ -3,9 +3,7 @@ import {
   BracesIcon,
   CheckIcon,
   InfoIcon,
-  PencilIcon,
   PlusIcon,
-  TrashIcon,
   TriangleAlertIcon,
 } from "lucide-react"
 import { toast } from "sonner"
@@ -15,7 +13,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
-import { MiniBadge } from "@/components/console/tagpill"
+import { MBadge } from "@/components/hifi/badge"
+import { hifiBtn } from "@/components/hifi/button"
+import { HiIcon } from "@/components/hifi/icon"
 import { Note } from "@/components/console/note"
 import { LoadingSpinner } from "@/components/common/loading"
 import {
@@ -120,7 +120,7 @@ export function GlobalPlaceholdersDrawer({
       <SheetContent
         side="right"
         showCloseButton
-        className="flex flex-col gap-0 p-0 data-[side=right]:w-[600px] data-[side=right]:max-w-[92vw] data-[side=right]:sm:max-w-[600px]"
+        className="flex flex-col gap-0 p-0 data-[side=right]:w-[600px] data-[side=right]:max-w-[92vw] data-[side=right]:sm:max-w-[600px] [&_svg]:[stroke-width:1.75]"
       >
         <div className="flex shrink-0 items-center gap-[11px] border-b px-[18px] py-4 pr-12">
           <span className="grid size-[38px] place-items-center rounded-[10px] bg-ph-global/[0.14] text-ph-global [&>svg]:size-[17px]">
@@ -159,7 +159,7 @@ export function GlobalPlaceholdersDrawer({
               .
             </Note>
           ) : (
-            <div className="flex flex-col overflow-hidden rounded-[11px] border">
+            <div className="flex flex-col overflow-hidden rounded-[11px] border border-input">
               {rows.length === 0 ? (
                 <div className="px-[13px] py-8 text-center text-[12.5px] text-muted-foreground">
                   No global placeholders yet.
@@ -212,13 +212,13 @@ export function GlobalPlaceholdersDrawer({
                       <div className="flex items-center justify-end gap-2">
                         <Button
                           variant="ghost"
-                          size="sm"
+                          className={hifiBtn}
                           onClick={() => setEditingId(null)}
                         >
                           Cancel
                         </Button>
                         <Button
-                          size="sm"
+                          className={hifiBtn}
                           disabled={
                             !editDraft.value.trim() || updateMut.isPending
                           }
@@ -249,12 +249,12 @@ export function GlobalPlaceholdersDrawer({
                         </div>
                       </div>
                       <div className="flex shrink-0 items-center gap-2">
-                        <MiniBadge
+                        <MBadge
                           tone={r.active ? "success" : "neutral"}
                           className="text-[10px]"
                         >
                           {r.active ? "Active" : "Inactive"}
-                        </MiniBadge>
+                        </MBadge>
                         {!readonly ? (
                           <Switch
                             checked={r.active}
@@ -276,9 +276,9 @@ export function GlobalPlaceholdersDrawer({
                                 desc: r.description,
                               })
                             }}
-                            className="grid size-[30px] place-items-center rounded-lg border border-input bg-card text-muted-foreground hover:bg-muted hover:text-foreground [&>svg]:size-[14px]"
+                            className="grid size-[30px] place-items-center rounded-[8px] border border-input bg-card text-muted-foreground hover:bg-muted hover:text-foreground [&>svg]:size-[14px]"
                           >
-                            <PencilIcon />
+                            <HiIcon name="pencil" />
                           </button>
                         ) : null}
                         {!readonly ? (
@@ -290,9 +290,9 @@ export function GlobalPlaceholdersDrawer({
                               deleteMut.variables === r.id
                             }
                             onClick={() => remove(r.id, r.key)}
-                            className="grid size-[30px] place-items-center rounded-lg border border-input bg-card text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50 [&>svg]:size-[14px]"
+                            className="grid size-[30px] place-items-center rounded-[8px] border border-input bg-card text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50 [&>svg]:size-[14px]"
                           >
-                            <TrashIcon />
+                            <HiIcon name="trash" />
                           </button>
                         ) : null}
                       </div>
@@ -358,11 +358,15 @@ export function GlobalPlaceholdersDrawer({
                   />
                 </div>
                 <div className="mt-3 flex items-center justify-end gap-2">
-                  <Button variant="ghost" size="sm" onClick={resetAdd}>
+                  <Button
+                    variant="ghost"
+                    className={hifiBtn}
+                    onClick={resetAdd}
+                  >
                     Cancel
                   </Button>
                   <Button
-                    size="sm"
+                    className={hifiBtn}
                     disabled={
                       !keyOk || !draft.value.trim() || createMut.isPending
                     }
@@ -390,7 +394,7 @@ export function GlobalPlaceholdersDrawer({
           <span className="flex-1 text-[11.5px] text-muted-foreground">
             {rows.length} placeholders · {activeCount} active
           </span>
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" className={hifiBtn} onClick={onClose}>
             Done
           </Button>
         </div>

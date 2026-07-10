@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils"
 import { fmtDate, versionStatusBadge } from "@/lib/console-format"
 import { Button } from "@/components/ui/button"
 import { Panel, PanelBody, PanelHead } from "@/components/console/panel"
-import { MiniBadge } from "@/components/console/tagpill"
+import { MBadge } from "@/components/hifi/badge"
 import { Note } from "@/components/console/note"
 import { LoadingSpinner } from "@/components/common/loading"
 import { DiffSegments } from "@/pages/email-templates/components/diff-text"
@@ -79,7 +79,7 @@ export function SmsVersionsTab({
 
   return (
     <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[340px_1fr]">
-      <Panel>
+      <Panel className="rounded-[12px]">
         <PanelHead icon={<HistoryIcon />} title="Version history" />
         <PanelBody className="p-2">
           {rows.length === 0 ? (
@@ -111,7 +111,7 @@ export function SmsVersionsTab({
                   >
                     <span
                       className={cn(
-                        "mono grid size-[38px] shrink-0 place-items-center rounded-full text-[12px] font-bold",
+                        "grid size-[38px] shrink-0 place-items-center rounded-full text-[12px] font-bold",
                         v.current
                           ? "bg-primary/[0.14] text-primary"
                           : "bg-muted text-muted-foreground"
@@ -123,9 +123,9 @@ export function SmsVersionsTab({
                       <div className="flex items-center gap-2">
                         <b className="text-[13.5px]">v{v.versionLabel}</b>
                         {v.status ? (
-                          <MiniBadge tone={versionStatusBadge(v.status).tone}>
+                          <MBadge tone={versionStatusBadge(v.status).tone}>
                             {versionStatusBadge(v.status).label}
-                          </MiniBadge>
+                          </MBadge>
                         ) : null}
                       </div>
                       <div className="mt-[3px] truncate text-[12px] text-muted-foreground">
@@ -150,7 +150,7 @@ export function SmsVersionsTab({
                         }}
                       >
                         <HistoryIcon data-icon="inline-start" />
-                        Rollback
+                        Roll back
                       </Button>
                     ) : null}
                   </div>
@@ -161,7 +161,7 @@ export function SmsVersionsTab({
         </PanelBody>
       </Panel>
 
-      <Panel>
+      <Panel className="rounded-[12px]">
         <PanelHead
           icon={<GitBranchIcon />}
           title="Compare"

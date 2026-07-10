@@ -1,7 +1,13 @@
 /* Thin service over the document-service API (email & SMS templates).
    Points the shared client at DOC_BASE_URL via a per-request baseURL override. */
 
-import { apiGet, apiPost, apiPut, DOC_BASE_URL } from "@/lib/api/client"
+import {
+  apiGet,
+  apiPost,
+  apiPut,
+  DOC_BASE_URL,
+  NOTIFICATIONS_BASE_URL,
+} from "@/lib/api/client"
 import type { Paged, PagedDTO } from "@/lib/api/paged"
 import { toPaged } from "@/lib/api/paged"
 import type { EmailTemplate } from "@/lib/console-data"
@@ -272,6 +278,25 @@ export async function setEmailTemplateArchived(
     `[POST /document-service/api/v1/email-templates/${id}/${action}]`,
     res
   )
+}
+
+/* ------------------------------------------------ send test (notifications) --- */
+
+export type SendTestEmailBody = {
+  template_id: number
+  to_email: string
+  /** Placeholder values used to render the template, keyed by field_key. */
+  data: Record<string, string>
+  template_code?: string
+}
+
+/** POST {notifications}/email/send — queue a templated test email (async, 202). */
+export async function sendTestEmail(body: SendTestEmailBody): Promise<unknown> {
+  const res = await apiPost<unknown>("/email/send", body, {
+    baseURL: NOTIFICATIONS_BASE_URL,
+  })
+  console.log("[POST /notifications/api/v1/email/send]", { body, res })
+  return res
 }
 
 /** Duplicate a template: read its full detail, then POST a copy (new code/name).

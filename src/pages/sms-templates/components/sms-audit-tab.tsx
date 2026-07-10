@@ -73,7 +73,7 @@ export function SmsAuditTab({ templateId }: { templateId?: number }) {
   const count = activityQuery.data?.totalElements ?? rows.length
 
   return (
-    <Panel>
+    <Panel className="rounded-[12px]">
       <PanelHead
         icon={<FileTextIcon />}
         title="Audit log"
@@ -108,7 +108,7 @@ export function SmsAuditTab({ templateId }: { templateId?: number }) {
             No activity recorded yet.
           </div>
         ) : (
-          <div className="flex flex-col">
+          <ol className="flex flex-col">
             {rows.map((a) => {
               const meta = metaFor(a.action)
               const versionInfo =
@@ -121,7 +121,7 @@ export function SmsAuditTab({ templateId }: { templateId?: number }) {
                 .filter(Boolean)
                 .join(" · ")
               return (
-                <div
+                <li
                   key={a.id}
                   className="flex items-start gap-3 border-t px-4 py-[13px] first:border-t-0"
                 >
@@ -135,7 +135,9 @@ export function SmsAuditTab({ templateId }: { templateId?: number }) {
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <b className="text-[13px]">{prettyAction(a.action)}</b>
+                      <b className="text-[13px] font-bold">
+                        {prettyAction(a.action)}
+                      </b>
                       <span className="mono text-[11px] text-muted-foreground">
                         {fmtWhen(a.occurredAt)}
                       </span>
@@ -145,7 +147,7 @@ export function SmsAuditTab({ templateId }: { templateId?: number }) {
                     </div>
                   </div>
                   {a.actor ? (
-                    <span className="inline-flex shrink-0 items-center gap-[7px] text-[11.5px] whitespace-nowrap text-muted-foreground">
+                    <span className="inline-flex shrink-0 items-center gap-[7px] text-[11.5px] text-muted-foreground">
                       <MiniAvatar
                         initials={initials2(a.actor)}
                         className="size-6 text-[9.5px]"
@@ -153,10 +155,10 @@ export function SmsAuditTab({ templateId }: { templateId?: number }) {
                       {a.actor}
                     </span>
                   ) : null}
-                </div>
+                </li>
               )
             })}
-          </div>
+          </ol>
         )}
       </PanelBody>
     </Panel>

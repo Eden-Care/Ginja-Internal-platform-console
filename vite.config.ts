@@ -24,6 +24,12 @@ export default defineConfig({
         changeOrigin: true,
         secure: true,
       },
+      // Notification service (templated email delivery + tracking).
+      "/notifications": {
+        target: API_TARGET,
+        changeOrigin: true,
+        secure: true,
+      },
     },
   },
   resolve: {

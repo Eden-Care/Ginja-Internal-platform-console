@@ -6,7 +6,6 @@ import {
   InfoIcon,
   PlusIcon,
   SaveIcon,
-  TrashIcon,
   TriangleAlertIcon,
 } from "lucide-react"
 import { toast } from "sonner"
@@ -25,10 +24,13 @@ import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { ConsolePageHeader } from "@/components/console/page-header"
 import { Panel, PanelBody, PanelHead } from "@/components/console/panel"
-import { Field, ConsoleSelect } from "@/components/console/form-atoms"
+import { ConsoleSelect } from "@/components/console/form-atoms"
 import { Note } from "@/components/console/note"
 import { Tagpill } from "@/components/console/tagpill"
 import { IconPicker } from "./icon-picker"
+import { hifiBtn } from "@/components/hifi/button"
+import { HiIcon } from "@/components/hifi/icon"
+import { MField, fieldInput } from "@/components/hifi/field"
 
 const MODULE_OWNERS = [
   "Claims Platform",
@@ -59,9 +61,9 @@ export function ModuleForm({
   const [desc, setDesc] = React.useState(ex ? ex.desc : "")
   const [icon, setIcon] = React.useState(ex ? ex.icon : "layers")
   const [url, setUrl] = React.useState(ex ? ex.url : "")
-  const [version, setVersion] = React.useState(
+  // Version isn't editable in the form (matches the hi-fi); still sent on save.
+  const version =
     ex && ex.version && ex.version !== "—" ? ex.version : "1.0.0"
-  )
   const [owner, setOwner] = React.useState(ex ? ex.owner : MODULE_OWNERS[0])
   const [published, setPublished] = React.useState(ex?.status === "Published")
   const [subs, setSubs] = React.useState<SubRow[]>(() =>
@@ -155,24 +157,36 @@ export function ModuleForm({
         crumbs={[]}
         title={ex ? "Edit module" : "Register module"}
         sub={
-          ex
-            ? "Update this module in the platform catalogue."
-            : "Add a module to the platform catalogue. It becomes selectable during tenant onboarding once published."
+          <span className="text-[13px]">
+            {ex
+              ? "Update this module in the platform catalogue."
+              : "Add a module to the platform catalogue. It becomes selectable during tenant onboarding once published."}
+          </span>
         }
         actions={
           <>
-            <Button variant="ghost" onClick={onBack} disabled={saving}>
+            <Button
+              variant="ghost"
+              className={hifiBtn}
+              onClick={onBack}
+              disabled={saving}
+            >
               Cancel
             </Button>
             <Button
               variant="outline"
+              className={hifiBtn}
               onClick={() => save(false)}
               disabled={saving}
             >
               <SaveIcon data-icon="inline-start" />
               Save draft
             </Button>
-            <Button onClick={() => save(true)} disabled={saving}>
+            <Button
+              className={hifiBtn}
+              onClick={() => save(true)}
+              disabled={saving}
+            >
               <CheckIcon data-icon="inline-start" />
               {saving ? "Saving…" : "Save & publish"}
             </Button>
@@ -218,20 +232,21 @@ export function ModuleForm({
           </Note>
 
           <div className="grid grid-cols-1 gap-x-[18px] gap-y-3.5 sm:grid-cols-2">
-            <Field
+            <MField
               label="Module name"
               required
               hint={err("name") || undefined}
               hintTone="error"
             >
               <Input
+                className={fieldInput}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 aria-invalid={!!err("name")}
                 placeholder="e.g. Claims Engine"
               />
-            </Field>
-            <Field
+            </MField>
+            <MField
               label="Module code"
               required
               hint={
@@ -243,7 +258,7 @@ export function ModuleForm({
               hintTone={err("code") ? "error" : "muted"}
             >
               <Input
-                className="mono text-[12.5px]"
+                className={cn(fieldInput, "mono text-[12.5px]")}
                 value={effCode}
                 disabled={!!ex}
                 aria-invalid={!!err("code")}
@@ -253,12 +268,12 @@ export function ModuleForm({
                 }}
                 placeholder="CLAIMS_ENGINE"
               />
-            </Field>
+            </MField>
           </div>
 
-          <Field label="Description">
+          <MField label="Description">
             <Textarea
-              className="min-h-14 text-[13px]"
+              className="min-h-[80px] rounded-[8px] border-input bg-background px-[11px] py-[9px] text-[13px] focus-visible:border-primary focus-visible:ring-ring/[0.16]"
               value={desc}
               maxLength={100}
               onChange={(e) => setDesc(e.target.value.slice(0, 100))}
@@ -287,35 +302,28 @@ export function ModuleForm({
                 {desc.length}/100
               </span>
             </span>
-          </Field>
+          </MField>
 
-          <div className="grid grid-cols-1 gap-x-[18px] gap-y-3.5 sm:grid-cols-2 lg:grid-cols-4">
-            <Field label="Icon">
+          <div className="grid grid-cols-1 gap-x-[18px] gap-y-3.5 sm:grid-cols-3">
+            <MField label="Icon">
               <IconPicker value={icon} onChange={setIcon} />
-            </Field>
-            <Field label="Version" hint="Semver, e.g. 1.0.0">
-              <Input
-                className="mono text-[12.5px]"
-                value={version}
-                onChange={(e) => setVersion(e.target.value)}
-                placeholder="1.0.0"
-              />
-            </Field>
-            <Field label="Owner team">
+            </MField>
+            <MField label="Owner team">
               <ConsoleSelect
+                className={fieldInput}
                 value={owner}
                 onChange={setOwner}
                 options={ownerOptions}
               />
-            </Field>
-            <Field label="Module URL">
+            </MField>
+            <MField label="Module URL">
               <Input
-                className="mono text-[12.5px]"
+                className={cn(fieldInput, "mono text-[12.5px]")}
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder="/claims"
               />
-            </Field>
+            </MField>
           </div>
         </PanelBody>
       </Panel>
@@ -334,44 +342,48 @@ export function ModuleForm({
           {subs.map((s, i) => (
             <div
               key={i}
-              className="grid grid-cols-1 items-start gap-2 sm:grid-cols-[1fr_1fr_1.4fr_auto]"
+              className="grid grid-cols-1 items-end gap-[10px] rounded-[10px] border bg-card p-[11px] sm:grid-cols-[1.2fr_1fr_1.3fr_auto]"
             >
-              <Input
-                value={s.name}
-                onChange={(e) => patchSub(i, { name: e.target.value })}
-                placeholder="Adjudication engine"
-              />
-              <Input
-                className="mono text-[12px]"
-                value={s.codeEdited ? s.code : templateCode(s.name)}
-                onChange={(e) =>
-                  patchSub(i, { code: e.target.value, codeEdited: true })
-                }
-                placeholder="ADJUDICATION_ENGINE"
-              />
-              <Input
-                value={s.desc}
-                onChange={(e) => patchSub(i, { desc: e.target.value })}
-                placeholder="What it does"
-              />
-              {subs.length > 1 ? (
-                <Button
-                  variant="outline"
-                  size="icon"
-                  title="Remove sub-module"
-                  onClick={() => removeSub(i)}
-                >
-                  <TrashIcon />
-                </Button>
-              ) : (
-                <span className="hidden sm:block sm:size-9" />
-              )}
+              <MField label="Sub-module name" eyebrow>
+                <Input
+                  className={fieldInput}
+                  value={s.name}
+                  onChange={(e) => patchSub(i, { name: e.target.value })}
+                  placeholder="Adjudication engine"
+                />
+              </MField>
+              <MField label="Code" eyebrow>
+                <Input
+                  className={cn(fieldInput, "mono text-[12px]")}
+                  value={s.codeEdited ? s.code : templateCode(s.name)}
+                  onChange={(e) =>
+                    patchSub(i, { code: e.target.value, codeEdited: true })
+                  }
+                  placeholder="ADJUDICATION_ENGINE"
+                />
+              </MField>
+              <MField label="Description" eyebrow>
+                <Input
+                  className={fieldInput}
+                  value={s.desc}
+                  onChange={(e) => patchSub(i, { desc: e.target.value })}
+                  placeholder="What it does"
+                />
+              </MField>
+              <button
+                type="button"
+                title="Remove sub-module"
+                onClick={() => removeSub(i)}
+                className="mb-1 grid size-[30px] shrink-0 cursor-pointer place-items-center self-end rounded-[8px] border border-input bg-card text-muted-foreground transition-colors hover:bg-muted hover:text-foreground [&>svg]:size-[14px]"
+              >
+                <HiIcon name="trash" />
+              </button>
             </div>
           ))}
           <button
             type="button"
             onClick={addSub}
-            className="flex w-full items-center justify-center gap-[7px] rounded-[11px] border border-dashed border-input bg-card p-[11px] text-[12.5px] font-semibold text-primary transition-colors hover:border-primary hover:bg-primary/[0.04] [&>svg]:size-[15px]"
+            className="flex w-full cursor-pointer items-center justify-center gap-[7px] rounded-[11px] border border-dashed border-input bg-card p-[11px] text-[12.5px] font-semibold text-primary transition-colors hover:border-primary hover:bg-primary/[0.04] [&>svg]:size-[15px]"
           >
             <PlusIcon />
             Add sub-module

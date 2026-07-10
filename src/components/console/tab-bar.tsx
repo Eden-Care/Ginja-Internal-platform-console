@@ -38,7 +38,7 @@ export function TabBar({
             aria-selected={active}
             onClick={() => onChange(t.k)}
             className={cn(
-              "-mb-px flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-[13px] font-medium whitespace-nowrap transition-colors [&>svg]:size-[15px]",
+              "-mb-px flex cursor-pointer items-center gap-1.5 border-b-2 px-3 py-2.5 text-[13px] font-medium whitespace-nowrap transition-colors [&>svg]:size-[15px]",
               active
                 ? "border-primary font-semibold text-primary"
                 : "border-transparent text-muted-foreground hover:text-foreground"

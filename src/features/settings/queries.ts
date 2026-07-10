@@ -8,4 +8,7 @@ export const settingsKeys = {
   sessions: () => [...settingsKeys.all, "sessions"] as const,
   mfaDetail: (memberId: number) =>
     [...settingsKeys.all, "mfa-detail", memberId] as const,
+  passwordStatuses: () => [...settingsKeys.all, "password-statuses"] as const,
+  passwordDetail: (memberId: number) =>
+    [...settingsKeys.all, "password-detail", memberId] as const,
 }

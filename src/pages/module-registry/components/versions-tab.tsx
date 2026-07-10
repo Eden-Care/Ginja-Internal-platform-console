@@ -1,17 +1,12 @@
 import * as React from "react"
-import {
-  CheckCircle2Icon,
-  GitBranchIcon,
-  HistoryIcon,
-  InfoIcon,
-  TriangleAlertIcon,
-} from "lucide-react"
+import { HistoryIcon, InfoIcon, TriangleAlertIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { fmtDate, versionStatusBadge } from "@/lib/console-format"
 import { Button } from "@/components/ui/button"
 import { Panel, PanelBody, PanelHead } from "@/components/console/panel"
-import { MiniBadge } from "@/components/console/tagpill"
+import { MBadge } from "@/components/hifi/badge"
+import { HiIcon } from "@/components/hifi/icon"
 import { Note } from "@/components/console/note"
 import { LoadingSpinner } from "@/components/common/loading"
 import {
@@ -125,8 +120,8 @@ export function ModuleVersionsTab({
 
   return (
     <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[340px_1fr]">
-      <Panel>
-        <PanelHead icon={<HistoryIcon />} title="Version history" />
+      <Panel className="rounded-[12px]">
+        <PanelHead icon={<HiIcon name="history" />} title="Version history" />
         <PanelBody className="p-2">
           {rows.length === 0 ? (
             <div className="px-2.5 py-8 text-center text-[12px] text-muted-foreground">
@@ -158,7 +153,7 @@ export function ModuleVersionsTab({
                   >
                     <span
                       className={cn(
-                        "mono grid size-[38px] shrink-0 place-items-center rounded-full text-[12px] font-bold",
+                        "grid size-[38px] shrink-0 place-items-center rounded-full text-[12px] font-bold",
                         v.current
                           ? "bg-primary/[0.14] text-primary"
                           : "bg-muted text-muted-foreground"
@@ -168,9 +163,9 @@ export function ModuleVersionsTab({
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <b className="text-[13.5px]">v{v.version}</b>
+                        <b className="text-[13.5px]">{v.version}</b>
                         {v.status ? (
-                          <MiniBadge tone={badge.tone}>{badge.label}</MiniBadge>
+                          <MBadge tone={badge.tone}>{badge.label}</MBadge>
                         ) : null}
                       </div>
                       <div className="mt-[3px] truncate text-[12px] text-muted-foreground">
@@ -182,7 +177,7 @@ export function ModuleVersionsTab({
                     </div>
                     {v.current ? (
                       <span className="inline-flex items-center gap-[5px] text-[12px] font-semibold whitespace-nowrap text-success [&>svg]:size-[13px]">
-                        <CheckCircle2Icon />
+                        <HiIcon name="checkCircle" />
                         Live
                       </span>
                     ) : !readonly ? (
@@ -195,7 +190,7 @@ export function ModuleVersionsTab({
                         }}
                       >
                         <HistoryIcon data-icon="inline-start" />
-                        Rollback
+                        Roll back
                       </Button>
                     ) : null}
                   </div>
@@ -206,16 +201,16 @@ export function ModuleVersionsTab({
         </PanelBody>
       </Panel>
 
-      <Panel>
+      <Panel className="rounded-[12px]">
         <PanelHead
-          icon={<GitBranchIcon />}
+          icon={<HiIcon name="gitBranch" />}
           title="Compare"
           action={
             <span className="text-[11.5px] text-muted-foreground">
               {hasPrev
-                ? `v${from} → v${to}`
+                ? `${from} → ${to}`
                 : selected
-                  ? `v${selected.version}`
+                  ? `${selected.version}`
                   : "—"}
             </span>
           }
@@ -227,7 +222,7 @@ export function ModuleVersionsTab({
             </p>
           ) : !hasPrev ? (
             <Note tone="info" icon={<InfoIcon />}>
-              <b>v{selected.version}</b> is the initial version — there’s no
+              <b>{selected.version}</b> is the initial version — there’s no
               previous version to compare against.
             </Note>
           ) : compareQuery.isLoading ? (
@@ -247,7 +242,7 @@ export function ModuleVersionsTab({
             </Note>
           ) : diffFields.length === 0 ? (
             <p className="text-[12px] text-muted-foreground">
-              No field changes between v{from} and v{to}.
+              No field changes between {from} and {to}.
             </p>
           ) : (
             <>
@@ -263,8 +258,8 @@ export function ModuleVersionsTab({
                       )}
                     >
                       {side === "old"
-                        ? `v${from} · previous`
-                        : `v${to} · ${selected.current ? "current" : "selected"}`}
+                        ? `${from} · previous`
+                        : `${to} · ${selected.current ? "current" : "selected"}`}
                     </div>
                     {diffFields.map((d) => (
                       <React.Fragment key={`${side}-${d.label}`}>
@@ -278,7 +273,7 @@ export function ModuleVersionsTab({
               {!readonly && !selected.current ? (
                 <div className="mt-3.5 flex items-center gap-3">
                   <span className="flex-1 text-[11.5px] text-muted-foreground">
-                    Restoring v{selected.version} creates a new published
+                    Restoring {selected.version} creates a new published
                     version; nothing is overwritten.
                   </span>
                   <Button
@@ -286,7 +281,7 @@ export function ModuleVersionsTab({
                     onClick={() => onRollback(selected)}
                   >
                     <HistoryIcon data-icon="inline-start" />
-                    Rollback to v{selected.version}
+                    Roll back to {selected.version}
                   </Button>
                 </div>
               ) : null}

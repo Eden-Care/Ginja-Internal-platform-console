@@ -198,6 +198,14 @@ export type ModuleChangeMap = Record<
   { from?: unknown; to?: unknown }
 > | null
 
+/** A single changed field as the compare endpoint returns it (array form):
+   `{ field, from, to }`. `field` is the field NAME (e.g. "owner_team"). */
+export type ModuleFieldChangeDTO = {
+  field: string
+  from?: unknown
+  to?: unknown
+}
+
 export type ModuleActivityDTO = {
   audit_id: string
   actor?: string | null
@@ -206,7 +214,10 @@ export type ModuleActivityDTO = {
   action: string
   entity_id?: string | null
   entity_label?: string | null
-  changes?: ModuleChangeMap
+  changes?: ModuleChangeMap | ModuleFieldChangeDTO[]
+  /** Human-readable summary shown below the action label. `reason` kept as a
+     fallback for older records. */
+  description?: string | null
   reason?: string | null
   created_at?: string | null
   kind?: string | null
@@ -221,15 +232,27 @@ export type ModuleActivity = {
   action: string
   createdAt: string
   kind: string
-  reason: string
+  description: string
   changes: ModuleFieldChange[]
 }
 
 const valueStr = (v: unknown): string =>
   v === null || v === undefined || v === "" ? "—" : String(v)
 
-function toFieldChanges(changes: ModuleChangeMap): ModuleFieldChange[] {
+/** The compare endpoint returns `changed_fields` as an ARRAY of
+   `{ field, from, to }`; activity `changes` may instead be a keyed map. Handle
+   both so the field NAME drives the label (not an array index). */
+function toFieldChanges(
+  changes: ModuleChangeMap | ModuleFieldChangeDTO[] | undefined
+): ModuleFieldChange[] {
   if (!changes) return []
+  if (Array.isArray(changes)) {
+    return changes.map((c) => ({
+      field: c.field ?? "",
+      from: valueStr(c.from),
+      to: valueStr(c.to),
+    }))
+  }
   return Object.entries(changes).map(([field, v]) => ({
     field,
     from: valueStr(v?.from),
@@ -244,7 +267,7 @@ export function toModuleActivity(d: ModuleActivityDTO): ModuleActivity {
     action: d.action ?? "",
     createdAt: d.created_at ?? "",
     kind: d.kind ?? "",
-    reason: d.reason ?? "",
+    description: d.description ?? d.reason ?? "",
     changes: toFieldChanges(d.changes ?? null),
   }
 }
@@ -256,7 +279,7 @@ export type ModuleCompareDTO = {
   to?: ModuleVersionDTO | null
   sub_modules_added?: SubModuleDTO[] | null
   sub_modules_removed?: SubModuleDTO[] | null
-  changed_fields?: ModuleChangeMap
+  changed_fields?: ModuleFieldChangeDTO[] | ModuleChangeMap
 }
 
 export type ModuleCompare = {

@@ -18,10 +18,12 @@ import {
   fetchEmailTemplateVersions,
   publishEmailTemplate,
   rollbackEmailTemplate,
+  sendTestEmail,
   setEmailTemplateActive,
   setEmailTemplateArchived,
   updateEmailTemplate,
   type EmailTemplateQuery,
+  type SendTestEmailBody,
 } from "./api"
 import { emailTemplateKeys } from "./queries"
 import type { CreateEmailTemplateBody } from "./types"
@@ -180,6 +182,13 @@ export function useSetEmailTemplateArchived() {
     mutationFn: ({ id, archived }: { id: number; archived: boolean }) =>
       setEmailTemplateArchived(id, archived),
     onSuccess: () => qc.invalidateQueries({ queryKey: emailTemplateKeys.all }),
+  })
+}
+
+/** Queue a test email via the notification service (POST /email/send). */
+export function useSendTestEmail() {
+  return useMutation({
+    mutationFn: (body: SendTestEmailBody) => sendTestEmail(body),
   })
 }
 

@@ -1,4 +1,5 @@
 import * as React from "react"
+import { Navigate, useNavigate, useParams } from "react-router-dom"
 import { ArrowRightIcon, GlobeIcon, ShieldIcon, UsersIcon } from "lucide-react"
 
 import { useAccess } from "@/contexts/access-context"
@@ -51,27 +52,35 @@ const CATEGORIES: Category[] = [
   },
 ]
 
+const SECTIONS: Section[] = ["security", "user-access", "locale"]
+
 export function PlatformSettingsPage() {
   const { isReadonly, role } = useAccess()
   const readonly = isReadonly("settings")
-  const [section, setSection] = React.useState<Section | null>(null)
+  const navigate = useNavigate()
+  // Section lives in the URL (`/platform-settings/:section`) so it survives a
+  // refresh / is deep-linkable; absent → landing grid.
+  const { section } = useParams<{ section: string }>()
+  const back = () => navigate("/platform-settings")
+
+  if (section && !SECTIONS.includes(section as Section)) {
+    return <Navigate to="/platform-settings" replace />
+  }
 
   if (section === "security") {
-    return (
-      <SecurityPolicies readonly={readonly} onBack={() => setSection(null)} />
-    )
+    return <SecurityPolicies readonly={readonly} onBack={back} />
   }
   if (section === "user-access") {
     return (
       <UserAccessSecurity
         readonly={readonly}
         roleName={role.label}
-        onBack={() => setSection(null)}
+        onBack={back}
       />
     )
   }
   if (section === "locale") {
-    return <LocaleRules readonly={readonly} onBack={() => setSection(null)} />
+    return <LocaleRules readonly={readonly} onBack={back} />
   }
 
   return (
@@ -88,8 +97,10 @@ export function PlatformSettingsPage() {
             key={c.k}
             role="button"
             tabIndex={0}
-            onClick={() => setSection(c.k)}
-            onKeyDown={(e) => e.key === "Enter" && setSection(c.k)}
+            onClick={() => navigate(`/platform-settings/${c.k}`)}
+            onKeyDown={(e) =>
+              e.key === "Enter" && navigate(`/platform-settings/${c.k}`)
+            }
             className="flex cursor-pointer flex-col gap-3.5 rounded-[14px] border bg-card p-4 transition-all hover:-translate-y-px hover:border-primary/40 hover:shadow-sm focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
           >
             <div className="flex gap-[11px]">

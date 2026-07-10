@@ -31,17 +31,17 @@ export function IconPicker({
         <button
           type="button"
           disabled={disabled}
-          className="flex h-9 w-full items-center gap-2 rounded-lg border border-input bg-transparent px-2.5 text-left transition-colors hover:bg-muted/50 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex h-[38px] w-full items-center gap-[9px] rounded-[8px] border border-input bg-transparent px-[11px] text-left transition-colors hover:bg-muted/50 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          <span className="grid size-[26px] shrink-0 place-items-center rounded-md bg-primary/10 text-primary [&>svg]:size-[16px]">
+          <span className="grid size-[26px] shrink-0 place-items-center rounded-[7px] bg-primary/[0.12] text-primary [&>svg]:size-[18px]">
             <Glyph name={value} />
           </span>
           <span className="mono flex-1 truncate text-[12.5px]">{value}</span>
           <ChevronDownIcon className="size-3.5 shrink-0 text-muted-foreground" />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-[280px] p-2">
-        <div className="mb-2 flex items-center gap-2 rounded-lg border border-input px-2.5">
+      <PopoverContent align="start" className="w-[280px] rounded-[11px] p-[11px]">
+        <div className="mb-2 flex items-center gap-2 rounded-[8px] border border-input px-2.5">
           <SearchIcon className="size-3.5 shrink-0 text-muted-foreground" />
           <input
             autoFocus
@@ -51,7 +51,7 @@ export function IconPicker({
             className="h-8 flex-1 bg-transparent text-[12.5px] outline-none placeholder:text-muted-foreground"
           />
         </div>
-        <div className="grid grid-cols-6 gap-1">
+        <div className="grid max-h-[180px] grid-cols-7 gap-1 overflow-y-auto">
           {list.map((n) => (
             <button
               key={n}
@@ -63,9 +63,9 @@ export function IconPicker({
                 setQ("")
               }}
               className={cn(
-                "grid aspect-square place-items-center rounded-md border text-muted-foreground transition-colors hover:bg-muted [&>svg]:size-[18px]",
+                "grid aspect-square place-items-center rounded-[8px] border text-muted-foreground transition-colors hover:bg-muted/40 [&>svg]:size-[18px]",
                 value === n
-                  ? "border-primary bg-primary/[0.08] text-primary"
+                  ? "border-primary bg-primary/[0.15] text-primary"
                   : "border-transparent"
               )}
             >
@@ -73,7 +73,7 @@ export function IconPicker({
             </button>
           ))}
           {list.length === 0 ? (
-            <div className="col-span-6 px-2 py-3 text-center text-[12px] text-muted-foreground">
+            <div className="col-span-7 px-2 py-3 text-center text-[12px] text-muted-foreground">
               No icons match.
             </div>
           ) : null}

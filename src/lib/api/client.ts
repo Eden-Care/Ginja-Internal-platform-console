@@ -29,6 +29,15 @@ export const DOC_BASE_URL =
     ? "/document-service/api/v1"
     : "https://dev-api.ginja.ai/document-service/api/v1")
 
+// The notification service (templated email delivery + tracking) — same host,
+// proxied under "/notifications" in dev. Same envelope + bearer auth, passed as
+// a per-request `baseURL` override. Override with VITE_NOTIFICATIONS_API_BASE_URL.
+export const NOTIFICATIONS_BASE_URL =
+  import.meta.env.VITE_NOTIFICATIONS_API_BASE_URL ??
+  (import.meta.env.DEV
+    ? "/notifications/api/v1"
+    : "https://dev-api.ginja.ai/notifications/api/v1")
+
 export type ApiEnvelope<T> = {
   status: number
   success: boolean

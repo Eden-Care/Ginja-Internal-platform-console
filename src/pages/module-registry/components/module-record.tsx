@@ -1,17 +1,9 @@
 import * as React from "react"
 import {
-  AlertTriangleIcon,
   BanIcon,
-  Building2Icon,
-  CheckCircle2Icon,
   ChevronLeftIcon,
-  FileTextIcon,
-  GitBranchIcon,
   HistoryIcon,
   InfoIcon,
-  LayersIcon,
-  PencilIcon,
-  ZapIcon,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -19,10 +11,12 @@ import type { ModuleStatus, RegistryModule } from "@/lib/console-data"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Panel, PanelBody, PanelHead } from "@/components/console/panel"
-import { MiniBadge, Tagpill } from "@/components/console/tagpill"
+import { Tagpill } from "@/components/console/tagpill"
+import { MBadge } from "@/components/hifi/badge"
+import { hifiBtn } from "@/components/hifi/button"
 import { CopyId } from "@/components/console/copy-id"
 import { Note } from "@/components/console/note"
-import { Glyph } from "@/components/console/glyph"
+import { HiIcon } from "@/components/hifi/icon"
 import { TabBar, type TabItem } from "@/components/console/tab-bar"
 import { ConfirmDialog, ImpactBox } from "@/components/console/confirm-dialog"
 import {
@@ -35,9 +29,9 @@ import { ModuleVersionsTab } from "./versions-tab"
 import { ModuleAuditTab } from "./audit-tab"
 
 const STAT_ICON: Record<ModuleStatus, React.ReactNode> = {
-  Published: <CheckCircle2Icon />,
-  Beta: <ZapIcon />,
-  Sunset: <AlertTriangleIcon />,
+  Published: <HiIcon name="checkCircle" />,
+  Beta: <HiIcon name="zap" />,
+  Sunset: <HiIcon name="alert" />,
 }
 
 /** A module-overview KPI cell. */
@@ -51,15 +45,13 @@ function ModStat({
   label: string
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-xl border bg-card p-3.5 shadow-xs">
-      <span className="grid size-9 shrink-0 place-items-center rounded-[9px] bg-primary/10 text-primary [&>svg]:size-4">
+    <div className="flex items-center gap-[11px] rounded-[12px] border bg-card px-[15px] py-3.5 shadow-xs">
+      <span className="grid size-9 shrink-0 place-items-center rounded-[9px] bg-primary/[0.12] text-primary [&>svg]:size-4">
         {icon}
       </span>
       <div className="min-w-0">
-        <div className="text-[15px] font-semibold">{value}</div>
-        <div className="text-[11px] font-medium text-muted-foreground">
-          {label}
-        </div>
+        <div className="text-[16px] leading-[1.1] font-bold">{value}</div>
+        <div className="mt-0.5 text-[11.5px] text-muted-foreground">{label}</div>
       </div>
     </div>
   )
@@ -68,8 +60,8 @@ function ModStat({
 /** A definition-list row (right-aligned value). */
 function DL({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-3 border-t py-2.5 text-[13px] first:border-t-0">
-      <span className="text-muted-foreground">{label}</span>
+    <div className="flex min-h-[30px] items-center justify-between gap-4 border-b py-[11px] text-[13px]">
+      <span className="text-[12.5px] text-muted-foreground">{label}</span>
       <span className="min-w-0 truncate text-right font-medium">
         {children}
       </span>
@@ -80,15 +72,19 @@ function DL({ label, children }: { label: string; children: React.ReactNode }) {
 export function ModuleRecord({
   module: m,
   readonly = false,
+  tab,
+  onTabChange,
   onBack,
   onEdit,
 }: {
   module: RegistryModule
   readonly?: boolean
+  /** Active tab, driven by the `?tab=` URL param (see ModuleRecordPage). */
+  tab: string
+  onTabChange: (t: string) => void
   onBack: () => void
   onEdit: () => void
 }) {
-  const [tab, setTab] = React.useState("overview")
   const [published, setPublished] = React.useState(m.status === "Published")
   const [confirmPub, setConfirmPub] = React.useState(false)
   const [rollback, setRollback] = React.useState<ModuleVersion | null>(null)
@@ -103,7 +99,7 @@ export function ModuleRecord({
       {
         onSuccess: () => {
           toast.success(
-            `Rolled back ${m.name} to v${v.version}. A new published version was created.`
+            `Rolled back ${m.name} to ${v.version}. A new published version was created.`
           )
           setRollback(null)
         },
@@ -122,11 +118,11 @@ export function ModuleRecord({
     {
       k: "hierarchy",
       label: "Hierarchy",
-      icon: <GitBranchIcon />,
+      icon: <HiIcon name="gitBranch" />,
       count: m.subs.length,
     },
     { k: "versions", label: "Versions", icon: <HistoryIcon /> },
-    { k: "audit", label: "Audit log", icon: <FileTextIcon /> },
+    { k: "audit", label: "Audit log", icon: <HiIcon name="fileText" /> },
   ]
 
   const codeDisplay = m.code || m.name.toUpperCase().replace(/[^A-Z0-9]+/g, "_")
@@ -152,7 +148,7 @@ export function ModuleRecord({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 [&_svg]:[stroke-width:1.75]">
       <button
         type="button"
         onClick={onBack}
@@ -166,13 +162,13 @@ export function ModuleRecord({
         <div className="min-w-0">
           <h1 className="flex items-center gap-2.5 text-2xl font-semibold tracking-tight">
             <span className="grid size-[34px] shrink-0 place-items-center rounded-[9px] bg-primary/[0.12] text-primary [&>svg]:size-[18px]">
-              <Glyph name={m.icon} />
+              <HiIcon name={m.icon} />
             </span>
             {m.name}
-            <MiniBadge tone={MODULE_TONE[m.status]}>{m.status}</MiniBadge>
+            <MBadge tone={MODULE_TONE[m.status]}>{m.status}</MBadge>
             <Tagpill className="text-[10.5px]">{m.version}</Tagpill>
           </h1>
-          <div className="mt-[3px] flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+          <div className="mt-[3px] flex flex-wrap items-center gap-2 text-[13px] text-muted-foreground">
             <span>{m.desc || "—"}</span>
             <CopyId value={m.id} label="Module ID" />
           </div>
@@ -187,15 +183,15 @@ export function ModuleRecord({
             />
           </label>
           {!readonly ? (
-            <Button size="sm" onClick={onEdit}>
-              <PencilIcon data-icon="inline-start" />
+            <Button className={hifiBtn} onClick={onEdit}>
+              <HiIcon name="pencil" />
               Edit module
             </Button>
           ) : null}
         </div>
       </div>
 
-      <TabBar tabs={TABS} value={tab} onChange={setTab} />
+      <TabBar tabs={TABS} value={tab} onChange={onTabChange} />
 
       {tab === "overview" ? (
         <div className="flex flex-col gap-4">
@@ -206,32 +202,32 @@ export function ModuleRecord({
               label="Status"
             />
             <ModStat
-              icon={<GitBranchIcon />}
+              icon={<HiIcon name="gitBranch" />}
               value={m.version}
               label="Version"
             />
             <ModStat
-              icon={<LayersIcon />}
+              icon={<HiIcon name="layers" />}
               value={m.subs.length}
               label="Sub-modules"
             />
             <ModStat
-              icon={<Building2Icon />}
+              icon={<HiIcon name="building" />}
               value={m.tenants}
               label="Active tenants"
             />
           </div>
 
-          <Panel>
+          <Panel className="rounded-[12px]">
             <PanelHead icon={<InfoIcon />} title="Module details" />
             <PanelBody className="flex flex-col gap-4">
               <div>
-                <div className="mb-1.5 text-[10px] font-semibold tracking-[0.06em] text-muted-foreground uppercase">
+                <div className="mb-1.5 text-[10px] font-semibold tracking-[0.07em] text-muted-foreground uppercase">
                   Description
                 </div>
                 <p className="text-[13.5px] leading-[1.55]">{m.desc || "—"}</p>
               </div>
-              <div className="flex flex-col">
+              <div className="grid grid-cols-2 gap-x-8">
                 <DL label="Module ID">
                   <CopyId value={m.id} />
                 </DL>
@@ -245,21 +241,21 @@ export function ModuleRecord({
                 <DL label="Icon">
                   <span className="inline-flex items-center gap-1.5">
                     <span className="grid size-[22px] place-items-center rounded-md bg-muted text-muted-foreground [&>svg]:size-3">
-                      <Glyph name={m.icon} />
+                      <HiIcon name={m.icon} />
                     </span>
                     <span className="mono text-[12px]">{m.icon}</span>
                   </span>
                 </DL>
                 <DL label="Status">
-                  <MiniBadge tone={MODULE_TONE[m.status]}>{m.status}</MiniBadge>
+                  <MBadge tone={MODULE_TONE[m.status]}>{m.status}</MBadge>
                 </DL>
               </div>
             </PanelBody>
           </Panel>
 
-          <Panel>
+          <Panel className="rounded-[12px]">
             <PanelHead
-              icon={<GitBranchIcon />}
+              icon={<HiIcon name="gitBranch" />}
               title="Sub-modules"
               action={
                 <Tagpill className="text-[10.5px]">{m.subs.length}</Tagpill>
@@ -278,10 +274,10 @@ export function ModuleRecord({
                   return (
                     <div
                       key={s.id}
-                      className="flex items-center gap-3 rounded-lg border p-3"
+                      className="flex items-center gap-3 rounded-[10px] border bg-card px-[13px] py-[11px]"
                     >
-                      <span className="grid size-[34px] shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground [&>svg]:size-[15px]">
-                        <GitBranchIcon />
+                      <span className="grid size-[34px] shrink-0 place-items-center rounded-[8px] bg-muted text-muted-foreground [&>svg]:size-[15px]">
+                        <HiIcon name="gitBranch" />
                       </span>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
@@ -309,46 +305,53 @@ export function ModuleRecord({
           </Panel>
         </div>
       ) : tab === "hierarchy" ? (
-        <Panel>
-          <PanelHead icon={<GitBranchIcon />} title="Module hierarchy" />
-          <PanelBody className="flex flex-col gap-3">
-            <div className="flex items-center gap-3 rounded-xl border bg-muted/30 p-3">
-              <span className="grid size-9 shrink-0 place-items-center rounded-[9px] bg-primary/[0.12] text-primary [&>svg]:size-4">
-                <Glyph name={m.icon} />
-              </span>
-              <div className="min-w-0 flex-1">
-                <div className="text-[13.5px] font-semibold">{m.name}</div>
-                <div className="mono text-[11px] text-muted-foreground">
-                  {m.id}
-                </div>
-              </div>
-              <MiniBadge tone={MODULE_TONE[m.status]}>{m.status}</MiniBadge>
-            </div>
-            <div className="flex flex-col gap-2 pl-5">
-              {m.subs.map((s) => {
-                const dep = s.requires
-                  ? m.subs.find((x) => x.id === s.requires)
-                  : null
-                return (
-                  <div key={s.id} className="relative flex items-center gap-3">
-                    <span className="absolute top-1/2 -left-5 h-px w-4 bg-border" />
-                    <span className="grid size-[26px] shrink-0 place-items-center rounded-md bg-muted text-muted-foreground [&>svg]:size-[13px]">
-                      <GitBranchIcon />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-[13px] font-medium">{s.name}</div>
-                      <div className="text-[11.5px] text-muted-foreground">
-                        {s.desc}
-                      </div>
-                    </div>
-                    {dep ? (
-                      <span className="shrink-0 rounded-[5px] bg-muted px-1.5 py-px text-[10px] font-semibold text-muted-foreground">
-                        requires {dep.name}
-                      </span>
-                    ) : null}
+        <Panel className="rounded-[12px]">
+          <PanelHead icon={<HiIcon name="gitBranch" />} title="Module hierarchy" />
+          <PanelBody className="flex flex-col gap-3.5">
+            <div className="rounded-[12px] border bg-muted/25 p-4">
+              <div className="flex items-center gap-[11px] rounded-[10px] border bg-card px-[13px] py-[11px]">
+                <span className="grid size-[34px] shrink-0 place-items-center rounded-[9px] bg-primary/[0.12] text-primary [&>svg]:size-4">
+                  <HiIcon name={m.icon} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="text-[13.5px] font-semibold">{m.name}</div>
+                  <div className="mono text-[11px] text-muted-foreground">
+                    {m.id}
                   </div>
-                )
-              })}
+                </div>
+                <MBadge tone={MODULE_TONE[m.status]}>{m.status}</MBadge>
+              </div>
+              <div className="ml-[30px] flex flex-col border-l-2 pl-[18px]">
+                {m.subs.map((s) => {
+                  const dep = s.requires
+                    ? m.subs.find((x) => x.id === s.requires)
+                    : null
+                  return (
+                    <div
+                      key={s.id}
+                      className="relative mt-2.5 flex items-center gap-2.5 rounded-[9px] border bg-card px-3 py-2.5"
+                    >
+                      <span className="absolute top-1/2 -left-[18px] h-0.5 w-4 bg-border" />
+                      <span className="grid size-[28px] shrink-0 place-items-center rounded-[7px] bg-muted text-muted-foreground [&>svg]:size-[13px]">
+                        <HiIcon name="gitBranch" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[13.5px] font-semibold">
+                          {s.name}
+                        </div>
+                        <div className="text-[11px] text-muted-foreground">
+                          {s.desc}
+                        </div>
+                      </div>
+                      {dep ? (
+                        <span className="shrink-0 rounded-[5px] bg-muted px-1.5 py-px text-[10px] font-semibold text-muted-foreground">
+                          requires {dep.name}
+                        </span>
+                      ) : null}
+                    </div>
+                  )
+                })}
+              </div>
             </div>
             <Note tone="info" icon={<InfoIcon />}>
               Dependencies are enforced during onboarding — selecting a
@@ -368,7 +371,7 @@ export function ModuleRecord({
 
       <ConfirmDialog
         open={confirmPub}
-        icon={published ? <BanIcon /> : <CheckCircle2Icon />}
+        icon={published ? <BanIcon /> : <HiIcon name="checkCircle" />}
         tone="warn"
         title={published ? `Unpublish "${m.name}"?` : `Publish "${m.name}"?`}
         confirmLabel={published ? "Unpublish module" : "Publish module"}
@@ -400,12 +403,12 @@ export function ModuleRecord({
         open={!!rollback}
         icon={<HistoryIcon />}
         tone="warn"
-        title={rollback ? `Roll back to v${rollback.version}?` : "Roll back"}
+        title={rollback ? `Roll back to ${rollback.version}?` : "Roll back"}
         confirmLabel={
           rollbackMut.isPending
             ? "Rolling back…"
             : rollback
-              ? `Roll back to v${rollback.version}`
+              ? `Roll back to ${rollback.version}`
               : "Roll back"
         }
         onConfirm={doRollback}
@@ -414,7 +417,7 @@ export function ModuleRecord({
           rollback ? (
             <>
               <p>
-                This restores the <b>v{rollback.version}</b> configuration as a
+                This restores the <b>{rollback.version}</b> configuration as a
                 new version. The current version is kept in history — nothing is
                 overwritten.
               </p>
@@ -423,7 +426,7 @@ export function ModuleRecord({
                 icon={<InfoIcon />}
                 heading="What happens"
                 items={[
-                  `A new published version with the v${rollback.version} content is created and goes live immediately.`,
+                  `A new published version with the ${rollback.version} content is created and goes live immediately.`,
                   "The previously current version is archived in the version history.",
                   "A rollback entry is written to the module audit log, attributed to you.",
                 ]}

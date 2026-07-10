@@ -1,4 +1,5 @@
 import * as React from "react"
+import { useSearchParams } from "react-router-dom"
 import {
   ArrowRightIcon,
   CheckCircle2Icon,
@@ -234,7 +235,14 @@ export function LocaleRules({
   readonly: boolean
   onBack: () => void
 }) {
-  const [tab, setTab] = React.useState("locale")
+  // Active tab lives in `?tab=` so it survives a refresh; default "locale".
+  const [params, setParams] = useSearchParams()
+  const tabParam = params.get("tab") ?? "locale"
+  const tab = ["locale", "rules", "history"].includes(tabParam)
+    ? tabParam
+    : "locale"
+  const setTab = (t: string) =>
+    setParams(t === "locale" ? {} : { tab: t }, { replace: true })
   const [open, setOpen] = React.useState<ValidationRule | null>(null)
 
   const locQ = useLocalization()

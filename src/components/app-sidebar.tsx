@@ -3,17 +3,18 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom"
 import {
   Building2Icon,
   ChevronsUpDownIcon,
-  CreditCardIcon,
+  DollarSignIcon,
   FileTextIcon,
   GalleryVerticalEndIcon,
   HistoryIcon,
+  HospitalIcon,
   KeyIcon,
   LayersIcon,
   type LucideIcon,
   LayoutDashboardIcon,
   LogOutIcon,
   MailIcon,
-  MessageSquareIcon,
+  SendIcon,
   ServerIcon,
   SettingsIcon,
   ShieldCheckIcon,
@@ -21,6 +22,7 @@ import {
   UsersIcon,
 } from "lucide-react"
 
+import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -100,6 +102,25 @@ export const navGroups: NavGroup[] = [
     ],
   },
   {
+    label: "Claim Clean-up (LAMU)",
+    items: [
+      {
+        title: "Service providers",
+        url: "/service-providers",
+        icon: HospitalIcon,
+        permId: "providers",
+        count: 8,
+      },
+      {
+        title: "Insurers",
+        url: "/insurers",
+        icon: Building2Icon,
+        permId: "insurers",
+        count: 8,
+      },
+    ],
+  },
+  {
     label: "Configuration library",
     items: [
       {
@@ -123,13 +144,13 @@ export const navGroups: NavGroup[] = [
       {
         title: "SMS templates",
         url: "/sms-templates",
-        icon: MessageSquareIcon,
+        icon: SendIcon,
         permId: "sms-templates",
       },
       {
         title: "Pricing & plans",
         url: "/pricing",
-        icon: CreditCardIcon,
+        icon: DollarSignIcon,
         permId: "pricing",
       },
     ],
@@ -185,7 +206,10 @@ function isActivePath(pathname: string, url: string, exact?: boolean) {
   return pathname === url || pathname.startsWith(`${url}/`)
 }
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({
+  className,
+  ...props
+}: React.ComponentProps<typeof Sidebar>) {
   const location = useLocation()
   const navigate = useNavigate()
   const { brand } = useBrand()
@@ -202,7 +226,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const showLogo = Boolean(brand.logoUrl && failedLogoUrl !== brand.logoUrl)
 
   return (
-    <Sidebar collapsible="icon" {...props}>
+    <Sidebar
+      collapsible="icon"
+      className={cn("[&_svg]:[stroke-width:1.75]", className)}
+      {...props}
+    >
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>

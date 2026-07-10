@@ -26,6 +26,8 @@ import { Panel, PanelBody, PanelHead } from "@/components/console/panel"
 import { Seg } from "@/components/console/form-atoms"
 import { Note } from "@/components/console/note"
 import { Tagpill } from "@/components/console/tagpill"
+import { MField, fieldInput } from "@/components/hifi/field"
+import { hifiBtn } from "@/components/hifi/button"
 import { useGlobalPlaceholders } from "@/features/global-placeholders/use-global-placeholders"
 import { useCreateSmsTemplate } from "@/features/sms-templates/use-sms-templates"
 import { encodingLabel, smsSegments } from "@/features/sms-templates/segments"
@@ -35,41 +37,6 @@ import type {
 } from "@/features/sms-templates/types"
 import { PlaceholderField } from "@/pages/email-templates/components/placeholder-field"
 import { SmsBubble } from "./sms-bubble"
-
-/** A labelled form field with the hi-fi `.field` look + error state. */
-function FormField({
-  label,
-  required,
-  error,
-  hint,
-  className,
-  children,
-}: {
-  label: React.ReactNode
-  required?: boolean
-  error?: string | false
-  hint?: React.ReactNode
-  className?: string
-  children: React.ReactNode
-}) {
-  return (
-    <div className={cn("flex flex-col gap-1.5", className)}>
-      <label className="flex items-center gap-1.5 text-[12.5px] font-medium">
-        {label}
-        {required ? <span className="text-destructive">*</span> : null}
-      </label>
-      {children}
-      {error ? (
-        <span className="inline-flex items-center gap-1 text-[11.5px] font-medium text-destructive [&>svg]:size-3">
-          <TriangleAlertIcon />
-          {error}
-        </span>
-      ) : hint ? (
-        <span className="text-[11.5px] text-muted-foreground">{hint}</span>
-      ) : null}
-    </div>
-  )
-}
 
 function Pat({ children }: { children: React.ReactNode }) {
   return (
@@ -223,30 +190,34 @@ export const SmsTemplateForm = React.forwardRef<
       ) : null}
 
       {/* Template details */}
-      <Panel>
+      <Panel className="rounded-[12px]">
         <PanelHead icon={<InfoIcon />} title="Template details" />
         <PanelBody className="flex flex-col gap-3.5">
           <div className="grid grid-cols-1 gap-x-[18px] gap-y-3.5 sm:grid-cols-2">
-            <FormField
+            <MField
               label="Template name"
               required
-              error={err("name")}
-              hint={dt ? "Can't be changed after creation." : undefined}
+              hint={
+                err("name") ||
+                (dt ? "Can't be changed after creation." : undefined)
+              }
+              hintTone={err("name") ? "error" : "muted"}
             >
               <Input
+                className={fieldInput}
                 value={name}
                 disabled={!!dt}
                 onChange={(e) => setName(e.target.value)}
                 aria-invalid={!!err("name")}
                 placeholder="e.g. Login OTP"
               />
-            </FormField>
-            <FormField
+            </MField>
+            <MField
               label="Template code"
               required
-              error={err("code")}
               hint={
-                dt ? (
+                err("code") ||
+                (dt ? (
                   "Can't be changed after creation."
                 ) : (
                   <>
@@ -255,11 +226,12 @@ export const SmsTemplateForm = React.forwardRef<
                       ? " Auto-generated from the name."
                       : ""}
                   </>
-                )
+                ))
               }
+              hintTone={err("code") ? "error" : "muted"}
             >
               <Input
-                className="mono text-[12.5px]"
+                className={cn(fieldInput, "mono text-[12.5px]")}
                 value={effCode}
                 disabled={!!dt}
                 aria-invalid={!!err("code")}
@@ -269,12 +241,12 @@ export const SmsTemplateForm = React.forwardRef<
                 }}
                 placeholder="LOGIN_OTP"
               />
-            </FormField>
+            </MField>
           </div>
 
-          <FormField label="Description">
+          <MField label="Description">
             <Textarea
-              className="min-h-14 text-[13px]"
+              className="min-h-[80px] rounded-[8px] border-input bg-background px-[11px] py-[9px] text-[13px] focus-visible:border-primary focus-visible:ring-ring/[0.16]"
               value={desc}
               maxLength={100}
               onChange={(e) => setDesc(e.target.value.slice(0, 100))}
@@ -303,23 +275,24 @@ export const SmsTemplateForm = React.forwardRef<
                 {desc.length}/100
               </span>
             </span>
-          </FormField>
+          </MField>
 
           <div className="grid grid-cols-1 gap-x-[18px] gap-y-3.5 sm:grid-cols-2">
-            <FormField
+            <MField
               label="Trigger on"
               required
-              error={err("trigger")}
-              hint="The platform event that sends this SMS."
+              hint={err("trigger") || "The platform event that sends this SMS."}
+              hintTone={err("trigger") ? "error" : "muted"}
             >
               <Input
+                className={fieldInput}
                 value={trigger}
                 aria-invalid={!!err("trigger")}
                 onChange={(e) => setTrigger(e.target.value)}
                 placeholder="e.g. On login verification"
               />
-            </FormField>
-            <FormField
+            </MField>
+            <MField
               label="Used by"
               hint="Which platform this template belongs to."
             >
@@ -332,14 +305,15 @@ export const SmsTemplateForm = React.forwardRef<
                 ]}
                 onChange={(v) => setScope(v as "console" | "tenant")}
               />
-            </FormField>
+            </MField>
           </div>
 
-          <FormField
+          <MField
             label="Tags"
             hint="Tags help organise and search the library."
           >
             <Input
+              className={fieldInput}
               value={tagDraft}
               onChange={(e) => setTagDraft(e.target.value)}
               onKeyDown={(e) => {
@@ -369,13 +343,13 @@ export const SmsTemplateForm = React.forwardRef<
                 ))}
               </div>
             ) : null}
-          </FormField>
+          </MField>
         </PanelBody>
       </Panel>
 
       {/* Message + live preview */}
       <div className="grid grid-cols-1 items-stretch gap-4 min-[1100px]:grid-cols-2">
-        <Panel>
+        <Panel className="rounded-[12px]">
           <PanelHead
             icon={<SendIcon />}
             title="Message text"
@@ -416,26 +390,31 @@ export const SmsTemplateForm = React.forwardRef<
               </span>
             )}
             {placeholders.length > 0 ? (
-              <div className="mt-1 flex flex-wrap gap-1.5">
-                {placeholders.map((p) => (
-                  <code
-                    key={p}
-                    className={cn(
-                      "rounded-md px-2 py-[3px] font-mono text-[11.5px] font-semibold",
-                      isGlobalPh(p)
-                        ? "bg-ph-global/10 text-ph-global"
-                        : "bg-info-subtle text-info-subtle-foreground"
-                    )}
-                  >
-                    {`{{${p}}}`}
-                  </code>
-                ))}
+              <div className="mt-1">
+                <span className="mb-1.5 block text-[10px] font-semibold tracking-[0.04em] text-muted-foreground uppercase">
+                  Placeholders
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {placeholders.map((p) => (
+                    <code
+                      key={p}
+                      className={cn(
+                        "rounded-md px-2 py-[3px] font-mono text-[11.5px] font-semibold",
+                        isGlobalPh(p)
+                          ? "bg-ph-global/10 text-ph-global"
+                          : "bg-info-subtle text-info-subtle-foreground"
+                      )}
+                    >
+                      {`{{${p}}}`}
+                    </code>
+                  ))}
+                </div>
               </div>
             ) : null}
           </PanelBody>
         </Panel>
 
-        <Panel className="flex flex-col">
+        <Panel className="flex flex-col rounded-[12px]">
           <PanelHead icon={<SmartphoneIcon />} title="Preview" />
           <PanelBody className="flex flex-1 items-center justify-center p-6">
             <SmsBubble>{previewText || "Your message preview…"}</SmsBubble>
@@ -448,7 +427,7 @@ export const SmsTemplateForm = React.forwardRef<
   if (embedded) return formBody
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 [&_svg]:[stroke-width:1.75]">
       <button
         type="button"
         onClick={onBack}
@@ -461,21 +440,31 @@ export const SmsTemplateForm = React.forwardRef<
       <ConsolePageHeader
         crumbs={[]}
         title="Create SMS template"
-        sub="Add a reusable SMS template to the library. Tenants inherit it and may override their own copy."
+        sub={
+          <span className="text-[13px]">
+            Add a reusable SMS template to the library. Tenants inherit it and
+            may override their own copy.
+          </span>
+        }
         actions={
           <>
-            <Button variant="ghost" onClick={onBack}>
+            <Button variant="ghost" className={hifiBtn} onClick={onBack}>
               Cancel
             </Button>
             <Button
               variant="outline"
+              className={hifiBtn}
               disabled={createMut.isPending}
               onClick={onSave}
             >
               <SaveIcon data-icon="inline-start" />
               Save draft
             </Button>
-            <Button disabled={createMut.isPending} onClick={onSave}>
+            <Button
+              className={hifiBtn}
+              disabled={createMut.isPending}
+              onClick={onSave}
+            >
               <CheckIcon data-icon="inline-start" />
               {createMut.isPending ? "Saving…" : "Save & publish"}
             </Button>

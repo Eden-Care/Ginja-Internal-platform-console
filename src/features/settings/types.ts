@@ -258,9 +258,9 @@ export function toValidationRuleset(d: ValidationRulesDTO): ValidationRuleset {
 
 /* -------------------------------------------------------- active sessions --- */
 
-/* GET /platform/settings/sessions returns a FLAT array of device sessions —
-   one row per signed-in device. The UI groups them under the user they belong
-   to, so we map each row to a SessionItem and fold them into SessionUsers. */
+/* GET /platform/settings/sessions returns an array of per-user GROUPS, each with
+   the user's device sessions nested under `sessions`. We map each group to a
+   SessionUser (and each nested row to a SessionItem). */
 
 export type SessionDTO = {
   session_id: string
@@ -278,6 +278,15 @@ export type SessionDTO = {
   expires_at?: string | null
   status?: string | null
   current?: boolean | null
+}
+
+/** A per-user group as the API now returns it (sessions nested inside). */
+export type SessionGroupDTO = {
+  member_id?: number | null
+  account?: string | null
+  user?: string | null
+  session_count?: number | null
+  sessions?: SessionDTO[] | null
 }
 
 /** One device session (a row in the expanded per-user panel). */
@@ -361,32 +370,24 @@ function toSessionItem(d: SessionDTO): SessionItem {
   }
 }
 
-export function toSessionUsers(dtos: SessionDTO[]): SessionUser[] {
-  const groups = new Map<string, SessionDTO[]>()
-  for (const d of dtos) {
-    const key = d.account ?? String(d.member_id ?? "")
-    const arr = groups.get(key)
-    if (arr) arr.push(d)
-    else groups.set(key, [d])
-  }
-
-  const users: SessionUser[] = []
-  for (const [key, rows] of groups) {
-    const sessions = rows
+/** Map the API's per-user groups to SessionUsers (most-recently-active first). */
+export function toSessionUsers(groups: SessionGroupDTO[]): SessionUser[] {
+  const users = (groups ?? []).map((g): SessionUser => {
+    const sessions = (g.sessions ?? [])
       .map(toSessionItem)
       .sort(
         (a, b) =>
           Number(b.current) - Number(a.current) || b.lastSeenAt - a.lastSeenAt
       )
-    const name = rows[0].user ?? key
+    const name = g.user ?? g.account ?? ""
     const lastSeenMax = Math.max(0, ...sessions.map((s) => s.lastSeenAt))
     const startedVals = sessions.map((s) => s.startedAt).filter((n) => n > 0)
     const startedMin = startedVals.length ? Math.min(...startedVals) : 0
-    users.push({
-      id: key,
-      memberId: rows[0].member_id ?? 0,
+    return {
+      id: g.account ?? String(g.member_id ?? ""),
+      memberId: g.member_id ?? 0,
       name,
-      email: rows[0].account ?? key,
+      email: g.account ?? "",
       initials: initialsFromName(name),
       lastActive: lastSeenMax
         ? fmtDateTime(new Date(lastSeenMax).toISOString())
@@ -395,10 +396,9 @@ export function toSessionUsers(dtos: SessionDTO[]): SessionUser[] {
         ? fmtDateTime(new Date(startedMin).toISOString())
         : "",
       sessions,
-    })
-  }
+    }
+  })
 
-  // Most-recently-active users first.
   return users.sort(
     (a, b) =>
       Math.max(0, ...b.sessions.map((s) => s.lastSeenAt)) -
@@ -441,5 +441,155 @@ export function toMfaDetail(d: MfaDetailDTO): MfaDetail {
     methods: d.methods ?? [],
     backupCodes: d.backup_codes ?? null,
     enabledOn: d.enabled_on ?? null,
+  }
+}
+
+/* --------------------------------------------------- password status --- */
+
+/** Per-member password health (90-day rotation policy). */
+export type PasswordState = "OK" | "EXPIRING" | "EXPIRED" | "PENDING"
+
+/** Derive a state from days-until-expiry when the API doesn't send an explicit
+   one (mirrors the mock policy): invited / no-password → PENDING; <0 → EXPIRED;
+   ≤14 → EXPIRING; else OK. */
+export function derivePasswordState(
+  daysLeft: number | null,
+  pending: boolean
+): PasswordState {
+  if (pending || daysLeft == null) return "PENDING"
+  if (daysLeft < 0) return "EXPIRED"
+  if (daysLeft <= 14) return "EXPIRING"
+  return "OK"
+}
+
+/** Normalise an API status string to a PasswordState (null if unrecognised so
+   the caller falls back to deriving from daysLeft). */
+function normPasswordState(s?: string | null): PasswordState | null {
+  const u = (s ?? "").toUpperCase().replace(/[\s_-]+/g, "_")
+  if (!u) return null
+  if (u.includes("EXPIRING") || u.includes("SOON")) return "EXPIRING"
+  if (u.includes("EXPIRED") || u.includes("OVERDUE")) return "EXPIRED"
+  if (u.includes("PENDING") || u.includes("INVITED") || u.includes("NONE"))
+    return "PENDING"
+  if (
+    u.includes("OK") ||
+    u.includes("HEALTHY") ||
+    u.includes("ACTIVE") ||
+    u.includes("GOOD") ||
+    u.includes("CURRENT")
+  )
+    return "OK"
+  return null
+}
+
+/* snake_case as the API returns it (API_REFERENCE.md → GET
+   /platform/settings/password-status). A few alternate key names are tolerated
+   defensively. */
+export type PasswordStatusDTO = {
+  member_id?: number | null
+  member?: { id?: number | null } | null
+  account?: string | null
+  user?: string | null
+  status?: string | null
+  pending?: boolean | null
+  last_changed_at?: string | null
+  last_changed?: string | null
+  changed_at?: string | null
+  password_last_changed?: string | null
+  expires_at?: string | null
+  expires_on?: string | null
+  expiry_date?: string | null
+  days_until_expiry?: number | null
+  days_left?: number | null
+}
+
+export type PasswordStatus = {
+  memberId: number
+  /** Display name (DTO `user`). */
+  name: string
+  /** Login / email (DTO `account`). */
+  email: string
+  state: PasswordState
+  /** ISO / display string of the last change; "" when unknown. */
+  lastChanged: string
+  /** ISO / display string of the expiry; "" when unknown. */
+  expiresOn: string
+  daysLeft: number | null
+}
+
+export function toPasswordStatus(d: PasswordStatusDTO): PasswordStatus {
+  const daysLeft = d.days_until_expiry ?? d.days_left ?? null
+  const lastChanged =
+    d.last_changed_at ??
+    d.last_changed ??
+    d.changed_at ??
+    d.password_last_changed ??
+    ""
+  const expiresOn = d.expires_at ?? d.expires_on ?? d.expiry_date ?? ""
+  const pending = !!d.pending || (!lastChanged && daysLeft == null)
+  const state =
+    normPasswordState(d.status) ?? derivePasswordState(daysLeft, pending)
+  return {
+    memberId: d.member_id ?? d.member?.id ?? -1,
+    name: d.user ?? "",
+    email: d.account ?? "",
+    state,
+    lastChanged,
+    expiresOn,
+    daysLeft,
+  }
+}
+
+/* ---- summary (KPI tiles) + the list envelope `{ summary, users }` ---- */
+
+export type PasswordSummaryDTO = {
+  total_users?: number | null
+  ok?: number | null
+  expiring_soon?: number | null
+  expired?: number | null
+  pending?: number | null
+}
+
+export type PasswordSummary = {
+  totalUsers: number
+  ok: number
+  expiringSoon: number
+  expired: number
+  pending: number
+}
+
+/** GET /platform/settings/password-status → `{ summary, users }`. */
+export type PasswordStatusListDTO = {
+  summary?: PasswordSummaryDTO | null
+  users?: PasswordStatusDTO[] | null
+}
+
+export type PasswordStatusList = {
+  summary: PasswordSummary
+  statuses: PasswordStatus[]
+}
+
+/** Map the API summary; when absent, derive the counts from the rows so the
+   tiles still populate. */
+export function toPasswordSummary(
+  dto: PasswordSummaryDTO | null | undefined,
+  rows: PasswordStatus[]
+): PasswordSummary {
+  if (dto) {
+    return {
+      totalUsers: dto.total_users ?? rows.length,
+      ok: dto.ok ?? 0,
+      expiringSoon: dto.expiring_soon ?? 0,
+      expired: dto.expired ?? 0,
+      pending: dto.pending ?? 0,
+    }
+  }
+  const count = (s: PasswordState) => rows.filter((r) => r.state === s).length
+  return {
+    totalUsers: rows.length,
+    ok: count("OK"),
+    expiringSoon: count("EXPIRING"),
+    expired: count("EXPIRED"),
+    pending: count("PENDING"),
   }
 }

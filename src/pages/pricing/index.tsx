@@ -9,6 +9,7 @@ import {
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import { Switch } from "@/components/ui/switch"
 import {
   Table,
   TableBody,
@@ -22,8 +23,9 @@ import { BILLING_FREQ } from "@/lib/console-data"
 import { fmtNum, fmtUSD } from "@/lib/console-format"
 import { ConsolePageHeader } from "@/components/console/page-header"
 import { FormSection } from "@/components/console/form-atoms"
-import { Glyph } from "@/components/console/glyph"
-import { MiniBadge, Tagpill } from "@/components/console/tagpill"
+import { Tagpill } from "@/components/console/tagpill"
+import { MBadge } from "@/components/hifi/badge"
+import { HiIcon } from "@/components/hifi/icon"
 import { Note } from "@/components/console/note"
 import { TabBar, type TabItem } from "@/components/console/tab-bar"
 import { hifiTableHead } from "@/components/console/table"
@@ -31,7 +33,7 @@ import { LoadingSpinner } from "@/components/common/loading"
 import { usePricingStructures } from "@/features/pricing/use-pricing-structures"
 import {
   PRICING_MODEL_LABEL,
-  PRICING_STATUS_TONE,
+  pricingHeadline,
   type PricingComponent,
 } from "@/features/pricing/types"
 
@@ -58,16 +60,27 @@ const money = (n: number, currency: string) =>
 const fmtRate = (n: number) =>
   n.toLocaleString("en-US", { maximumFractionDigits: 4 })
 
-/** Pricing model → a fitting Glyph name. */
+/** Pricing model → a fitting hi-fi glyph name. */
 const modelGlyph = (model: string) =>
   /PCT|GWP|PERCENT/i.test(model) ? "percent" : "creditCard"
+
+/** Volume-discount component → its hi-fi rate-tab glyph (matches Ginja Console.html:
+   PMPM→crm, outpatient→fileCheck, inpatient→fileText, % of GWP→percent). */
+function componentGlyph(c: PricingComponent): string {
+  const s = `${c.componentType} ${c.unit}`.toUpperCase()
+  if (/GWP|PERCENT|PCT/.test(s)) return "percent"
+  if (/OUTPATIENT/.test(s)) return "fileCheck"
+  if (/INPATIENT/.test(s)) return "fileText"
+  if (/PMPM|MEMBER/.test(s)) return "crm"
+  return "layers"
+}
 
 /** Volume-discount tier table for one component's `tiers`. */
 function TierTable({ component }: { component: PricingComponent | null }) {
   if (!component) return null
   const tiers = [...component.tiers].sort((a, b) => a.tierNumber - b.tierNumber)
   return (
-    <div className="overflow-hidden rounded-lg border">
+    <div className="overflow-hidden rounded-[10px] border">
       <Table>
         <TableHeader className={hifiTableHead}>
           <TableRow className="hover:bg-transparent">
@@ -128,6 +141,9 @@ export function PricingPage() {
 
   const [structureId, setStructureId] = React.useState<number | null>(null)
   const [componentKey, setComponentKey] = React.useState<string | null>(null)
+  // Local, client-side on/off per model — mirrors the hi-fi toggle (the API is
+  // read-only). Defaults to on for Active structures; overrides live here.
+  const [enabled, setEnabled] = React.useState<Record<number, boolean>>({})
 
   // Derive the active structure/component with a fallback to the first item so
   // selection survives async load + structure switches without an effect.
@@ -143,11 +159,28 @@ export function PricingPage() {
 
   const tabs: TabItem[] = components.map((c) => ({
     k: c.componentType,
-    label: humanizeLabel(c.componentType),
+    // Tab text comes from the API `label`; fall back to the humanized code.
+    label: c.label || humanizeLabel(c.componentType),
+    icon: <HiIcon name={componentGlyph(c)} />,
   }))
 
+  // Log the exact API-sourced data feeding the "Volume discount schedules"
+  // section whenever the selected plan or component tab changes.
+  React.useEffect(() => {
+    if (!activeStructure) return
+    console.log("[Pricing] Volume discount schedules — data in use:", {
+      structure: `${activeStructure.code} · ${activeStructure.name}`,
+      status: activeStructure.status,
+      selectedComponent: activeComponent?.componentType ?? "(none)",
+      unit: activeComponent?.unit,
+      tiers: activeComponent?.tiers ?? [],
+      allComponents: activeStructure.components,
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeStructure?.id, activeComponent?.componentType])
+
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-5 [&_svg]:[stroke-width:1.75]">
       <ConsolePageHeader
         title="Pricing & plans"
         sub="Subscription models, tiered volume-discount schedules and billing frequencies available during onboarding."
@@ -181,12 +214,14 @@ export function PricingPage() {
       ) : (
         <>
           <FormSection
-            title="Pricing structures"
-            desc="Select a structure to view its components and volume-discount tiers."
+            title="Subscription models"
+            desc="Commercial models that can be selected when onboarding a tenant. Select one to view its volume-discount tiers."
           >
             <div className="grid [grid-template-columns:repeat(auto-fill,minmax(300px,1fr))] gap-3.5">
               {structures.map((s) => {
+                const on = enabled[s.id] ?? s.status === "ACTIVE"
                 const selected = activeStructure?.id === s.id
+                const headline = pricingHeadline(s)
                 return (
                   <button
                     key={s.id}
@@ -196,15 +231,15 @@ export function PricingPage() {
                       setComponentKey(null)
                     }}
                     className={cn(
-                      "flex flex-col gap-3 rounded-xl border bg-card p-[18px] text-left shadow-xs transition-all",
+                      "flex flex-col gap-3 rounded-[12px] border bg-card p-[18px] text-left shadow-xs transition-all",
                       selected
-                        ? "border-primary ring-1 ring-primary"
+                        ? "border-primary shadow-[0_0_0_1px_hsl(var(--primary))]"
                         : "hover:border-primary/40 hover:shadow-md"
                     )}
                   >
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-[11px]">
                       <span className="grid size-[38px] shrink-0 place-items-center rounded-[10px] bg-primary/12 text-primary [&>svg]:size-[18px]">
-                        <Glyph name={modelGlyph(s.model)} />
+                        <HiIcon name={modelGlyph(s.model)} />
                       </span>
                       <div className="min-w-0 flex-1">
                         <div className="text-sm font-semibold">{s.name}</div>
@@ -212,28 +247,34 @@ export function PricingPage() {
                           {PRICING_MODEL_LABEL[s.model] ?? s.model}
                         </div>
                       </div>
-                      <MiniBadge
-                        tone={PRICING_STATUS_TONE[s.status] ?? "neutral"}
-                      >
-                        {s.status}
-                      </MiniBadge>
+                      <Switch
+                        checked={on}
+                        onClick={(e) => e.stopPropagation()}
+                        onCheckedChange={(v) =>
+                          setEnabled((m) => ({ ...m, [s.id]: v }))
+                        }
+                      />
                     </div>
                     {s.description ? (
-                      <p className="text-xs leading-normal text-muted-foreground">
+                      <p className="text-xs leading-[1.5] text-muted-foreground">
                         {s.description}
                       </p>
                     ) : null}
-                    <div className="flex items-end justify-between">
-                      <div className="mono text-2xl font-bold tracking-[-0.02em]">
-                        {money(s.implementationFee, s.currency)}
-                        <span className="ml-1 font-sans text-xs font-medium text-muted-foreground">
-                          impl. fee
-                        </span>
-                      </div>
+                    <div className="mt-auto flex items-end justify-between">
+                      {headline ? (
+                        <div className="mono text-2xl font-bold tracking-[-0.02em]">
+                          {headline.amount}{" "}
+                          <span className="font-sans text-xs font-medium text-muted-foreground">
+                            {headline.suffix}
+                          </span>
+                        </div>
+                      ) : (
+                        <span />
+                      )}
                       {s.tierCount > 0 ? (
                         <Tagpill className="text-[10.5px]">
                           <LayersIcon className="size-2.5" />
-                          {s.tierCount} tier{s.tierCount > 1 ? "s" : ""}
+                          Tiered
                         </Tagpill>
                       ) : null}
                     </div>
@@ -244,14 +285,14 @@ export function PricingPage() {
           </FormSection>
 
           <FormSection title="Billing frequencies">
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-2.5">
               {BILLING_FREQ.map((f) => (
                 <div
                   key={f}
-                  className="flex min-w-[150px] items-center gap-2.5 rounded-[11px] border bg-card px-3.5 py-2.5"
+                  className="flex min-w-[150px] items-center gap-[13px] rounded-[11px] border bg-card px-[15px] py-[13px]"
                 >
-                  <span className="grid size-[30px] shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
-                    <CalendarIcon className="size-[15px]" />
+                  <span className="grid size-9 shrink-0 place-items-center rounded-[9px] bg-muted text-muted-foreground [&>svg]:size-[15px]">
+                    <CalendarIcon />
                   </span>
                   <div className="flex-1">
                     <div className="text-[13px] font-semibold">{f}</div>
@@ -259,7 +300,7 @@ export function PricingPage() {
                       Invoiced {f.toLowerCase()}
                     </div>
                   </div>
-                  <MiniBadge tone="success">On</MiniBadge>
+                  <MBadge tone="success">On</MBadge>
                 </div>
               ))}
             </div>
@@ -285,7 +326,7 @@ export function PricingPage() {
                 </div>
               </>
             ) : (
-              <div className="rounded-lg border px-6 py-10 text-center text-sm text-muted-foreground">
+              <div className="rounded-[10px] border px-6 py-10 text-center text-sm text-muted-foreground">
                 This structure has no components.
               </div>
             )}

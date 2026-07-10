@@ -1,11 +1,13 @@
 import * as React from "react"
-import { CheckCircle2Icon, InfoIcon, Loader2Icon, SendIcon } from "lucide-react"
+import { InfoIcon, Loader2Icon, SendIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { aiSampleFor, globalPhValue, isGlobalPh } from "@/lib/console-format"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
+import { HiIcon } from "@/components/hifi/icon"
+import { hifiBtn } from "@/components/hifi/button"
 import { Note } from "@/components/console/note"
 import type { SmsTemplate } from "@/features/sms-templates/types"
 import { smsSegments } from "@/features/sms-templates/segments"
@@ -58,7 +60,7 @@ export function SmsSendTestModal({
     >
       <DialogContent
         showCloseButton
-        className="flex max-h-[86vh] w-[480px] max-w-[calc(100vw-32px)] flex-col gap-0 overflow-hidden p-0"
+        className="flex max-h-[86vh] w-[520px] max-w-[calc(100vw-32px)] flex-col gap-0 overflow-hidden p-0 sm:max-w-[calc(100vw-32px)] [&_svg]:[stroke-width:1.75]"
       >
         <div className="flex shrink-0 items-center gap-[11px] border-b px-[18px] py-4">
           <span className="grid size-[38px] place-items-center rounded-[10px] bg-primary/[0.12] text-primary [&>svg]:size-[17px]">
@@ -75,7 +77,7 @@ export function SmsSendTestModal({
         {sent ? (
           <div className="flex flex-col items-center gap-0.5 p-[18px] text-center">
             <span className="grid size-16 place-items-center rounded-[18px] bg-success-subtle text-success-subtle-foreground [&>svg]:size-[30px]">
-              <CheckCircle2Icon />
+              <HiIcon name="checkCircle" />
             </span>
             <h3 className="mt-3.5 mb-1 text-[17px] font-semibold">
               Test SMS sent
@@ -94,10 +96,16 @@ export function SmsSendTestModal({
             </Note>
             <div className="mt-4 flex items-center gap-2 self-stretch">
               <span className="flex-1" />
-              <Button variant="ghost" onClick={() => setSent(false)}>
+              <Button
+                variant="ghost"
+                className={hifiBtn}
+                onClick={() => setSent(false)}
+              >
                 Send another
               </Button>
-              <Button onClick={onClose}>Done</Button>
+              <Button className={hifiBtn} onClick={onClose}>
+                Done
+              </Button>
             </div>
           </div>
         ) : (
@@ -139,10 +147,14 @@ export function SmsSendTestModal({
               <span className="flex-1 text-[11.5px] text-muted-foreground">
                 Sends one SMS now.
               </span>
-              <Button variant="ghost" onClick={onClose}>
+              <Button variant="ghost" className={hifiBtn} onClick={onClose}>
                 Cancel
               </Button>
-              <Button disabled={!valid || sending} onClick={send}>
+              <Button
+                className={hifiBtn}
+                disabled={!valid || sending}
+                onClick={send}
+              >
                 {sending ? (
                   <Loader2Icon
                     data-icon="inline-start"

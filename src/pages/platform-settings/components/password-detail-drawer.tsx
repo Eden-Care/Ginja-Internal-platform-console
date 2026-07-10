@@ -3,49 +3,57 @@ import { CheckIcon, LockIcon, RotateCcwIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { MiniBadge } from "@/components/console/tagpill"
-import type { Member } from "@/features/access/types"
+import { usePasswordDetail } from "@/features/settings/use-password"
+import type { PasswordStatus } from "@/features/settings/types"
 import {
-  MEMBER_STATUS_TONE,
+  PWD_STATE,
   PendingBadge,
   UserAvatar,
   initialsOf,
-  memberAccountLabel,
+  passwordExpires,
+  passwordLastChanged,
 } from "./ua-shared"
 
 export function PasswordDetailDrawer({
-  user,
+  ps,
   readonly,
   done,
   onForceReset,
   onClose,
 }: {
-  user: Member | null
+  ps: PasswordStatus | null
   readonly: boolean
   done: boolean
-  onForceReset: (u: Member) => void
+  onForceReset: (ps: PasswordStatus) => void
   onClose: () => void
 }) {
+  // Per-user endpoint; render instantly from the passed row, refresh from detail.
+  const detailQuery = usePasswordDetail(ps?.memberId ?? null)
   return (
-    <Sheet open={!!user} onOpenChange={(o) => !o && onClose()}>
+    <Sheet open={!!ps} onOpenChange={(o) => !o && onClose()}>
       <SheetContent
         side="right"
         showCloseButton
         className="gap-0 p-0 data-[side=right]:w-[416px] data-[side=right]:max-w-[92vw] data-[side=right]:sm:max-w-[416px]"
       >
-        {user
+        {ps
           ? (() => {
-              const canReset = user.status === "ACTIVE" && !readonly
+              const canReset =
+                !readonly && (ps.state === "EXPIRING" || ps.state === "EXPIRED")
+              const health = detailQuery.data ?? ps
+              const lastChanged = passwordLastChanged(health)
+              const expires = passwordExpires(health)
               return (
                 <>
                   <div className="flex items-center gap-[11px] border-b px-[18px] py-4">
                     <UserAvatar
-                      initials={initialsOf(user.name)}
+                      initials={initialsOf(ps.name)}
                       className="size-[38px] text-[12px]"
                     />
                     <div className="min-w-0">
-                      <div className="text-[14.5px] font-bold">{user.name}</div>
+                      <div className="text-[14.5px] font-bold">{ps.name}</div>
                       <div className="mono truncate text-[11.5px] text-muted-foreground">
-                        {user.email}
+                        {ps.email}
                       </div>
                     </div>
                   </div>
@@ -59,10 +67,12 @@ export function PasswordDetailDrawer({
                       <div className="min-w-0 flex-1">
                         <div className="text-sm font-bold">Password health</div>
                         <div className="mt-0.5 text-[11.5px] text-muted-foreground">
-                          Last changed, expiry and rotation status aren’t
-                          exposed by the API yet.
+                          90-day rotation policy.
                         </div>
                       </div>
+                      <MiniBadge tone={PWD_STATE[health.state].tone}>
+                        {PWD_STATE[health.state].label}
+                      </MiniBadge>
                     </div>
 
                     {/* Key-value grid */}
@@ -72,20 +82,19 @@ export function PasswordDetailDrawer({
                           User ID
                         </span>
                         <span className="mono text-[12.5px] font-medium">
-                          {user.code}
+                          #{ps.memberId}
                         </span>
                       </div>
                       <div className="flex flex-col gap-1 bg-card px-3 py-2.5">
                         <span className="text-[9.5px] font-semibold tracking-[0.05em] text-muted-foreground uppercase">
                           Account
                         </span>
-                        <MiniBadge tone={MEMBER_STATUS_TONE[user.status]}>
-                          {memberAccountLabel(user)}
-                        </MiniBadge>
+                        {/* Not in the password-status API — static. */}
+                        <MiniBadge tone="success">Active</MiniBadge>
                       </div>
                     </div>
 
-                    {/* Rotation — pending backend */}
+                    {/* Rotation */}
                     <div>
                       <div className="mb-2 text-[10.5px] font-semibold tracking-[0.05em] text-muted-foreground uppercase">
                         Rotation
@@ -95,13 +104,25 @@ export function PasswordDetailDrawer({
                           <span className="text-[9.5px] font-semibold tracking-[0.05em] text-muted-foreground uppercase">
                             Last changed
                           </span>
-                          <PendingBadge />
+                          {lastChanged ? (
+                            <span className="text-[12.5px] font-medium">
+                              {lastChanged}
+                            </span>
+                          ) : (
+                            <PendingBadge />
+                          )}
                         </div>
                         <div className="flex flex-col gap-1.5 bg-card px-3 py-2.5">
                           <span className="text-[9.5px] font-semibold tracking-[0.05em] text-muted-foreground uppercase">
                             Expires
                           </span>
-                          <PendingBadge />
+                          {expires ? (
+                            <span className="text-[12.5px] font-medium">
+                              {expires}
+                            </span>
+                          ) : (
+                            <PendingBadge />
+                          )}
                         </div>
                       </div>
                     </div>
@@ -115,7 +136,7 @@ export function PasswordDetailDrawer({
                           Reset link sent
                         </span>
                       ) : (
-                        <Button onClick={() => onForceReset(user)}>
+                        <Button onClick={() => onForceReset(ps)}>
                           <RotateCcwIcon data-icon="inline-start" />
                           Force password reset
                         </Button>

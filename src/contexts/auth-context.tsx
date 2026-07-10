@@ -37,7 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     clearSession()
     setSession(null)
     queryClient.clear()
-    navigate("/login", { replace: true })
+    navigate("/auth/login", { replace: true })
   }, [navigate])
 
   const logout = React.useCallback(() => {
@@ -46,10 +46,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setSession(null)
     queryClient.clear()
     void logoutRequest(token ?? undefined)
-    navigate("/login", { replace: true })
+    navigate("/auth/login", { replace: true })
   }, [navigate])
 
-  // Any API call that 401s drops the session and bounces to /login.
+  // Any API call that 401s drops the session and bounces to /auth/login.
   React.useEffect(() => {
     setUnauthorizedHandler(clearAndRedirect)
     return () => setUnauthorizedHandler(null)

@@ -1,4 +1,4 @@
-import * as React from "react"
+import { useSearchParams } from "react-router-dom"
 import {
   ChevronLeftIcon,
   KeyRoundIcon,
@@ -17,6 +17,7 @@ const UA_TABS: TabItem[] = [
   { k: "mfa", label: "MFA status", icon: <KeyRoundIcon /> },
   { k: "password", label: "Password status", icon: <LockIcon /> },
 ]
+const UA_TAB_KEYS = new Set(UA_TABS.map((t) => t.k))
 
 export function UserAccessSecurity({
   readonly,
@@ -27,7 +28,13 @@ export function UserAccessSecurity({
   roleName: string
   onBack: () => void
 }) {
-  const [tab, setTab] = React.useState("sessions")
+  // Active tab lives in `?tab=` so it survives a refresh; default "sessions"
+  // (kept out of the URL to keep it clean).
+  const [params, setParams] = useSearchParams()
+  const tabParam = params.get("tab") ?? "sessions"
+  const tab = UA_TAB_KEYS.has(tabParam) ? tabParam : "sessions"
+  const setTab = (t: string) =>
+    setParams(t === "sessions" ? {} : { tab: t }, { replace: true })
 
   return (
     <div className="flex flex-col gap-4">

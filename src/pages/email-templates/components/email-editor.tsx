@@ -4,7 +4,6 @@ import {
   FileTextIcon,
   HistoryIcon,
   InfoIcon,
-  PencilIcon,
   SendIcon,
   TriangleAlertIcon,
 } from "lucide-react"
@@ -16,7 +15,9 @@ import {
   type DocStatus,
 } from "@/lib/console-data"
 import { Button } from "@/components/ui/button"
-import { MiniBadge } from "@/components/console/tagpill"
+import { MBadge } from "@/components/hifi/badge"
+import { HiIcon } from "@/components/hifi/icon"
+import { hifiBtn } from "@/components/hifi/button"
 import { CopyId } from "@/components/console/copy-id"
 import { Note } from "@/components/console/note"
 import { TabBar, type TabItem } from "@/components/console/tab-bar"
@@ -43,7 +44,7 @@ const TPL_TONE: Record<DocStatus, "success" | "neutral"> = {
 }
 
 const buildTabs = (versionsCount?: number): TabItem[] => [
-  { k: "editor", label: "Editor", icon: <PencilIcon /> },
+  { k: "editor", label: "Editor", icon: <HiIcon name="pencil" /> },
   {
     k: "versions",
     label: "Versions",
@@ -61,13 +62,17 @@ const buildTabs = (versionsCount?: number): TabItem[] => [
 export function EmailEditor({
   tpl,
   readonly = false,
+  tab,
+  onTabChange,
   onBack,
 }: {
   tpl: EmailTemplate
   readonly?: boolean
+  /** Active tab, driven by the `?tab=` URL param (see EmailEditorPage). */
+  tab: string
+  onTabChange: (t: string) => void
   onBack: () => void
 }) {
-  const [tab, setTab] = React.useState("editor")
   const [rollback, setRollback] = React.useState<EmailVersionRow | null>(null)
   const [sendTest, setSendTest] = React.useState(false)
   const cur = EMAIL_VERSIONS.find((v) => v.current) ?? EMAIL_VERSIONS[0]
@@ -112,7 +117,7 @@ export function EmailEditor({
             `Rolled back ${tpl.name} to v${v.versionNumber}. A new draft version was created.`
           )
           setRollback(null)
-          setTab("versions")
+          onTabChange("versions")
         },
         onError: (e) =>
           toast.error("Couldn't roll back", {
@@ -123,7 +128,7 @@ export function EmailEditor({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 [&_svg]:[stroke-width:1.75]">
       <div>
         <div className="mb-2.5 flex items-center gap-[7px] text-xs text-muted-foreground">
           <button
@@ -141,11 +146,11 @@ export function EmailEditor({
           <div className="min-w-0">
             <h1 className="flex items-center gap-2.5 text-2xl font-semibold tracking-tight">
               {tpl.name}
-              <MiniBadge tone={tpl.archived ? "neutral" : TPL_TONE[tpl.status]}>
+              <MBadge tone={tpl.archived ? "neutral" : TPL_TONE[tpl.status]}>
                 {tpl.archived ? "Archived" : tpl.status}
-              </MiniBadge>
+              </MBadge>
             </h1>
-            <div className="mt-[3px] flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            <div className="mt-[3px] flex flex-wrap items-center gap-2 text-[13px] text-muted-foreground">
               <span>
                 Trigger: {tpl.trigger} · {tpl.version}
               </span>
@@ -156,14 +161,18 @@ export function EmailEditor({
             <div className="flex shrink-0 items-center gap-2">
               <Button
                 variant="outline"
-                size="sm"
+                className={hifiBtn}
                 onClick={() => setSendTest(true)}
               >
                 <SendIcon data-icon="inline-start" />
                 Send test
               </Button>
               {!readonly ? (
-                <Button size="sm" onClick={save} disabled={updateMut.isPending}>
+                <Button
+                  className={hifiBtn}
+                  onClick={save}
+                  disabled={updateMut.isPending}
+                >
                   <CheckIcon data-icon="inline-start" />
                   {updateMut.isPending ? "Saving…" : "Save & publish"}
                 </Button>
@@ -173,7 +182,7 @@ export function EmailEditor({
         </div>
       </div>
 
-      <TabBar tabs={TABS} value={tab} onChange={setTab} />
+      <TabBar tabs={TABS} value={tab} onChange={onTabChange} />
 
       {tab === "editor" ? (
         detailQuery.isLoading ? (
@@ -204,12 +213,17 @@ export function EmailEditor({
         <AuditTab templateId={tpl.templateId} />
       )}
 
-      <SendTestModal
-        open={sendTest}
-        tpl={tpl}
-        cur={cur}
-        onClose={() => setSendTest(false)}
-      />
+      {/* Mounted only while open so every open starts fresh (no stale
+         sent/error state from a previous send). */}
+      {sendTest ? (
+        <SendTestModal
+          open
+          tpl={tpl}
+          cur={cur}
+          detail={detailQuery.data}
+          onClose={() => setSendTest(false)}
+        />
+      ) : null}
 
       <ConfirmDialog
         open={!!rollback}

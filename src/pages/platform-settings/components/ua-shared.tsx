@@ -5,6 +5,7 @@ import { format, formatDistanceToNow } from "date-fns"
 import { cn } from "@/lib/utils"
 import { Tagpill } from "@/components/console/tagpill"
 import type { MemberStatus } from "@/features/access/types"
+import type { PasswordState, PasswordStatus } from "@/features/settings/types"
 
 /* ----------------------------------- member status + formatting helpers --- */
 
@@ -48,6 +49,42 @@ export const fmtLastActive = (iso: string | null) =>
   iso ? formatDistanceToNow(new Date(iso), { addSuffix: true }) : "Never"
 export const fmtSince = (iso: string | null) =>
   iso ? format(new Date(iso), "dd MMM yyyy") : "—"
+
+/* --------------------------------------------- password-status helpers --- */
+
+/** PasswordState → MiniBadge tone + label (shared by the tab + detail drawer). */
+export const PWD_STATE: Record<
+  PasswordState,
+  { tone: "success" | "warning" | "error" | "neutral"; label: string }
+> = {
+  OK: { tone: "success", label: "OK" },
+  EXPIRING: { tone: "warning", label: "Expiring soon" },
+  EXPIRED: { tone: "error", label: "Expired" },
+  PENDING: { tone: "neutral", label: "Pending" },
+}
+
+/** Format an ISO date safely; "" if missing/unparseable (so callers can fall
+   back to a Pending badge). */
+const fmtPwdDate = (s: string): string => {
+  if (!s) return ""
+  const d = new Date(s)
+  return isNaN(d.getTime()) ? "" : format(d, "dd MMM yyyy")
+}
+
+/** "Last changed" cell text; "" → render a Pending badge. */
+export const passwordLastChanged = (ps: PasswordStatus): string =>
+  fmtPwdDate(ps.lastChanged)
+
+/** "Expires" cell text; null → render a Pending badge. Prefers an explicit
+   date, else a relative days-left phrase. */
+export function passwordExpires(ps: PasswordStatus): string | null {
+  const d = fmtPwdDate(ps.expiresOn)
+  if (d) return d
+  if (ps.daysLeft == null) return null
+  if (ps.daysLeft < 0) return `${-ps.daysLeft}d overdue`
+  if (ps.daysLeft === 0) return "Today"
+  return `in ${ps.daysLeft}d`
+}
 
 /** Dashed, muted pill marking a value the backend doesn't power yet. */
 export function PendingBadge({

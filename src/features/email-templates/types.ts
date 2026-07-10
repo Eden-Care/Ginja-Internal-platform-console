@@ -176,6 +176,10 @@ export type EmailTemplateDetail = {
   /** Which platform the template belongs to, e.g. "TENANT_PLATFORMS". */
   usedBy: string
   status: string
+  /** Active / archived lifecycle flags (from get-one meta) — the editor header
+     shows an "Archived" badge and the mapper below rebuilds the list card. */
+  active: boolean
+  archived: boolean
   versionNumber: number
   subject: string
   /** Inbox preview snippet (from the current version). */
@@ -207,6 +211,8 @@ export function toEmailTemplateDetail(
     triggerEvent: meta.trigger_event ?? "",
     usedBy: meta.used_by ?? "TENANT_PLATFORMS",
     status: meta.status,
+    active: meta.active ?? true,
+    archived: meta.archived ?? false,
     versionNumber: ver.version_number,
     subject: ver.subject ?? "",
     preheaderText: ver.preheader_text ?? "",
@@ -232,6 +238,29 @@ export function toEmailTemplateDetail(
       displayOrder: m.display_order,
       defaultValue: m.default_value,
     })),
+  }
+}
+
+/** Build the list-card `EmailTemplate` shape from a full detail — used by the
+   deep-link route wrapper (EmailEditorPage) to feed the editor's header when
+   there's no list object (e.g. on refresh). */
+export function detailToEmailTemplate(d: EmailTemplateDetail): EmailTemplate {
+  return {
+    id: d.code,
+    templateId: d.id,
+    name: d.name,
+    trigger: d.triggerEvent,
+    channel: CHANNEL[(d.channel ?? "").toUpperCase()] ?? "Email",
+    status: toStatus(d.status),
+    version: d.versionNumber != null ? `v${d.versionNumber}` : "",
+    updated: "",
+    description: d.description,
+    usedBy: d.usedBy,
+    active: d.active,
+    archived: d.archived,
+    overrides: undefined,
+    subject: "",
+    body: "",
   }
 }
 

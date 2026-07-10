@@ -106,6 +106,10 @@ export type SmsTemplateDetail = {
   triggerEvent: string
   usedBy: string
   status: string
+  /** Active / archived lifecycle flags (from get-one) — the editor header shows
+     an "Archived" badge and the mapper below rebuilds the list card. */
+  active: boolean
+  archived: boolean
   tags: string[]
   messageText: string
   segmentInfo: SmsSegmentInfo
@@ -122,6 +126,8 @@ export function toSmsTemplateDetail(d: SmsTemplateDTO): SmsTemplateDetail {
     triggerEvent: d.trigger_event ?? "",
     usedBy: d.used_by ?? "TENANT_PLATFORMS",
     status: d.status,
+    active: d.active ?? true,
+    archived: !!d.archived,
     tags: d.tags ?? [],
     messageText: d.message_text ?? "",
     segmentInfo: {
@@ -130,6 +136,29 @@ export function toSmsTemplateDetail(d: SmsTemplateDTO): SmsTemplateDetail {
       encoding: d.segment_info?.encoding ?? "",
     },
     versionNumber: d.current_version_number ?? d.latest_version_number ?? 1,
+  }
+}
+
+/** Build the list-card `SmsTemplate` shape from a full detail — used by the
+   deep-link route wrapper (SmsEditorPage) to feed the editor's header when
+   there's no list object (e.g. on refresh). */
+export function detailToSmsTemplate(d: SmsTemplateDetail): SmsTemplate {
+  return {
+    id: d.code,
+    templateId: d.templateId,
+    name: d.name,
+    trigger: d.triggerEvent,
+    status: toStatus(d.status),
+    active: d.active,
+    archived: d.archived,
+    usedBy: d.usedBy,
+    tags: d.tags,
+    message: d.messageText,
+    charCount: d.segmentInfo.charCount,
+    segmentCount: d.segmentInfo.segmentCount,
+    encoding: d.segmentInfo.encoding,
+    version: d.versionNumber != null ? `v${d.versionNumber}` : "",
+    updated: "",
   }
 }
 
