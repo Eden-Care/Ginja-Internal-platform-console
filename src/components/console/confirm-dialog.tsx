@@ -9,17 +9,19 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 
-export type ConfirmTone = "danger" | "warn"
+export type ConfirmTone = "danger" | "warn" | "primary"
 
 const ICON_TONE: Record<ConfirmTone, string> = {
   danger: "bg-destructive/12 text-destructive",
   warn: "bg-warning-subtle text-warning-subtle-foreground",
+  primary: "bg-primary/12 text-primary",
 }
 
 const IMPACT_TONE: Record<ConfirmTone, string> = {
   danger:
     "border-destructive/30 bg-destructive-subtle/50 [&_.ib-h]:text-destructive-subtle-foreground",
   warn: "border-warning/35 bg-warning-subtle/50 [&_.ib-h]:text-warning-subtle-foreground",
+  primary: "border-primary/30 bg-primary/[0.06] [&_.ib-h]:text-primary",
 }
 
 /**
@@ -34,6 +36,8 @@ export function ConfirmDialog({
   title,
   body,
   confirmLabel,
+  reasonRequired = false,
+  reasonLabel,
   onConfirm,
   onCancel,
 }: {
@@ -43,9 +47,24 @@ export function ConfirmDialog({
   title: React.ReactNode
   body?: React.ReactNode
   confirmLabel: React.ReactNode
-  onConfirm: () => void
+  /** When set, shows a required reason textarea; confirm is disabled until
+     the reason has >2 chars and the entered text is passed to `onConfirm`. */
+  reasonRequired?: boolean
+  reasonLabel?: React.ReactNode
+  onConfirm: (reason?: string) => void
   onCancel: () => void
 }) {
+  const [reason, setReason] = React.useState("")
+  const reasonOk = !reasonRequired || reason.trim().length > 2
+
+  // Clear the reason each time the dialog (re)opens — callers may keep it
+  // mounted, so reset on the closed→open transition during render.
+  const [wasOpen, setWasOpen] = React.useState(open)
+  if (open !== wasOpen) {
+    setWasOpen(open)
+    if (open) setReason("")
+  }
+
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onCancel()}>
       <DialogContent
@@ -68,13 +87,29 @@ export function ConfirmDialog({
             {body}
           </div>
         ) : null}
+        {reasonRequired ? (
+          <div className="flex flex-col gap-1.5">
+            <label className="flex items-center gap-1 text-[12.5px] font-medium text-foreground">
+              {reasonLabel ?? "Reason"}
+              <span className="text-destructive">*</span>
+            </label>
+            <textarea
+              rows={2}
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Recorded in the audit log…"
+              className="w-full resize-none rounded-[8px] border border-input bg-background px-[11px] py-[9px] text-[13px] text-foreground outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-ring/[0.16]"
+            />
+          </div>
+        ) : null}
         <DialogFooter className="mx-0 mt-2 mb-0 gap-2 border-0 bg-transparent p-0">
           <Button variant="ghost" onClick={onCancel}>
             Cancel
           </Button>
           <Button
             variant={tone === "danger" ? "destructive" : "default"}
-            onClick={onConfirm}
+            disabled={!reasonOk}
+            onClick={() => onConfirm(reasonRequired ? reason : undefined)}
           >
             {icon}
             {confirmLabel}

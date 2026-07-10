@@ -3,6 +3,7 @@ import { ConstructionIcon } from "lucide-react"
 
 const TITLES: Record<string, string> = {
   approvals: "Approvals",
+  "service-providers": "Service providers",
   "module-registry": "Module registry",
   "document-templates": "Document templates",
   "email-templates": "Email & SMS templates",

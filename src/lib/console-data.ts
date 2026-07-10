@@ -3525,6 +3525,86 @@ export const provDone = (p: ProvisioningRecord) =>
   PROV_SECTIONS.filter((s) => ["done", "tested"].includes(p.sections[s.k]))
     .length
 
+/* ========================================================= insurers (LAMU) */
+/* Mock-only "Claim Clean-up (LAMU)" → Insurers module. No backend endpoint yet,
+   so the directory is ported verbatim from the hi-fi (`Ginja Console.html`
+   `InsurersDirectory`) rather than wired via a `src/features/` folder. */
+
+/** East-African countries an insurer can operate in (create-form select). */
+export const EA_COUNTRIES = [
+  "Kenya",
+  "Tanzania",
+  "Uganda",
+  "Rwanda",
+  "Burundi",
+  "South Sudan",
+  "Ethiopia",
+  "Somalia",
+  "DR Congo",
+]
+
+/** Insurer company types (create-form select). */
+export const INSURER_TYPES = [
+  "Health insurer",
+  "Composite insurer",
+  "Third-party administrator (TPA)",
+  "Reinsurer",
+  "Micro-insurer",
+]
+
+export type InsurerStatusValue = "Active" | "Inactive"
+
+export type Insurer = {
+  id: string
+  name: string
+  country: string
+  city: string
+  regulator: string
+  type: string
+  license: string
+  contact: string
+  email: string
+  phone: string
+  status: InsurerStatusValue
+  created: string
+  createdBy: string
+  /** Set once the profile is marked Inactive. */
+  deactivatedBy?: string
+  deactivatedOn?: string
+  deactivateReason?: string
+}
+
+export const INSURERS: Insurer[] = [
+  { id: "INS-2026-0001", name: "Jubilee Health Insurance", country: "Kenya", type: "Health insurer", regulator: "IRA Kenya", license: "IRA/07/HIC/2019", city: "Nairobi", contact: "Faith Wanjiru", email: "faith.wanjiru@jubilee.co.ke", phone: "+254712345678", status: "Active", created: "12 Jan 2026", createdBy: "Amara Okeke" },
+  { id: "INS-2026-0002", name: "CIC Insurance Group", country: "Kenya", type: "Composite insurer", regulator: "IRA Kenya", license: "IRA/03/CIG/2018", city: "Nairobi", contact: "Peter Otieno", email: "p.otieno@cic.co.ke", phone: "+254722004455", status: "Active", created: "03 Feb 2026", createdBy: "Daniel Achieng" },
+  { id: "INS-2026-0003", name: "Britam Health", country: "Kenya", type: "Health insurer", regulator: "IRA Kenya", license: "IRA/11/BRH/2020", city: "Nairobi", contact: "Mary Njoki", email: "mary.njoki@britam.com", phone: "+254733889900", status: "Active", created: "20 Feb 2026", createdBy: "Amara Okeke" },
+  { id: "INS-2026-0004", name: "Strategis Insurance Tanzania", country: "Tanzania", type: "Health insurer", regulator: "TIRA", license: "TIRA/HIC/0442", city: "Dar es Salaam", contact: "Joseph Massawe", email: "j.massawe@strategis.co.tz", phone: "+255712009988", status: "Active", created: "28 Feb 2026", createdBy: "Fatima Hassan" },
+  { id: "INS-2026-0005", name: "UAP Old Mutual Uganda", country: "Uganda", type: "Composite insurer", regulator: "IRA Uganda", license: "IRAU/COMP/0231", city: "Kampala", contact: "Grace Nakato", email: "grace.n@uapoldmutual.ug", phone: "+256772334455", status: "Active", created: "06 Mar 2026", createdBy: "Daniel Achieng" },
+  { id: "INS-2026-0006", name: "Radiant Insurance Rwanda", country: "Rwanda", type: "Health insurer", regulator: "BNR", license: "BNR/INS/0087", city: "Kigali", contact: "Eric Mugisha", email: "eric.m@radiant.rw", phone: "+250788112233", status: "Active", created: "15 Mar 2026", createdBy: "Amara Okeke" },
+  { id: "INS-2026-0007", name: "Nyala Insurance Ethiopia", country: "Ethiopia", type: "Composite insurer", regulator: "NBE", license: "NBE/INS/0451", city: "Addis Ababa", contact: "Selam Bekele", email: "s.bekele@nyala.et", phone: "+251911223344", status: "Inactive", created: "22 Jan 2026", createdBy: "Fatima Hassan", deactivatedBy: "Amara Okeke", deactivatedOn: "18 Apr 2026", deactivateReason: "Regulatory licence under renewal — paused at insurer request." },
+  { id: "INS-2026-0008", name: "Sanlam General Tanzania", country: "Tanzania", type: "Health insurer", regulator: "TIRA", license: "TIRA/HIC/0511", city: "Dar es Salaam", contact: "Neema Kileo", email: "neema.k@sanlam.co.tz", phone: "+255755667788", status: "Active", created: "02 Apr 2026", createdBy: "Daniel Achieng" },
+]
+
+export type InsurerAuditTone = "success" | "warning" | "neutral"
+
+export type InsurerAudit = {
+  id: string
+  /** Insurer account id this entry belongs to. */
+  ins: string
+  action: string
+  by: string
+  initials: string
+  when: string
+  tone: InsurerAuditTone
+  detail: string
+}
+
+export const INSURER_AUDIT: InsurerAudit[] = [
+  { id: "IA-1", ins: "INS-2026-0007", action: "Marked Inactive", by: "Amara Okeke", initials: "AO", when: "18 Apr 2026 · 14:22", tone: "warning", detail: "Reason: Regulatory licence under renewal — paused at insurer request." },
+  { id: "IA-2", ins: "INS-2026-0007", action: "Profile updated", by: "Fatima Hassan", initials: "FH", when: "10 Feb 2026 · 09:40", tone: "neutral", detail: "Primary contact email changed." },
+  { id: "IA-3", ins: "INS-2026-0007", action: "Profile created", by: "Fatima Hassan", initials: "FH", when: "22 Jan 2026 · 11:05", tone: "success", detail: "Account INS-2026-0007 generated. Status: Active." },
+]
+
 /* ============================================================ access roles */
 /* The internal staff roles you can act as (demo: switch via the header). Each
    role grants `view:<permId>` permissions (permId matches a nav item) plus
@@ -3576,6 +3656,8 @@ export const CONSOLE_ROLES: Record<ConsoleRoleKey, ConsoleRole> = {
       "view:payers",
       "view:approvals",
       "view:provisioning",
+      "view:providers",
+      "view:insurers",
       "view:registry",
       "view:doc-templates",
       "view:email-templates",
@@ -3597,6 +3679,8 @@ export const CONSOLE_ROLES: Record<ConsoleRoleKey, ConsoleRole> = {
     perms: [
       "view:dashboard",
       "view:payers",
+      "view:providers",
+      "view:insurers",
       "view:provisioning",
       "view:registry",
       "view:settings",
@@ -3604,7 +3688,13 @@ export const CONSOLE_ROLES: Record<ConsoleRoleKey, ConsoleRole> = {
       "view:access-roles",
       "view:audit",
     ],
-    readonly: ["payers", "access-users", "access-roles"],
+    readonly: [
+      "payers",
+      "providers",
+      "insurers",
+      "access-users",
+      "access-roles",
+    ],
     maker: false,
     checker: false,
     techReviewer: false,
@@ -3620,6 +3710,8 @@ export const CONSOLE_ROLES: Record<ConsoleRoleKey, ConsoleRole> = {
       "view:payers",
       "view:approvals",
       "view:provisioning",
+      "view:providers",
+      "view:insurers",
       "view:registry",
       "view:doc-templates",
       "view:email-templates",
@@ -3633,6 +3725,8 @@ export const CONSOLE_ROLES: Record<ConsoleRoleKey, ConsoleRole> = {
       "payers",
       "approvals",
       "provisioning",
+      "providers",
+      "insurers",
       "registry",
       "doc-templates",
       "email-templates",

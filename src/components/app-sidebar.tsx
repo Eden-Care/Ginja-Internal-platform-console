@@ -7,6 +7,7 @@ import {
   FileTextIcon,
   GalleryVerticalEndIcon,
   HistoryIcon,
+  HospitalIcon,
   KeyIcon,
   LayersIcon,
   type LucideIcon,
@@ -97,6 +98,25 @@ export const navGroups: NavGroup[] = [
         icon: ServerIcon,
         permId: "provisioning",
         count: 4,
+      },
+    ],
+  },
+  {
+    label: "Claim Clean-up (LAMU)",
+    items: [
+      {
+        title: "Service providers",
+        url: "/service-providers",
+        icon: HospitalIcon,
+        permId: "providers",
+        count: 8,
+      },
+      {
+        title: "Insurers",
+        url: "/insurers",
+        icon: Building2Icon,
+        permId: "insurers",
+        count: 8,
       },
     ],
   },

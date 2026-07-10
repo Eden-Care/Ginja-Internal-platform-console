@@ -26,6 +26,8 @@ export const ROUTE_NODES: RouteNode[] = [
   },
   { path: "/approvals", label: "Approvals" },
   { path: "/tenant-provisioning", label: "Tenant provisioning" },
+  { path: "/service-providers", label: "Service providers" },
+  { path: "/insurers", label: "Insurers" },
   { path: "/module-registry", label: "Module registry" },
   { path: "/document-templates", label: "Document templates" },
   { path: "/email-templates", label: "Email templates" },

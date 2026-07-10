@@ -164,7 +164,7 @@ export function Seg({
           type="button"
           onClick={() => onChange(o.v)}
           className={cn(
-            "h-[30px] rounded-md px-3 text-[13px] transition-colors",
+            "h-[30px] cursor-pointer rounded-md px-3 text-[13px] transition-colors",
             value === o.v
               ? "bg-card font-semibold text-foreground shadow-xs"
               : "text-muted-foreground hover:text-foreground"
