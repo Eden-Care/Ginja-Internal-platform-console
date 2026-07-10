@@ -18,7 +18,7 @@ it.
 > the design source of truth (the visual language: fonts, type, colour, spacing, shape, motion,
 > components).** How it's *built* lives with the code: tokens in `src/index.css`, design-system
 > widgets in `src/components/console/`, and the conventions in the Architecture section below.
-> `Ginja Console-v2.html` at the repo root is the hi-fi reference bundle (a self-contained
+> `Ginja Console-v4.html` at the repo root is the hi-fi reference bundle (a self-contained
 > bundle of every screen + its data). `README.md` is the entry-point overview.
 > **[API_GUIDE.md](./API_GUIDE.md)** documents the backend REST contract (base path
 > `/internal-platform/api/v1`, **snake_case** JSON, a `{status,success,result,error_details}`

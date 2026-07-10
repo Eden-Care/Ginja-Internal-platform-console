@@ -25,7 +25,7 @@ import { PayerRecordPage } from "@/pages/tenant-accounts/record"
 import { TenantProvisioningPage } from "@/pages/tenant-provisioning"
 import { ProvisioningDetailPage } from "@/pages/tenant-provisioning/detail"
 import { InsurersPage } from "@/pages/insurers"
-import { ComingSoonPage } from "@/pages/coming-soon"
+import { ServiceProvidersPage } from "@/pages/service-providers"
 import { ModuleRegistryPage } from "@/pages/module-registry"
 import { ModuleRecordPage } from "@/pages/module-registry/record"
 import { ModuleFormPage } from "@/pages/module-registry/form-page"
@@ -104,7 +104,7 @@ function AppShell() {
             <Route path="insurers" element={<InsurersPage />} />
             <Route
               path="service-providers"
-              element={<ComingSoonPage />}
+              element={<ServiceProvidersPage />}
             />
             <Route path="module-registry" element={<ModuleRegistryPage />} />
             <Route

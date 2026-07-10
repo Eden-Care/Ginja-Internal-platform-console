@@ -2,6 +2,7 @@
 
 > Auto-generated reference for the Ginja Platform Console backend (OpenAPI `3.1.0`, API version `v1`).
 > Source spec: `https://dev-api.ginja.ai/internal-platform/api/v1/v3/api-docs` · Swagger UI: `/internal-platform/api/v1/swagger-ui/index.html`
+> Regenerate with `python3 scripts/gen-api-reference.py api-docs.json API_REFERENCE.md`.
 
 Backend API for the **Ginja AI Internal Ops Platform** (Platform Console) — used by Ginja staff to
 onboard and operate payer/tenant customers, manage internal access, and maintain a compliant audit trail.
@@ -58,7 +59,9 @@ All endpoints require this scheme unless noted otherwise (the `/dev/token` helpe
 - [Platform Settings · Security](#platform-settings-security) (14)
 - [Platform Settings · Provisioning Tiers](#platform-settings-provisioning-tiers) (5)
 - [Platform Settings · Data Residency](#platform-settings-data-residency) (5)
+- [Claim Clean-up · Service providers](#claim-clean-up-service-providers) (18)
 - [My Account](#my-account) (16)
+- [Claim Clean-up · Insurance companies](#claim-clean-up-insurance-companies) (7)
 - [Dashboard](#dashboard) (1)
 - [Schemas](#schemas)
 
@@ -2139,7 +2142,7 @@ _Creatable permission catalogue assigned to roles; surfaced as PERM_* authoritie
 
 **List permissions (filter)**
 
-`operationId: list_3`
+`operationId: list_4`
 
 Returns the permission catalogue, with optional filters: `status` (`ACTIVE`/`INACTIVE`),
 `group_code` (e.g. `TENANT_MANAGEMENT`), and `sensitive` (`true`/`false`). Sorted by code.
@@ -2193,7 +2196,7 @@ Returns the permission catalogue, with optional filters: `status` (`ACTIVE`/`INA
 
 **Create a permission**
 
-`operationId: create_3`
+`operationId: create_4`
 
 Registers a new permission in the catalogue. The `code` is normalised to UPPER_SNAKE and becomes the
 `PERM_<code>` authority carried in a member's login JWT (via the roles they hold).
@@ -2350,7 +2353,7 @@ authority again on the member's next login.
 
 **Get a permission**
 
-`operationId: get_8`
+`operationId: get_10`
 
 Returns a single permission by its numeric id.
 
@@ -2508,7 +2511,7 @@ _The Configuration-library module catalogue (register, list/filter, search, upda
 
 **List modules (filter + pagination)**
 
-`operationId: list_4`
+`operationId: list_5`
 
 Returns the module catalogue as a paged envelope, with optional `status` and `owner_team` filters.
 Each row carries the module's metadata, its sub-modules, and the derived `tenants` count (number of
@@ -2677,7 +2680,7 @@ the prior current version is simply archived and remains in the history.
 
 **Get a module by business id**
 
-`operationId: get_6`
+`operationId: get_7`
 
 Returns one module by its business id (e.g. `MRC000001`), including sub-modules and the derived
 `tenants` count.
@@ -2732,7 +2735,7 @@ Returns one module by its business id (e.g. `MRC000001`), including sub-modules 
 
 **Update a module (PATCH, publish/unpublish)**
 
-`operationId: update_6`
+`operationId: update_7`
 
 Partially updates a module — only the non-null fields are applied. Supplying `sub_modules` replaces
 the whole set; omitting it leaves them unchanged. Setting `status` to `PUBLISHED` (from another
@@ -3093,7 +3096,7 @@ endpoint reads the schema resolved from the caller's token (platform admin → `
 | `entity_id` | query |  | string | Filter by entity business code, e.g. `MBR000001` (usually combined with `entity_type`). |
 | `action` | query |  | string | Filter by action code, e.g. `PAYER_APPROVED`, `ROLE_CREATED`. |
 | `actor` | query |  | string | Filter by actor (the acting member id / subject). |
-| `module` | query |  | string enum: `TENANT_ONBOARDING`, `TENANT_APPROVAL`, `TENANT_LIFECYCLE`, `TENANT_PROVISIONING`, `TECHNICAL_REVIEW`, `MEMBER_MANAGEMENT`, `MEMBER_INVITATION`, `ROLE_MANAGEMENT`, `PERMISSION_MANAGEMENT`, `MODULE_REGISTRY`, `AUTHENTICATION`, `PRICING`, `PLATFORM_SETTINGS` | Filter by functional module, e.g. `MEMBER_INVITATION` (see GET /audit-logs/modules for the catalogue). |
+| `module` | query |  | string enum: `TENANT_ONBOARDING`, `TENANT_APPROVAL`, `TENANT_LIFECYCLE`, `TENANT_PROVISIONING`, `TECHNICAL_REVIEW`, `MEMBER_MANAGEMENT`, `MEMBER_INVITATION`, `ROLE_MANAGEMENT`, `PERMISSION_MANAGEMENT`, `MODULE_REGISTRY`, `AUTHENTICATION`, `PRICING`, `PLATFORM_SETTINGS`, `CLAIM_CLEANUP` | Filter by functional module, e.g. `MEMBER_INVITATION` (see GET /audit-logs/modules for the catalogue). |
 | `pageable` | query | ✓ | [`Pageable`](#schema-pageable) | Pagination: `page` (0-based), `size` (default 20), `sort` (default `created_at,desc`). |
 
 **Responses**
@@ -3220,7 +3223,7 @@ first; not paged. Use for compliance exports.
 | `entity_id` | query |  | string |  |
 | `action` | query |  | string |  |
 | `actor` | query |  | string |  |
-| `module` | query |  | string enum: `TENANT_ONBOARDING`, `TENANT_APPROVAL`, `TENANT_LIFECYCLE`, `TENANT_PROVISIONING`, `TECHNICAL_REVIEW`, `MEMBER_MANAGEMENT`, `MEMBER_INVITATION`, `ROLE_MANAGEMENT`, `PERMISSION_MANAGEMENT`, `MODULE_REGISTRY`, `AUTHENTICATION`, `PRICING`, `PLATFORM_SETTINGS` |  |
+| `module` | query |  | string enum: `TENANT_ONBOARDING`, `TENANT_APPROVAL`, `TENANT_LIFECYCLE`, `TENANT_PROVISIONING`, `TECHNICAL_REVIEW`, `MEMBER_MANAGEMENT`, `MEMBER_INVITATION`, `ROLE_MANAGEMENT`, `PERMISSION_MANAGEMENT`, `MODULE_REGISTRY`, `AUTHENTICATION`, `PRICING`, `PLATFORM_SETTINGS`, `CLAIM_CLEANUP` |  |
 | `format` | query |  | string | Export format: `csv` (default) or `json`. |
 
 **Responses**
@@ -3621,7 +3624,7 @@ _Versioned, tiered pricing catalogue (DRAFT → ACTIVE → ARCHIVED) bound to su
 
 **List pricing structures**
 
-`operationId: list_2`
+`operationId: list_3`
 
 Returns all pricing structures, optionally filtered by lifecycle status. Each entry includes its
 nested `components[]` and `tiers[]`. Two are seeded **ACTIVE** (Transaction-Based, % of Gross Premium).
@@ -3692,7 +3695,7 @@ to a Payer subscription (`PUT /platform/payers/{id}/subscription`).
 
 **Create a pricing structure (DRAFT)**
 
-`operationId: create_2`
+`operationId: create_3`
 
 Authors a new versioned commercial proposal. It is created in **DRAFT** status with its full
 `components[]` (each carrying a `tiers[]` volume-discount schedule). `model` is
@@ -3925,7 +3928,7 @@ attachable to a Payer subscription via `PUT /platform/payers/{id}/subscription`.
 
 **Get a pricing structure**
 
-`operationId: get_5`
+`operationId: get_6`
 
 Fetches a single pricing structure by numeric id, including its nested `components[]` and `tiers[]`.
 
@@ -3993,7 +3996,7 @@ Fetches a single pricing structure by numeric id, including its nested `componen
 
 **Update a pricing structure (PATCH, DRAFT only)**
 
-`operationId: update_5`
+`operationId: update_6`
 
 Partial update — only non-null fields are applied. If `components` is provided, the **entire**
 component/tier set is replaced; if omitted, it is left unchanged.
@@ -4683,7 +4686,7 @@ be in `PENDING_ACTIVATION`.
 
 **Submit payer for approval**
 
-`operationId: submit`
+`operationId: submit_1`
 
 Submits the DRAFT payer for approval (§8.6) — the validating gate. No body. On success it stamps
 `submitted_by`/`submitted_at` (status stays `DRAFT`), completes the `review` step, emits
@@ -5585,7 +5588,7 @@ re-submit. `comment` is **mandatory** (the rejection reason shown to the submitt
 
 **Approve a payer → auto-activate**
 
-`operationId: approve`
+`operationId: approve_1`
 
 Records the approver's decision and then **auto-activates** the payer: provisions each
 tenant's `tenant_<subdomain>` schema, creates the Tenant Admin **inside that schema**,
@@ -5708,7 +5711,7 @@ is not yet modeled (returned `null`).
 
 **Approval review (by id)**
 
-`operationId: review`
+`operationId: review_1`
 
 Full review payload for the "Review · as Approver" screen: the request header + review meta
 (`status`, `own_submission`, `provisioning_complete`, `can_decide`, `sections`, `auto_activate_note`)
@@ -5868,7 +5871,7 @@ its tenants) are moved to the terminal `RETIRED` state. The body's `reason` is *
 
 **Request payer reactivation (maker step)**
 
-`operationId: reactivate`
+`operationId: reactivate_1`
 
 **Maker step.** Raises a PENDING reactivation request for a `SUSPENDED` payer — it does not
 reactivate immediately. A second actor with `APPROVAL_DECIDE` must approve. Optional note via
@@ -6211,7 +6214,7 @@ DATA_MIGRATION`.
 
 **Add a technical-review remark on a section**
 
-`operationId: addRemark`
+`operationId: addRemark_1`
 
 A Technical Reviewer leaves a remark on a config section; the section's `review_status` moves to
 `CHANGES_REQUESTED` so the engineer addresses it. `severity` defaults to `ACTION`.
@@ -6396,7 +6399,7 @@ must be in the provisioning queue.
 
 **Resolve a review remark**
 
-`operationId: resolveRemark`
+`operationId: resolveRemark_1`
 
 Marks a review remark `RESOLVED` once the engineer has addressed it. Returns the updated
 `RemarkResponse`.
@@ -6523,7 +6526,7 @@ on payer submit.
 
 **Get a tenant's provisioning detail**
 
-`operationId: get_7`
+`operationId: get_9`
 
 Returns one tenant's `ProvisioningResponse` including its full `sections[]` (DATABASE,
 DOMAINS_SSL, EMAIL, SMS, DATA_MIGRATION) with config, test results, and review status.
@@ -6955,7 +6958,7 @@ All ruleset versions, newest first. **Roles:** `PLATFORM_ADMIN` / `SUPPORT`.
 | `GET` | `/platform/settings/notification-templates/{type}` | Get one notification template mapping |
 | `PATCH` | `/platform/settings/notification-templates/{type}` | Update a notification template mapping |
 | `GET` | `/platform/settings/sessions` | List all active sessions (grouped by member) |
-| `GET` | `/platform/settings/password-status` | Password status — summary + per-user list |
+| `GET` | `/platform/settings/password-status` | Password status — summary + paged, filterable per-user list |
 | `GET` | `/platform/settings/password-status/{memberId}` | Password status for one user (detail panel) |
 | `GET` | `/platform/settings/notification-templates` | List notification template mappings |
 | `GET` | `/platform/settings/mfa-status` | MFA status — adoption summary + per-user list |
@@ -7236,7 +7239,7 @@ Returns the template mapping for one notification type. **Roles:** `PLATFORM_ADM
 
 | Name | In | Req | Type | Description |
 |---|---|---|---|---|
-| `type` | path | ✓ | string enum: `MEMBER_INVITE`, `TENANT_ADMIN_INVITE`, `SMS_OTP`, `EMAIL_OTP` | Notification type. |
+| `type` | path | ✓ | string enum: `MEMBER_INVITE`, `TENANT_ADMIN_INVITE`, `SMS_OTP`, `EMAIL_OTP`, `PROVIDER_SENT_BACK` | Notification type. |
 
 **Responses**
 
@@ -7264,7 +7267,7 @@ fields are applied. Audited as `NOTIFICATION_TEMPLATE_UPDATED`.
 
 | Name | In | Req | Type | Description |
 |---|---|---|---|---|
-| `type` | path | ✓ | string enum: `MEMBER_INVITE`, `TENANT_ADMIN_INVITE`, `SMS_OTP`, `EMAIL_OTP` | Notification type. |
+| `type` | path | ✓ | string enum: `MEMBER_INVITE`, `TENANT_ADMIN_INVITE`, `SMS_OTP`, `EMAIL_OTP`, `PROVIDER_SENT_BACK` | Notification type. |
 
 **Request body** (required): [`UpdateNotificationTemplateRequest`](#schema-updatenotificationtemplaterequest)
 
@@ -7350,17 +7353,37 @@ until an IP-geo source is configured. Revoke a whole member's sessions via `revo
 
 ### `GET` `/platform/settings/password-status`
 
-**Password status — summary + per-user list**
+**Password status — summary + paged, filterable per-user list**
 
 `operationId: status`
 
-Returns password-expiry tiles (`total_users`, `ok`, `expiring_soon`, `expired`, `pending`) and a
-per-user breakdown (`status`, `last_changed`, `days_left`, `expires_at`). Status is derived from each
-member's last password change and the policy's `password_expiry_days` (0 = no expiry → everyone
-`ok`); `days_left` is negative when overdue; `pending` = no password set yet. The UI filters/searches
-client-side.
+Returns password-expiry tiles (`total_users`, `ok`, `expiring_soon`, `expired`, `pending`) plus a
+**paged** per-user list enriched with directory detail: password status (`status`, `last_changed`,
+`days_left`, `expires_at`), account lifecycle (`account_status`, `status_reason`, `locked`,
+`invite_expired`, `invite_expires_at`), identity/activity (`member_code`, `roles`, `invited_by`,
+`member_since`, `created_at`, `last_active`, `active_sessions`) and MFA flags (`mfa_enabled`,
+`totp_enabled`, `sms_enabled`, `email_mfa_enabled`, `webauthn_enabled`).
+
+Password `status` is derived from each member's last password change and the policy's
+`password_expiry_days` (0 = no expiry → everyone `ok`); `days_left` is negative when overdue;
+`pending` = no password set yet.
+
+**Filtering / paging (server-side):** `q` matches name or email; `account_status`
+(`INVITED|ACTIVE|SUSPENDED|DISABLED`) filters by lifecycle; `password_status`
+(`ok|soon|expired|pending`) filters by the derived status; `page` (0-based), `size` (default 20) and
+`sort` (default `email`) page the result. `summary` always reflects the **full** population,
+independent of filters/paging.
 
 **Roles:** `PLATFORM_ADMIN` or `SUPPORT` (read-only).
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `q` | query |  | string | Search by member name or email (case-insensitive). |
+| `account_status` | query |  | string enum: `INVITED`, `ACTIVE`, `SUSPENDED`, `DISABLED` | Filter by account lifecycle status. |
+| `password_status` | query |  | string | Filter by derived password status (ok\|soon\|expired\|pending). |
+| `pageable` | query | ✓ | [`Pageable`](#schema-pageable) |  |
 
 **Responses**
 
@@ -7385,17 +7408,42 @@ client-side.
       "expired": 2,
       "pending": 1
     },
-    "users": [
-      {
-        "member_id": 1,
-        "account": "admin@ginja.ai",
-        "user": "Platform Administrator",
-        "status": "ok",
-        "last_changed": "2026-04-01T09:00:00Z",
-        "days_left": 57,
-        "expires_at": "2026-06-30T09:00:00Z"
-      }
-    ]
+    "users": {
+      "content": [
+        {
+          "member_id": 1,
+          "member_code": "MBR000001",
+          "account": "admin@ginja.ai",
+          "user": "Platform Administrator",
+          "account_status": "ACTIVE",
+          "status_reason": null,
+          "locked": false,
+          "invite_expired": false,
+          "invite_expires_at": null,
+          "status": "ok",
+          "last_changed": "2026-04-01T09:00:00Z",
+          "days_left": 57,
+          "expires_at": "2026-06-30T09:00:00Z",
+          "roles": [
+            "PLATFORM_ADMIN"
+          ],
+          "invited_by": null,
+          "member_since": "2026-01-10T09:00:00Z",
+          "created_at": "2026-01-10T09:00:00Z",
+          "last_active": "2026-07-08T09:15:00Z",
+          "active_sessions": 1,
+          "mfa_enabled": true,
+          "totp_enabled": true,
+          "sms_enabled": false,
+          "email_mfa_enabled": false,
+          "webauthn_enabled": false
+        }
+      ],
+      "page": 0,
+      "size": 20,
+      "total_elements": 13,
+      "total_pages": 1
+    }
   }
 }
 ```
@@ -7432,7 +7480,7 @@ Single user's password status for the detail drawer. **Roles:** `PLATFORM_ADMIN`
 
 **List notification template mappings**
 
-`operationId: list_5`
+`operationId: list_7`
 
 Returns every notification type and the template it currently maps to. `active:false` means the
 adapter skips sending that type (per-type kill switch).
@@ -8079,6 +8127,532 @@ Removes a data-residency region from the catalogue.
 
 ---
 
+## Claim Clean-up · Service providers
+
+| Method | Path | Summary |
+|---|---|---|
+| `GET` | `/platform/service-providers` | Service providers directory |
+| `POST` | `/platform/service-providers` | Onboard a provider (create draft) |
+| `POST` | `/platform/service-providers/{code}/submit` | Submit a draft for approval |
+| `POST` | `/platform/service-providers/{code}/send-back` | Send back to specialist |
+| `POST` | `/platform/service-providers/{code}/review/sections/{section}/reviewed` | Mark a section reviewed |
+| `POST` | `/platform/service-providers/{code}/remarks` | Leave a review remark |
+| `POST` | `/platform/service-providers/{code}/remarks/{remarkId}/resolve` | Resolve a remark |
+| `POST` | `/platform/service-providers/{code}/reactivate` | Reactivate a provider |
+| `POST` | `/platform/service-providers/{code}/documents/{docType}` | Upload / replace a document |
+| `POST` | `/platform/service-providers/{code}/deactivate` | Mark a provider inactive |
+| `POST` | `/platform/service-providers/{code}/approve` | Approve & activate |
+| `GET` | `/platform/service-providers/{code}` | Get a provider / draft |
+| `PATCH` | `/platform/service-providers/{code}` | Save a wizard section (draft) |
+| `GET` | `/platform/service-providers/{code}/review` | Provider review detail |
+| `GET` | `/platform/service-providers/{code}/documents` | List document slots |
+| `GET` | `/platform/service-providers/{code}/documents/{docType}/download` | Download a document |
+| `GET` | `/platform/service-providers/{code}/audit` | Provider audit trail |
+| `GET` | `/platform/service-providers/review-queue` | Provider review queue |
+
+### `GET` `/platform/service-providers`
+
+**Service providers directory**
+
+`operationId: list_2`
+
+Status tiles (`total`, `active`, `pending_review`, `inactive`) over the full population plus a
+paged, filtered provider list. `q` matches name / account id / draft code / town-city; `type`
+filters by provider type; `status` filters by lifecycle
+(`DRAFT|PENDING_REVIEW|ACTIVE|INACTIVE`); `page`/`size`/`sort` (default `createdAt`) page it.
+
+**Roles:** `PLATFORM_ADMIN` or `SUPPORT`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `q` | query |  | string | Search name / account id / draft code / town-city. |
+| `type` | query |  | string enum: `HOSPITAL`, `PRIMARY_HEALTH_CLINIC`, `SPECIALIST_CLINIC`, `PHARMACY`, `DENTAL_PRACTICE`, `OPTICIAN`, `LAB_SERVICES`, `IMAGING_SERVICES`, `AMBULANCE_SERVICES`, `HOMECARE_SERVICES` | Filter by provider type. |
+| `status` | query |  | string enum: `DRAFT`, `PENDING_REVIEW`, `ACTIVE`, `INACTIVE` | Filter by lifecycle status. |
+| `pageable` | query | ✓ | [`Pageable`](#schema-pageable) |  |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK |
+
+---
+
+### `POST` `/platform/service-providers`
+
+**Onboard a provider (create draft)**
+
+`operationId: create_2`
+
+Starts a new onboarding draft from the wizard's first section (**Provider profile**) and generates a
+permanent draft code (`SPO-…`), status `DRAFT`. `name` is required (no empty drafts); the other
+section-1 fields are optional here and can be completed later. Fill the remaining sections via PATCH,
+then submit. Audited as `SERVICE_PROVIDER_DRAFTED`.
+
+**Role:** `PLATFORM_ADMIN`.
+
+**Request body** (required): [`CreateServiceProviderRequest`](#schema-createserviceproviderrequest)
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `name` | string | ✓ | Service provider name. _(e.g. `Meditest Diagnostics`)_ |
+| `provider_type` | string enum: `HOSPITAL`, `PRIMARY_HEALTH_CLINIC`, `SPECIALIST_CLINIC`, `PHARMACY`, `DENTAL_PRACTICE`, `OPTICIAN`, `LAB_SERVICES`, `IMAGING_SERVICES`, `AMBULANCE_SERVICES`, `HOMECARE_SERVICES` |  | Provider type. _(e.g. `IMAGING_SERVICES`)_ |
+| `classification` | string enum: `TIER_1`, `TIER_2`, `TIER_3`, `TIER_4` |  | Provider classification (Tier 1–4). _(e.g. `TIER_2`)_ |
+| `tier` | string enum: `TOP_35`, `RANK_36_100`, `RANK_100_PLUS` |  | Ranking bucket by claim volume. _(e.g. `RANK_36_100`)_ |
+| `ownership` | string enum: `PUBLIC`, `PRIVATE`, `FAITH_BASED`, `NGO` |  | Ownership model. _(e.g. `PRIVATE`)_ |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `201` | Draft created — returns the draft incl. code + completeness. |
+| `400` | Missing name / invalid body. |
+| `403` | Caller is not PLATFORM_ADMIN. |
+
+---
+
+### `POST` `/platform/service-providers/{code}/submit`
+
+**Submit a draft for approval**
+
+`operationId: submit`
+
+Validates that all required onboarding sections are complete, generates a permanent account id
+(`SP-YYYY-NNNN`), and moves the provider to `PENDING_REVIEW` (Inactive until approved). Audited as
+`SERVICE_PROVIDER_SUBMITTED`.
+
+**Role:** `PLATFORM_ADMIN`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `code` | path | ✓ | string | Draft code. |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | Submitted — returns the provider incl. account id. |
+| `400` | Not a draft / required sections incomplete. |
+| `403` | Caller is not PLATFORM_ADMIN. |
+| `404` | Not found. |
+
+---
+
+### `POST` `/platform/service-providers/{code}/send-back`
+
+**Send back to specialist**
+
+`operationId: sendBack`
+
+Returns the provider to `DRAFT` so the onboarding specialist can address open remarks and resubmit, and emails them (best-effort; carries the open-remark count + optional `note`). Audited as `SERVICE_PROVIDER_SENT_BACK`. **Roles:** `PLATFORM_APPROVER` / `PLATFORM_ADMIN`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `code` | path | ✓ | string | Account id or draft code. |
+
+**Request body**: [`SendBackProviderRequest`](#schema-sendbackproviderrequest)
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `note` | string |  | Optional message to the specialist. _(e.g. `Please re-upload a matching KRA PIN certificate and resubmit.`)_ |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | Sent back — provider is DRAFT. |
+| `400` | Provider not pending review. |
+| `404` | Not found. |
+
+---
+
+### `POST` `/platform/service-providers/{code}/review/sections/{section}/reviewed`
+
+**Mark a section reviewed**
+
+`operationId: markSectionReviewed`
+
+Marks a section reviewed ("Clear"); rejected if the section has open remarks. Audited as `SERVICE_PROVIDER_SECTION_REVIEWED`. **Roles:** `PLATFORM_APPROVER` / `PLATFORM_ADMIN`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `code` | path | ✓ | string | Account id or draft code. |
+| `section` | path | ✓ | string enum: `PROVIDER_PROFILE`, `LOCATION_CONTACT`, `SYSTEMS_INTEGRATION`, `REGISTRATION`, `DOCUMENTS` | Review section. |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | Reviewed — returns the updated review. |
+| `400` | Open remarks on the section / not pending. |
+| `404` | Not found. |
+
+---
+
+### `POST` `/platform/service-providers/{code}/remarks`
+
+**Leave a review remark**
+
+`operationId: addRemark`
+
+Adds a remark to a section (`ACTION_REQUIRED` blocks activation and un-clears the section).
+Audited as `SERVICE_PROVIDER_REMARK_ADDED`. **Roles:** `PLATFORM_APPROVER` / `PLATFORM_ADMIN`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `code` | path | ✓ | string | Account id or draft code. |
+
+**Request body** (required): [`AddProviderRemarkRequest`](#schema-addproviderremarkrequest)
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `section` | string enum: `PROVIDER_PROFILE`, `LOCATION_CONTACT`, `SYSTEMS_INTEGRATION`, `REGISTRATION`, `DOCUMENTS` | ✓ | Section the remark applies to. _(e.g. `REGISTRATION`)_ |
+| `type` | string enum: `ACTION_REQUIRED`, `NOTE` | ✓ | Remark type; ACTION_REQUIRED blocks activation. _(e.g. `ACTION_REQUIRED`)_ |
+| `body` | string | ✓ | The remark text. _(e.g. `KRA PIN certificate doesn’t match the facility name on the licence.`)_ |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `201` | Added — returns the updated review. |
+| `400` | Provider not pending review / invalid body. |
+| `404` | Not found. |
+
+---
+
+### `POST` `/platform/service-providers/{code}/remarks/{remarkId}/resolve`
+
+**Resolve a remark**
+
+`operationId: resolveRemark`
+
+Marks an open remark resolved. Audited as `SERVICE_PROVIDER_REMARK_RESOLVED`. **Roles:** `PLATFORM_APPROVER` / `PLATFORM_ADMIN`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `code` | path | ✓ | string | Account id or draft code. |
+| `remarkId` | path | ✓ | string | Remark id. |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | Resolved — returns the updated review. |
+| `404` | Provider or remark not found. |
+
+---
+
+### `POST` `/platform/service-providers/{code}/reactivate`
+
+**Reactivate a provider**
+
+`operationId: reactivate`
+
+Sets an inactive provider back to `ACTIVE` and clears the status reason. Audited as `SERVICE_PROVIDER_REACTIVATED`. **Role:** `PLATFORM_ADMIN`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `code` | path | ✓ | string | Account id. |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK |
+
+---
+
+### `POST` `/platform/service-providers/{code}/documents/{docType}`
+
+**Upload / replace a document**
+
+`operationId: upload`
+
+Uploads (or replaces) the file in a document slot (multipart `file`). Stored in the document
+service; the slot is set to `PENDING_REVIEW`. Audited as `SERVICE_PROVIDER_DOCUMENT_UPLOADED`.
+
+**Role:** `PLATFORM_ADMIN`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `code` | path | ✓ | string | Draft code or account id. |
+| `docType` | path | ✓ | string enum: `SIGNED_PARTNERSHIP_CONTRACT`, `FACILITY_OPERATING_LICENCE`, `KRA_PIN_CERTIFICATE`, `BANK_MPESA_SETTLEMENT`, `REGULATORY_REGISTRATION`, `SHIF_SHA_ACCREDITATION` | Document slot. |
+
+**Request body**: `object`
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `file` | string (binary) | ✓ |  |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | Uploaded — returns the slot. |
+| `400` | Missing/empty file. |
+| `404` | Provider not found. |
+
+---
+
+### `POST` `/platform/service-providers/{code}/deactivate`
+
+**Mark a provider inactive**
+
+`operationId: deactivate`
+
+Sets an active provider to `INACTIVE` with the supplied reason (shown on the profile + audit trail).
+Audited as `SERVICE_PROVIDER_DEACTIVATED`. **Role:** `PLATFORM_ADMIN`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `code` | path | ✓ | string | Account id. |
+
+**Request body** (required): [`DeactivateServiceProviderRequest`](#schema-deactivateserviceproviderrequest)
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `reason` | string | ✓ | Why the provider is being marked inactive. _(e.g. `Contract lapsed — renewal pending.`)_ |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | Marked inactive. |
+| `400` | Missing reason / not active. |
+| `403` | Caller is not PLATFORM_ADMIN. |
+| `404` | Not found. |
+
+---
+
+### `POST` `/platform/service-providers/{code}/approve`
+
+**Approve & activate**
+
+`operationId: approve`
+
+Approves the provider and activates it — gated on **all sections reviewed and no open remarks**
+(else 400). Records the approver and sets status `ACTIVE`. Audited as `SERVICE_PROVIDER_ACTIVATED`.
+
+**Roles:** `PLATFORM_APPROVER` / `PLATFORM_ADMIN`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `code` | path | ✓ | string | Account id or draft code. |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | Approved — provider is Active. |
+| `400` | Not pending / open remarks / sections unreviewed. |
+| `404` | Not found. |
+
+---
+
+### `GET` `/platform/service-providers/{code}`
+
+**Get a provider / draft**
+
+`operationId: get_5`
+
+Returns one provider by draft code (`SPO-…`) or account id (`SP-…`). **Roles:** `PLATFORM_ADMIN` or `SUPPORT`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `code` | path | ✓ | string | Draft code or account id. |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK. |
+| `404` | Not found. |
+
+---
+
+### `PATCH` `/platform/service-providers/{code}`
+
+**Save a wizard section (draft)**
+
+`operationId: update_5`
+
+Partial save of an onboarding draft — only non-null fields are applied (the UI sends one section's
+fields at a time). Allowed only while status is `DRAFT`. Audited as `SERVICE_PROVIDER_UPDATED`.
+
+**Role:** `PLATFORM_ADMIN`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `code` | path | ✓ | string | Draft code. |
+
+**Request body** (required): [`UpdateServiceProviderRequest`](#schema-updateserviceproviderrequest)
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `name` | string |  | Service provider name. |
+| `provider_type` | string enum: `HOSPITAL`, `PRIMARY_HEALTH_CLINIC`, `SPECIALIST_CLINIC`, `PHARMACY`, `DENTAL_PRACTICE`, `OPTICIAN`, `LAB_SERVICES`, `IMAGING_SERVICES`, `AMBULANCE_SERVICES`, `HOMECARE_SERVICES` |  | Provider type. |
+| `classification` | string enum: `TIER_1`, `TIER_2`, `TIER_3`, `TIER_4` |  | Provider classification (Tier 1–4). |
+| `tier` | string enum: `TOP_35`, `RANK_36_100`, `RANK_100_PLUS` |  | Ranking bucket by claim volume. |
+| `ownership` | string enum: `PUBLIC`, `PRIVATE`, `FAITH_BASED`, `NGO` |  | Ownership model. |
+| `country` | string |  | Country of operation. |
+| `county_region` | string |  | County / region. |
+| `town_city` | string |  | Town / city. |
+| `physical_address` | string |  | Physical address. |
+| `contact_name` | string |  | Primary contact name. |
+| `contact_role` | string |  | Primary contact role / title. |
+| `contact_email` | string (email) |  | Primary contact email. |
+| `contact_phone` | string |  | Primary contact phone. |
+| `hims_name` | string |  | Health information system (HIMS) name. |
+| `claims_per_month` | integer (int32) |  | Approx. claims processed per month. |
+| `integration_status` | string enum: `DONE`, `IN_PROGRESS`, `NOT_STARTED` |  | HIMS integration status. |
+| `services_offered` | array&lt;string enum: `OUTPATIENT`, `INPATIENT`, `SURGERY`, `MATERNITY`, `EMERGENCY`, `LABORATORY`, `RADIOLOGY`, `PHARMACY`, `DENTAL`, `OPTICAL`, `ICU_HDU`, `RENAL_DIALYSIS`&gt; |  | Clinical services offered (replaces the current set when present). |
+| `facility_registration_no` | string |  | Facility registration no. (KMPDC / PPB). |
+| `kra_pin` | string |  | KRA PIN. |
+| `shif_sha_accreditation` | string |  | SHIF / SHA accreditation (optional). |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | Saved — returns the draft incl. section completeness. |
+| `400` | Not a draft / invalid body. |
+| `403` | Caller is not PLATFORM_ADMIN. |
+| `404` | Not found. |
+
+---
+
+### `GET` `/platform/service-providers/{code}/review`
+
+**Provider review detail**
+
+`operationId: review`
+
+Per-section review state (reviewed + open remarks), review status `n/5`, and all remarks. **Roles:** `PLATFORM_APPROVER` / `PLATFORM_ADMIN` / `SUPPORT`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `code` | path | ✓ | string | Account id or draft code. |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK. |
+| `404` | Not found. |
+
+---
+
+### `GET` `/platform/service-providers/{code}/documents`
+
+**List document slots**
+
+`operationId: list_8`
+
+Returns every document slot with its upload/review state (or empty when not uploaded). **Roles:** `PLATFORM_ADMIN` or `SUPPORT`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `code` | path | ✓ | string | Draft code or account id. |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK |
+
+---
+
+### `GET` `/platform/service-providers/{code}/documents/{docType}/download`
+
+**Download a document**
+
+`operationId: download`
+
+Returns a fresh download reference (URL + metadata) for an uploaded slot. **Roles:** `PLATFORM_ADMIN` or `SUPPORT`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `code` | path | ✓ | string | Draft code or account id. |
+| `docType` | path | ✓ | string enum: `SIGNED_PARTNERSHIP_CONTRACT`, `FACILITY_OPERATING_LICENCE`, `KRA_PIN_CERTIFICATE`, `BANK_MPESA_SETTLEMENT`, `REGULATORY_REGISTRATION`, `SHIF_SHA_ACCREDITATION` | Document slot. |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK. |
+| `404` | Provider or document not found. |
+
+---
+
+### `GET` `/platform/service-providers/{code}/audit`
+
+**Provider audit trail**
+
+`operationId: audit`
+
+Chronological activity list for one provider (draft → submit → status changes), newest first — the profile's "Audit trail" tab. **Roles:** `PLATFORM_ADMIN` or `SUPPORT`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `code` | path | ✓ | string | Draft code or account id. |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK. |
+| `404` | Not found. |
+
+---
+
+### `GET` `/platform/service-providers/review-queue`
+
+**Provider review queue**
+
+`operationId: reviewQueue`
+
+Providers awaiting approval + stats (`awaiting_review`, `open_remarks`, `ready_to_activate`, `approved`). **Roles:** `PLATFORM_APPROVER` / `PLATFORM_ADMIN` / `SUPPORT`.
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK |
+
+---
+
 ## My Account
 
 | Method | Path | Summary |
@@ -8366,6 +8940,252 @@ Removes a data-residency region from the catalogue.
 
 ---
 
+## Claim Clean-up · Insurance companies
+
+| Method | Path | Summary |
+|---|---|---|
+| `GET` | `/platform/insurance-companies` | Insurance companies directory |
+| `POST` | `/platform/insurance-companies` | Create an insurance company |
+| `POST` | `/platform/insurance-companies/{accountId}/reactivate` | Reactivate an insurance company |
+| `POST` | `/platform/insurance-companies/{accountId}/deactivate` | Mark an insurance company inactive |
+| `GET` | `/platform/insurance-companies/{accountId}` | Get an insurance company profile |
+| `PATCH` | `/platform/insurance-companies/{accountId}` | Update an insurance company profile |
+| `GET` | `/platform/insurance-companies/{accountId}/audit` | Insurance company audit trail |
+
+### `GET` `/platform/insurance-companies`
+
+**Insurance companies directory**
+
+`operationId: list_6`
+
+Status tiles (`total`, `active`, `inactive`) over the full population plus a paged, filtered
+company list. `q` matches name / account id / country; `status` filters by lifecycle
+(`ACTIVE|INACTIVE`); `page`/`size`/`sort` (default `name`) page the result.
+
+**Roles:** `PLATFORM_ADMIN` or `SUPPORT`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `q` | query |  | string | Search name / account id / country. |
+| `status` | query |  | string enum: `ACTIVE`, `INACTIVE` | Filter by lifecycle status. |
+| `pageable` | query | ✓ | [`Pageable`](#schema-pageable) |  |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK |
+
+---
+
+### `POST` `/platform/insurance-companies`
+
+**Create an insurance company**
+
+`operationId: create_5`
+
+Creates an insurer profile and generates a unique, permanent account id (`INS-YYYY-NNNN`). The
+profile is created with status `ACTIVE`. Audited as `INSURANCE_COMPANY_CREATED`.
+
+**Role:** `PLATFORM_ADMIN`.
+
+**Request body** (required): [`CreateInsuranceCompanyRequest`](#schema-createinsurancecompanyrequest)
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `name` | string | ✓ | Company name. _(e.g. `Jubilee Health Insurance`)_ |
+| `country` | string | ✓ | Country of operation. _(e.g. `Kenya`)_ |
+| `company_type` | string enum: `HEALTH_INSURER`, `COMPOSITE_INSURER`, `TPA`, `REINSURER`, `MICRO_INSURER` | ✓ | Company type. _(e.g. `HEALTH_INSURER`)_ |
+| `city` | string |  | City. _(e.g. `Nairobi`)_ |
+| `registered_address` | string |  | Registered address. |
+| `regulator` | string |  | Regulator (optional). _(e.g. `IRA Kenya`)_ |
+| `licence_number` | string |  | Licence number (optional). _(e.g. `IRA/07/HIC/2019`)_ |
+| `contact_name` | string |  | Primary contact name (optional). _(e.g. `Faith Wanjiru`)_ |
+| `contact_email` | string (email) |  | Primary contact email (optional). _(e.g. `faith.wanjiru@jubilee.co.ke`)_ |
+| `contact_phone` | string |  | Primary contact phone (optional). _(e.g. `+254712345678`)_ |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `201` | Created — returns the new profile incl. account id. |
+| `400` | Invalid body. |
+| `403` | Caller is not PLATFORM_ADMIN. |
+
+---
+
+### `POST` `/platform/insurance-companies/{accountId}/reactivate`
+
+**Reactivate an insurance company**
+
+`operationId: reactivate_2`
+
+Sets an inactive profile back to `ACTIVE` and clears the status reason. Audited as
+`INSURANCE_COMPANY_REACTIVATED`.
+
+**Role:** `PLATFORM_ADMIN`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `accountId` | path | ✓ | string | Account id. |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | Reactivated. |
+| `400` | Already active. |
+| `403` | Caller is not PLATFORM_ADMIN. |
+| `404` | Not found. |
+
+---
+
+### `POST` `/platform/insurance-companies/{accountId}/deactivate`
+
+**Mark an insurance company inactive**
+
+`operationId: deactivate_1`
+
+Sets the profile to `INACTIVE` with the supplied reason (shown on the profile and recorded in the
+audit trail). Audited as `INSURANCE_COMPANY_DEACTIVATED`.
+
+**Role:** `PLATFORM_ADMIN`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `accountId` | path | ✓ | string | Account id. |
+
+**Request body** (required): [`DeactivateInsuranceCompanyRequest`](#schema-deactivateinsurancecompanyrequest)
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `reason` | string | ✓ | Why the profile is being marked inactive. _(e.g. `Regulatory licence under renewal — paused at insurer request.`)_ |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | Marked inactive. |
+| `400` | Missing reason / already inactive. |
+| `403` | Caller is not PLATFORM_ADMIN. |
+| `404` | Not found. |
+
+---
+
+### `GET` `/platform/insurance-companies/{accountId}`
+
+**Get an insurance company profile**
+
+`operationId: get_8`
+
+Returns one insurer profile by account id. **Roles:** `PLATFORM_ADMIN` or `SUPPORT`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `accountId` | path | ✓ | string | Account id. |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK. |
+| `404` | Not found. |
+
+---
+
+### `PATCH` `/platform/insurance-companies/{accountId}`
+
+**Update an insurance company profile**
+
+`operationId: update_8`
+
+Partial update of an insurer profile — only non-null fields are applied. Status is changed via the
+deactivate/reactivate actions, not here. Audited as `INSURANCE_COMPANY_UPDATED`.
+
+**Role:** `PLATFORM_ADMIN`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `accountId` | path | ✓ | string | Account id. |
+
+**Request body** (required): [`UpdateInsuranceCompanyRequest`](#schema-updateinsurancecompanyrequest)
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `name` | string |  | Company name. |
+| `country` | string |  | Country of operation. |
+| `company_type` | string enum: `HEALTH_INSURER`, `COMPOSITE_INSURER`, `TPA`, `REINSURER`, `MICRO_INSURER` |  | Company type. |
+| `city` | string |  | City. |
+| `registered_address` | string |  | Registered address. |
+| `regulator` | string |  | Regulator. |
+| `licence_number` | string |  | Licence number. |
+| `contact_name` | string |  | Primary contact name. |
+| `contact_email` | string (email) |  | Primary contact email. |
+| `contact_phone` | string |  | Primary contact phone. |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | Updated — returns the new profile. |
+| `403` | Caller is not PLATFORM_ADMIN. |
+| `404` | Not found. |
+
+---
+
+### `GET` `/platform/insurance-companies/{accountId}/audit`
+
+**Insurance company audit trail**
+
+`operationId: audit_1`
+
+Chronological activity list for one insurer profile (create + status changes, with actor, timestamp
+and reason), newest first — the profile's "Audit trail" tab. Returned as a plain list, not paged.
+**Roles:** `PLATFORM_ADMIN` or `SUPPORT`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `accountId` | path | ✓ | string | Account id. |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK. |
+| `404` | Not found. |
+
+<details><summary>Example <code>200</code> response</summary>
+
+```json
+{
+  "status": 200,
+  "success": true,
+  "result": [
+    {
+      "action": "INSURANCE_COMPANY_CREATED",
+      "actor_name": "Platform Administrator",
+      "reason": null
+    }
+  ]
+}
+```
+
+</details>
+
+---
+
 ## Dashboard
 
 | Method | Path | Summary |
@@ -8466,6 +9286,17 @@ Invite token + chosen password to activate a member.
 |---|---|---|---|
 | `token` | string | ✓ | The pending, unexpired invite token e-mailed to the user when they were invited (POST /platform/organization/members) or re-invited (resend-invite). _(e.g. `f47ac10b58cc4372a5670e02b2c3d479`)_ |
 | `password` | string | ✓ | The member's chosen password. _(e.g. `NewPass@123`)_ |
+
+### AddProviderRemarkRequest
+<a id="schema-addproviderremarkrequest"></a>
+
+A review remark on a provider section.
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `section` | string enum: `PROVIDER_PROFILE`, `LOCATION_CONTACT`, `SYSTEMS_INTEGRATION`, `REGISTRATION`, `DOCUMENTS` | ✓ | Section the remark applies to. _(e.g. `REGISTRATION`)_ |
+| `type` | string enum: `ACTION_REQUIRED`, `NOTE` | ✓ | Remark type; ACTION_REQUIRED blocks activation. _(e.g. `ACTION_REQUIRED`)_ |
+| `body` | string | ✓ | The remark text. _(e.g. `KRA PIN certificate doesn’t match the facility name on the licence.`)_ |
 
 ### AddRemarkRequest
 <a id="schema-addremarkrequest"></a>
@@ -8613,6 +9444,24 @@ A tenant contact card.
 | `role_title` | string |  | Contact role / title. _(e.g. `Operations Lead`)_ |
 | `receives_invite` | boolean |  | True if this contact receives the tenant activation invite. _(e.g. `True`)_ |
 
+### CreateInsuranceCompanyRequest
+<a id="schema-createinsurancecompanyrequest"></a>
+
+Registers a new insurer profile.
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `name` | string | ✓ | Company name. _(e.g. `Jubilee Health Insurance`)_ |
+| `country` | string | ✓ | Country of operation. _(e.g. `Kenya`)_ |
+| `company_type` | string enum: `HEALTH_INSURER`, `COMPOSITE_INSURER`, `TPA`, `REINSURER`, `MICRO_INSURER` | ✓ | Company type. _(e.g. `HEALTH_INSURER`)_ |
+| `city` | string |  | City. _(e.g. `Nairobi`)_ |
+| `registered_address` | string |  | Registered address. |
+| `regulator` | string |  | Regulator (optional). _(e.g. `IRA Kenya`)_ |
+| `licence_number` | string |  | Licence number (optional). _(e.g. `IRA/07/HIC/2019`)_ |
+| `contact_name` | string |  | Primary contact name (optional). _(e.g. `Faith Wanjiru`)_ |
+| `contact_email` | string (email) |  | Primary contact email (optional). _(e.g. `faith.wanjiru@jubilee.co.ke`)_ |
+| `contact_phone` | string |  | Primary contact phone (optional). _(e.g. `+254712345678`)_ |
+
 ### CreatePayerRequest
 <a id="schema-createpayerrequest"></a>
 
@@ -8689,6 +9538,37 @@ Payload to create a CUSTOM role (name, colour and permissions).
 | `description` | string |  | Optional longer description of the role. _(e.g. `Finance + claims`)_ |
 | `hex_color` | string |  | Accent colour for the role badge, as a hex string. _(e.g. `#6741D9`)_ |
 | `permission_codes` | array&lt;string&gt; |  | Permission codes that define this role (each must exist in the catalogue). |
+
+### CreateServiceProviderRequest
+<a id="schema-createserviceproviderrequest"></a>
+
+Provider-profile (section 1) fields used to start an onboarding draft.
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `name` | string | ✓ | Service provider name. _(e.g. `Meditest Diagnostics`)_ |
+| `provider_type` | string enum: `HOSPITAL`, `PRIMARY_HEALTH_CLINIC`, `SPECIALIST_CLINIC`, `PHARMACY`, `DENTAL_PRACTICE`, `OPTICIAN`, `LAB_SERVICES`, `IMAGING_SERVICES`, `AMBULANCE_SERVICES`, `HOMECARE_SERVICES` |  | Provider type. _(e.g. `IMAGING_SERVICES`)_ |
+| `classification` | string enum: `TIER_1`, `TIER_2`, `TIER_3`, `TIER_4` |  | Provider classification (Tier 1–4). _(e.g. `TIER_2`)_ |
+| `tier` | string enum: `TOP_35`, `RANK_36_100`, `RANK_100_PLUS` |  | Ranking bucket by claim volume. _(e.g. `RANK_36_100`)_ |
+| `ownership` | string enum: `PUBLIC`, `PRIVATE`, `FAITH_BASED`, `NGO` |  | Ownership model. _(e.g. `PRIVATE`)_ |
+
+### DeactivateInsuranceCompanyRequest
+<a id="schema-deactivateinsurancecompanyrequest"></a>
+
+Reason for marking an insurer profile inactive.
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `reason` | string | ✓ | Why the profile is being marked inactive. _(e.g. `Regulatory licence under renewal — paused at insurer request.`)_ |
+
+### DeactivateServiceProviderRequest
+<a id="schema-deactivateserviceproviderrequest"></a>
+
+Reason for marking a provider inactive.
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `reason` | string | ✓ | Why the provider is being marked inactive. _(e.g. `Contract lapsed — renewal pending.`)_ |
 
 ### DocumentResponse
 <a id="schema-documentresponse"></a>
@@ -8927,6 +9807,7 @@ A priced line within a pricing structure (e.g. CORE_PLATFORM_PMPM), carrying its
 | Field | Type | Req | Description |
 |---|---|---|---|
 | `component_type` | string | ✓ | Component type identifier. _(e.g. `CORE_PLATFORM_PMPM`)_ |
+| `label` | string |  | Human-readable label for this rate-card component (e.g. the tab name shown in the console). Optional; the UI falls back to the component type when omitted. _(e.g. `Outpatient claim`)_ |
 | `unit` | string | ✓ | Billing unit for this component. _(e.g. `PER_MEMBER_MONTH`)_ |
 | `sort_order` | integer (int32) |  | Display/order position of this component within the structure. _(e.g. `1`)_ |
 | `tiers` | array&lt;[`PricingTierRequest`](#schema-pricingtierrequest)&gt; | ✓ | Volume-discount tiers for this component (nested under the component). Must be non-empty. |
@@ -8940,6 +9821,7 @@ A priced line within a pricing structure, with its nested tiers[] schedule.
 |---|---|---|---|
 | `component_id` | string |  | Human-readable business code for the component. _(e.g. `PCM000001`)_ |
 | `component_type` | string |  | Component type identifier. _(e.g. `CORE_PLATFORM_PMPM`)_ |
+| `label` | string |  | Human-readable label / rate-card tab name (null if not set). _(e.g. `Outpatient claim`)_ |
 | `unit` | string |  | Billing unit. _(e.g. `PER_MEMBER_MONTH`)_ |
 | `sort_order` | integer (int32) |  | Display/order position within the structure. _(e.g. `1`)_ |
 | `tiers` | array&lt;[`PricingTierResponse`](#schema-pricingtierresponse)&gt; |  | Volume-discount tiers nested under this component. |
@@ -9096,6 +9978,15 @@ Replace the draft ruleset's grouped rules.
 |---|---|---|---|
 | `rules` | array&lt;object&gt; | ✓ | Grouped rules: [{ group, icon, rules:[{id, field, applies, pattern, example, error, normalize[], required, status, variants[] }] }]. |
 | `note` | string |  | Optional change note for this draft. |
+
+### SendBackProviderRequest
+<a id="schema-sendbackproviderrequest"></a>
+
+Optional note when sending a provider back to the specialist.
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `note` | string |  | Optional message to the specialist. _(e.g. `Please re-upload a matching KRA PIN certificate and resubmit.`)_ |
 
 ### SessionResponse
 <a id="schema-sessionresponse"></a>
@@ -9392,6 +10283,24 @@ The 6-digit TOTP code to confirm enrolment.
 |---|---|---|---|
 | `code` | string | ✓ | The 6-digit code from the authenticator app. _(e.g. `123456`)_ |
 
+### UpdateInsuranceCompanyRequest
+<a id="schema-updateinsurancecompanyrequest"></a>
+
+Partial update of an insurer profile; only non-null fields are applied.
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `name` | string |  | Company name. |
+| `country` | string |  | Country of operation. |
+| `company_type` | string enum: `HEALTH_INSURER`, `COMPOSITE_INSURER`, `TPA`, `REINSURER`, `MICRO_INSURER` |  | Company type. |
+| `city` | string |  | City. |
+| `registered_address` | string |  | Registered address. |
+| `regulator` | string |  | Regulator. |
+| `licence_number` | string |  | Licence number. |
+| `contact_name` | string |  | Primary contact name. |
+| `contact_email` | string (email) |  | Primary contact email. |
+| `contact_phone` | string |  | Primary contact phone. |
+
 ### UpdateLocalizationRequest
 <a id="schema-updatelocalizationrequest"></a>
 
@@ -9553,6 +10462,34 @@ Partial update for the platform security policy, grouped by section. Omit any se
 | `session_timeout_minutes` | integer (int32) |  | Absolute session lifetime in minutes. _(e.g. `480`)_ |
 | `idle_timeout_minutes` | integer (int32) |  | Inactivity (idle) timeout in minutes. _(e.g. `30`)_ |
 | `max_concurrent_sessions` | integer (int32) |  | Max simultaneous active sessions per user (0 = unlimited). _(e.g. `3`)_ |
+
+### UpdateServiceProviderRequest
+<a id="schema-updateserviceproviderrequest"></a>
+
+Partial save of an onboarding draft; only non-null fields are applied.
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `name` | string |  | Service provider name. |
+| `provider_type` | string enum: `HOSPITAL`, `PRIMARY_HEALTH_CLINIC`, `SPECIALIST_CLINIC`, `PHARMACY`, `DENTAL_PRACTICE`, `OPTICIAN`, `LAB_SERVICES`, `IMAGING_SERVICES`, `AMBULANCE_SERVICES`, `HOMECARE_SERVICES` |  | Provider type. |
+| `classification` | string enum: `TIER_1`, `TIER_2`, `TIER_3`, `TIER_4` |  | Provider classification (Tier 1–4). |
+| `tier` | string enum: `TOP_35`, `RANK_36_100`, `RANK_100_PLUS` |  | Ranking bucket by claim volume. |
+| `ownership` | string enum: `PUBLIC`, `PRIVATE`, `FAITH_BASED`, `NGO` |  | Ownership model. |
+| `country` | string |  | Country of operation. |
+| `county_region` | string |  | County / region. |
+| `town_city` | string |  | Town / city. |
+| `physical_address` | string |  | Physical address. |
+| `contact_name` | string |  | Primary contact name. |
+| `contact_role` | string |  | Primary contact role / title. |
+| `contact_email` | string (email) |  | Primary contact email. |
+| `contact_phone` | string |  | Primary contact phone. |
+| `hims_name` | string |  | Health information system (HIMS) name. |
+| `claims_per_month` | integer (int32) |  | Approx. claims processed per month. |
+| `integration_status` | string enum: `DONE`, `IN_PROGRESS`, `NOT_STARTED` |  | HIMS integration status. |
+| `services_offered` | array&lt;string enum: `OUTPATIENT`, `INPATIENT`, `SURGERY`, `MATERNITY`, `EMERGENCY`, `LABORATORY`, `RADIOLOGY`, `PHARMACY`, `DENTAL`, `OPTICAL`, `ICU_HDU`, `RENAL_DIALYSIS`&gt; |  | Clinical services offered (replaces the current set when present). |
+| `facility_registration_no` | string |  | Facility registration no. (KMPDC / PPB). |
+| `kra_pin` | string |  | KRA PIN. |
+| `shif_sha_accreditation` | string |  | SHIF / SHA accreditation (optional). |
 
 ### UpdateTenantRequest
 <a id="schema-updatetenantrequest"></a>
