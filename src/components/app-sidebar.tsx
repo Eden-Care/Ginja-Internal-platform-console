@@ -58,6 +58,13 @@ export type NavItem = {
   permId: string
   exact?: boolean
   count?: number
+  /**
+   * Hide this item from the sidebar without removing it. The route, page and
+   * feature code stay intact and remain reachable directly (search, deep links,
+   * flows) — only the nav entry is suppressed. Flip to remove/undo. See the
+   * "First-launch scope" note in CLAUDE.md / README.md.
+   */
+  hidden?: boolean
 }
 
 export type NavGroup = { label: string; items: NavItem[] }
@@ -76,6 +83,13 @@ export const navGroups: NavGroup[] = [
     ],
   },
   {
+    // The entire "Tenant management" group is hidden from the sidebar for the
+    // first launch — not in scope for v1. Every item is flagged `hidden: true`;
+    // with no visible items the group label auto-drops too. The pages, routes
+    // and feature code are fully built and stay intact (reachable via deep
+    // links / global search / in-app flows) — only the nav entries are
+    // suppressed. Remove the `hidden: true` flags to bring the group back. See
+    // "First-launch scope" in CLAUDE.md / README.md.
     label: "Tenant management",
     items: [
       {
@@ -84,6 +98,7 @@ export const navGroups: NavGroup[] = [
         icon: Building2Icon,
         permId: "payers",
         count: 24,
+        hidden: true,
       },
       {
         title: "Approvals",
@@ -91,6 +106,7 @@ export const navGroups: NavGroup[] = [
         icon: ShieldCheckIcon,
         permId: "approvals",
         count: 5,
+        hidden: true,
       },
       {
         title: "Tenant provisioning",
@@ -98,6 +114,7 @@ export const navGroups: NavGroup[] = [
         icon: ServerIcon,
         permId: "provisioning",
         count: 4,
+        hidden: true,
       },
     ],
   },
@@ -219,7 +236,9 @@ export function AppSidebar({
   const visibleGroups = navGroups
     .map((group) => ({
       ...group,
-      items: group.items.filter((item) => hasPermission(item.permId)),
+      items: group.items.filter(
+        (item) => !item.hidden && hasPermission(item.permId)
+      ),
     }))
     .filter((group) => group.items.length > 0)
   const [failedLogoUrl, setFailedLogoUrl] = React.useState<string | null>(null)

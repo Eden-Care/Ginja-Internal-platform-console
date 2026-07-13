@@ -28,14 +28,26 @@ bun run typecheck
 bun run format   # Prettier
 ```
 
+## First-launch scope
+
+The whole **"Tenant management"** sidebar group — **Tenant accounts** (`/tenant-accounts` +
+the onboarding wizard), **Approvals** (`/approvals`) and **Tenant provisioning**
+(`/tenant-provisioning`) — is **fully built but hidden from the sidebar for the first
+launch**. It is not part of v1's nav, but the code is intact and the routes still work (deep
+links / global search / in-app flows reach it). Each item carries a `hidden: true` flag on its
+`navGroups` entry in `src/components/app-sidebar.tsx`; remove those flags to bring the group
+back. **Do not delete the pages, routes, or feature code.** See the "First-launch scope"
+section in [CLAUDE.md](./CLAUDE.md) for the full convention.
+
 ## Routes
 
 | Path | Screen | Status |
 |---|---|---|
 | `/` | Dashboard | ✅ |
-| `/tenant-accounts` | Tenant accounts (list + drafts drawer) | ✅ |
-| `/tenant-accounts/onboard` | Onboard tenant (7-section wizard) | ✅ |
-| `/approvals` | Approvals | ⬜ coming soon |
+| `/tenant-accounts` | Tenant accounts (list + drafts drawer) | ✅ built · 🙈 hidden from nav (v1) |
+| `/tenant-accounts/onboard` | Onboard tenant (7-section wizard) | ✅ built · 🙈 hidden from nav (v1) |
+| `/approvals` | Approvals | ✅ built · 🙈 hidden from nav (v1) |
+| `/tenant-provisioning` | Tenant provisioning | ✅ built · 🙈 hidden from nav (v1) |
 | `/module-registry` | Module registry | ⬜ coming soon |
 | `/document-templates` | Document templates | ⬜ coming soon |
 | `/email-templates` | Email & SMS templates | ⬜ coming soon |
