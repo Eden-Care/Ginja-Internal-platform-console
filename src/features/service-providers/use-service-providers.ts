@@ -10,6 +10,8 @@ import {
   useQueryClient,
 } from "@tanstack/react-query"
 
+import { ApiError } from "@/lib/api/client"
+
 import {
   addRemark,
   approveProvider,
@@ -36,11 +38,17 @@ import type { ServiceProvider } from "./types"
 
 /* -------------------------------- queries ------------------------------- */
 
+/** Don't retry a 4xx — a 403 (caller can't view providers) is terminal. */
+const retry4xx = (count: number, err: unknown) =>
+  !(err instanceof ApiError && err.status >= 400 && err.status < 500) &&
+  count < 1
+
 export function useServiceProvidersDirectory(params: ListParams = {}) {
   return useQuery({
     queryKey: spKeys.directory(params),
     queryFn: () => fetchServiceProvidersDirectory(params),
     placeholderData: keepPreviousData,
+    retry: retry4xx,
   })
 }
 
