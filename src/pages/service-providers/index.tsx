@@ -78,6 +78,7 @@ export function ServiceProvidersPage() {
   if (view === "onboard")
     return (
       <ProviderOnboard
+        initialCode={code || undefined}
         onBack={() => setView("list")}
         onDone={(rec) => {
           setCreated(rec)
@@ -165,7 +166,13 @@ export function ServiceProvidersPage() {
                 <HiIcon name="download" />
                 Export
               </Button>
-              <Button className={hifiBtn} onClick={() => setView("onboard")}>
+              <Button
+                className={hifiBtn}
+                onClick={() => {
+                  setCode("")
+                  setView("onboard")
+                }}
+              >
                 <HiIcon name="plus" />
                 Onboard provider
               </Button>
@@ -276,12 +283,12 @@ export function ServiceProvidersPage() {
                   tabIndex={0}
                   onClick={() => {
                     setCode(x.code)
-                    setView("record")
+                    setView(x.status === "Draft" ? "onboard" : "record")
                   }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       setCode(x.code)
-                      setView("record")
+                      setView(x.status === "Draft" ? "onboard" : "record")
                     }
                   }}
                   className={cn(

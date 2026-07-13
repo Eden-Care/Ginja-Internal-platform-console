@@ -16,7 +16,7 @@ it.
 
 > **Before building or changing a screen, read [DESIGN-GUIDE.md](./DESIGN-GUIDE.md) — it is
 > the design source of truth (the visual language: fonts, type, colour, spacing, shape, motion,
-> components).** How it's *built* lives with the code: tokens in `src/index.css`, design-system
+> components).** How it's _built_ lives with the code: tokens in `src/index.css`, design-system
 > widgets in `src/components/console/`, and the conventions in the Architecture section below.
 > `Ginja Console-v4.html` at the repo root is the hi-fi reference bundle (a self-contained
 > bundle of every screen + its data). `README.md` is the entry-point overview.
@@ -26,6 +26,10 @@ it.
 > Match its field names, role names, and state machines when wiring a new domain.
 > The maintained **Postman collection is the authoritative contract**; `API_REFERENCE.md`
 > can lag behind it.
+
+Login cred for testing
+
+Admin: admin@ginja.ai/Admin@12345
 
 ## Commands
 
@@ -76,7 +80,7 @@ sits **inside** `AuthProvider` because it derives the acting role from the live 
   token contract — never inject `oklch`/hex here (it becomes `hsl(oklch(...))` and breaks).
 - **`AccessProvider`** (`src/contexts/access-context.tsx`) is the client-side RBAC layer.
   `useAccess()` returns `{ role, roleKey, user, isLoading, hasPermission(permId),
-  isReadonly(permId) }`. The acting role is **derived from the JWT** —
+isReadonly(permId) }`. The acting role is **derived from the JWT** —
   `roleKeyFromApiRoles(session?.roles)` maps the backend role names to a `ConsoleRoleKey`;
   there is **no demo role switcher** anymore. Roles, their `perms`/`readonly` permIds, and the
   helpers `cHasPerm`/`cReadonly` live in `CONSOLE_ROLES` (`src/lib/console-data.ts`). **Gate UI
@@ -106,6 +110,7 @@ initial mock-only build.
 
 **Feature-folder pattern** — wire each domain under `src/features/<domain>/`, mirroring
 `src/features/auth/`:
+
 - `types.ts` — snake_case `*DTO` types + camelCase client types + `toX()` mappers between them.
 - `api.ts` — thin service functions over the `api*` helpers, returning **mapped client types**
   (never raw DTOs to the UI).

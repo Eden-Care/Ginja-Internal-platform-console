@@ -1,5 +1,5 @@
 import * as React from "react"
-import { CheckIcon, Loader2Icon } from "lucide-react"
+import { CheckIcon, Loader2Icon, TriangleAlertIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { cn } from "@/lib/utils"
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Panel } from "@/components/console/panel"
 import { Note } from "@/components/console/note"
+import { LoadingSpinner } from "@/components/common/loading"
 import { MiniBadge } from "@/components/console/tagpill"
 import { ConsoleSelect } from "@/components/console/form-atoms"
 import { MField, fieldInput } from "@/components/hifi/field"
@@ -30,6 +31,7 @@ import {
 import {
   useCreateProvider,
   useProviderDocuments,
+  useServiceProvider,
   useSubmitProvider,
   useUpdateProvider,
   useUploadProviderDocument,
@@ -141,6 +143,54 @@ function toInput(f: SpForm): SpFormInput {
   }
 }
 
+/** Dial codes offered in the Location step — used to split a stored phone. */
+const SP_DIAL_CODES = ["+254", "+255", "+256", "+250"]
+/** Reverse the display `dash()` — turn "—"/empty back into an editable "". */
+const unDash = (v: string | null | undefined) => (!v || v === "—" ? "" : v)
+/** Split a stored full phone ("+254712…") into the wizard's dial + local parts. */
+function splitPhone(full: string | null | undefined): {
+  dial: string
+  phone: string
+} {
+  const s = unDash(full).trim()
+  const dial = SP_DIAL_CODES.find((d) => s.startsWith(d))
+  return dial
+    ? { dial, phone: s.slice(dial.length).trim() }
+    : { dial: SP_BASE.dial, phone: s }
+}
+
+/**
+ * Hydrate the wizard form from a saved draft (client record) so a Draft
+ * provider can be resumed. The client type is display-formatted (`dash()`),
+ * so we un-dash and fall back to the base defaults for the select fields.
+ */
+function toForm(rec: ServiceProvider): SpForm {
+  const { dial, phone } = splitPhone(rec.phone)
+  return {
+    name: unDash(rec.name),
+    type: unDash(rec.type) || SP_BASE.type,
+    tier: unDash(rec.tier) || SP_BASE.tier,
+    cls: unDash(rec.cls) || SP_BASE.cls,
+    ownership: unDash(rec.ownership) || SP_BASE.ownership,
+    country: unDash(rec.country) || SP_BASE.country,
+    county: unDash(rec.county) || SP_BASE.county,
+    town: unDash(rec.town),
+    address: unDash(rec.address),
+    contact: unDash(rec.contact),
+    role: unDash(rec.role),
+    email: unDash(rec.email),
+    dial,
+    phone,
+    hims: unDash(rec.hims),
+    claimsMonth: rec.claimsMonth != null ? String(rec.claimsMonth) : "",
+    integration: unDash(rec.integration) || SP_BASE.integration,
+    services: rec.services ?? [],
+    reg: unDash(rec.reg),
+    kra: unDash(rec.kra),
+    shif: unDash(rec.shif),
+  }
+}
+
 function FormGrid({
   three,
   children,
@@ -191,17 +241,27 @@ function Section({
  * save (once a name exists); documents upload to the live draft.
  */
 export function ProviderOnboard({
+  initialCode,
   onBack,
   onDone,
 }: {
+  /** When set, resume an existing draft: hydrate the form from `GET /{code}`
+     instead of starting blank. */
+  initialCode?: string
   onBack: () => void
   onDone: (rec: ServiceProvider) => void
 }) {
   const [step, setStep] = React.useState(0)
   const [form, setForm] = React.useState<SpForm>(SP_BASE)
-  const [draftCode, setDraftCode] = React.useState<string | null>(null)
-  const codeRef = React.useRef<string | null>(null)
+  const [draftCode, setDraftCode] = React.useState<string | null>(
+    initialCode ?? null
+  )
+  const codeRef = React.useRef<string | null>(initialCode ?? null)
+  const [hydrated, setHydrated] = React.useState(!initialCode)
 
+  const resumeQ = useServiceProvider(initialCode ?? "", {
+    enabled: !!initialCode,
+  })
   const createMut = useCreateProvider()
   const updateMut = useUpdateProvider()
   const submitMut = useSubmitProvider()
@@ -209,6 +269,15 @@ export function ProviderOnboard({
   const documentsQ = useProviderDocuments(draftCode ?? "", {
     enabled: !!draftCode,
   })
+
+  /* Resume: seed the editable form once the saved draft loads. Done during
+     render (React's "adjust state when data changes" pattern) rather than in an
+     effect, to avoid a setState-in-effect cascade. draftCode + codeRef are
+     already initialised to initialCode, so only the form needs seeding. */
+  if (initialCode && !hydrated && resumeQ.data) {
+    setForm(toForm(resumeQ.data))
+    setHydrated(true)
+  }
 
   const set = <K extends keyof SpForm>(k: K, v: SpForm[K]) =>
     setForm((f) => ({ ...f, [k]: v }))
@@ -379,6 +448,31 @@ export function ProviderOnboard({
     )
   }
 
+  /* Resuming a draft: hold the wizard until the saved data loads. */
+  if (initialCode && !hydrated) {
+    return (
+      <div className="flex flex-col gap-4">
+        <BackLink label="All providers" onClick={onBack} />
+        {resumeQ.isError ? (
+          <Note tone="err" icon={<TriangleAlertIcon />}>
+            Couldn’t load this draft.{" "}
+            <button
+              className="font-semibold underline underline-offset-2"
+              onClick={() => resumeQ.refetch()}
+            >
+              Try again
+            </button>
+            .
+          </Note>
+        ) : (
+          <Panel className="flex items-center justify-center py-24 text-muted-foreground">
+            <LoadingSpinner />
+          </Panel>
+        )}
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <BackLink label="All providers" onClick={onBack} />
@@ -394,7 +488,9 @@ export function ProviderOnboard({
         <div className="grid lg:grid-cols-[280px_minmax(0,1fr)]">
           {/* Section navigation rail */}
           <aside className="border-b px-[18px] py-[22px] lg:border-r lg:border-b-0">
-            <div className="text-[13px] font-semibold">New service provider</div>
+            <div className="text-[13px] font-semibold">
+              {initialCode ? "Continue draft" : "New service provider"}
+            </div>
             <div className="mt-[3px] mb-[18px] text-xs text-muted-foreground">
               Claim Clean-up onboarding · {total} sections
             </div>
@@ -964,11 +1060,27 @@ function StepDocuments({
                   {d.req ? <span className="text-destructive"> *</span> : null}
                 </div>
                 <div className="truncate text-[11.5px] text-muted-foreground">
-                  {done
-                    ? `${doc?.fileName ?? "Uploaded"} · pending review`
-                    : d.req
-                      ? "Required — not uploaded"
-                      : "Optional — not uploaded"}
+                  {done ? (
+                    doc?.fileUrl ? (
+                      <>
+                        <a
+                          href={doc.fileUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="font-medium text-primary underline-offset-2 hover:underline"
+                        >
+                          {doc.fileName ?? "Uploaded"}
+                        </a>
+                        {" · pending review"}
+                      </>
+                    ) : (
+                      `${doc?.fileName ?? "Uploaded"} · pending review`
+                    )
+                  ) : d.req ? (
+                    "Required — not uploaded"
+                  ) : (
+                    "Optional — not uploaded"
+                  )}
                 </div>
               </div>
               {done ? (
