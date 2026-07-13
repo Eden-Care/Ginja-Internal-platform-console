@@ -31,6 +31,25 @@ Login cred for testing
 
 Admin: admin@ginja.ai/Admin@12345
 
+## First-launch scope (READ THIS)
+
+Some screens are **fully built but intentionally hidden for the first launch** — they are
+NOT descoped or broken, just not shown in v1. **Do not delete their code, routes, or
+feature folders.** They stay reachable directly (deep links, global search, in-app flows);
+only the sidebar nav entry is suppressed.
+
+- **The entire "Tenant management" nav group is hidden for the first launch** — all three
+  items: **Tenant accounts** (`/tenant-accounts`, page + onboarding wizard +
+  `src/features/payers`), **Approvals** (`/approvals`) and **Tenant provisioning**
+  (`/tenant-provisioning`). Each item in that group in `navGroups`
+  (`src/components/app-sidebar.tsx`) carries `hidden: true`; the sidebar filter skips items
+  flagged `hidden`, and because the group then has no visible items its "Tenant management"
+  label auto-drops too. **To bring the group back, remove the `hidden: true` flags from those
+  items** — nothing else needs to change.
+
+When you need to hide (not remove) another built screen from the nav, add `hidden: true` to
+its `navGroups` item and record it here — never silently delete the entry.
+
 ## Commands
 
 Package manager is **bun** (`bun.lock`), but `npm`/`pnpm` also work.
@@ -163,10 +182,13 @@ a node there when introducing a route with a parent.
 - `src/components/global-search.tsx` — the cmdk palette mounted in the header.
 - `src/components/app-sidebar.tsx` — nav lives in `navGroups` (Overview / Tenant management /
   Configuration library / Access & security / Platform), each item
-  `{ title, url, icon, permId, exact?, count? }`. **`permId` gates visibility** — the sidebar
-  only renders items the acting role's `hasPermission(permId)` passes (and hides empty groups).
-  Add new top-level pages here, and add the matching route in `App.tsx`, a `ROUTE_NODES` entry,
-  and (if needed) the `permId` to roles in `CONSOLE_ROLES`.
+  `{ title, url, icon, permId, exact?, count?, hidden? }`. **`permId` gates visibility** — the
+  sidebar only renders items the acting role's `hasPermission(permId)` passes (and hides empty
+  groups). **`hidden: true` suppresses a built item from the nav without removing it** (route +
+  page stay live and reachable); this is how the whole **Tenant management** group (Tenant
+  accounts, Approvals, Tenant provisioning) is kept off the v1 nav — see "First-launch scope"
+  above. Add new top-level pages here, and add the matching route in
+  `App.tsx`, a `ROUTE_NODES` entry, and (if needed) the `permId` to roles in `CONSOLE_ROLES`.
 
 ### Styling
 
