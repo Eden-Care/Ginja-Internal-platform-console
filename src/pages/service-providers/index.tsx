@@ -1,8 +1,9 @@
 import * as React from "react"
-import { SearchIcon, TriangleAlertIcon } from "lucide-react"
+import { LockIcon, SearchIcon, TriangleAlertIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { cn } from "@/lib/utils"
+import { ApiError } from "@/lib/api/client"
 import { useAccess } from "@/contexts/access-context"
 import { Button } from "@/components/ui/button"
 import { ConsolePageHeader } from "@/components/console/page-header"
@@ -69,11 +70,13 @@ export function ServiceProvidersPage() {
     return () => clearTimeout(t)
   }, [q])
 
-  const { data, isLoading, isError, refetch } = useServiceProvidersDirectory({
-    q: qDebounced.trim() || undefined,
-    type: typeF === "All" ? undefined : PROVIDER_TYPE_TO_ENUM[typeF],
-    status: STATUS_PARAM[status],
-  })
+  const { data, isLoading, isError, error, refetch } =
+    useServiceProvidersDirectory({
+      q: qDebounced.trim() || undefined,
+      type: typeF === "All" ? undefined : PROVIDER_TYPE_TO_ENUM[typeF],
+      status: STATUS_PARAM[status],
+    })
+  const forbidden = error instanceof ApiError && error.status === 403
 
   if (view === "onboard")
     return (
@@ -264,16 +267,23 @@ export function ServiceProvidersPage() {
               <LoadingSpinner />
             </div>
           ) : isError ? (
-            <Note tone="err" icon={<TriangleAlertIcon />} className="m-4">
-              Couldn’t load service providers.{" "}
-              <button
-                className="font-semibold underline underline-offset-2"
-                onClick={() => refetch()}
-              >
-                Try again
-              </button>
-              .
-            </Note>
+            forbidden ? (
+              <Note tone="warn" icon={<LockIcon />} className="m-4">
+                <b>Access denied.</b> You don’t have permission to view service
+                providers. Ask an administrator to grant you the required access.
+              </Note>
+            ) : (
+              <Note tone="err" icon={<TriangleAlertIcon />} className="m-4">
+                Couldn’t load service providers.{" "}
+                <button
+                  className="font-semibold underline underline-offset-2"
+                  onClick={() => refetch()}
+                >
+                  Try again
+                </button>
+                .
+              </Note>
+            )
           ) : (
             <>
               {list.map((x, i) => (
