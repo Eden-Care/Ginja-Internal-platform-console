@@ -1,5 +1,5 @@
 import * as React from "react"
-import { SearchIcon, TriangleAlertIcon } from "lucide-react"
+import { Loader2Icon, SearchIcon, TriangleAlertIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { cn } from "@/lib/utils"
@@ -21,6 +21,7 @@ import {
   useApproveProvider,
   useMarkSectionReviewed,
   useProviderDocuments,
+  useProviderDocumentUrl,
   useProviderReview,
   useReviewQueue,
   useResolveRemark,
@@ -322,6 +323,29 @@ export function ProviderReview({
   const markMut = useMarkSectionReviewed()
   const approveMut = useApproveProvider()
   const sendBackMut = useSendBackProvider()
+  const openMut = useProviderDocumentUrl()
+
+  /* Open a document via a freshly-minted pre-signed URL (fetched on click, not
+     the load-time cached one). Opens a blank tab synchronously so it survives
+     popup blockers, then points it at the URL once it resolves. */
+  const openDoc = (docType: string) => {
+    const w = window.open("about:blank", "_blank")
+    openMut.mutate(
+      { code, docType },
+      {
+        onSuccess: (url) => {
+          if (w) w.location.href = url
+          else window.open(url, "_blank")
+        },
+        onError: (e) => {
+          w?.close()
+          toast.error("Couldn’t open document", {
+            description: e instanceof Error ? e.message : undefined,
+          })
+        },
+      }
+    )
+  }
 
   const review = reviewQ.data
   const p = providerQ.data
@@ -685,13 +709,28 @@ export function ProviderReview({
                             : "Not uploaded"}
                         </div>
                       </div>
-                      {d.uploaded && d.fileUrl ? (
-                        <a href={d.fileUrl} target="_blank" rel="noreferrer">
-                          <Button variant="outline" size="sm" className={hifiBtn}>
+                      {d.uploaded ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className={hifiBtn}
+                          disabled={
+                            openMut.isPending &&
+                            openMut.variables?.docType === d.docType
+                          }
+                          onClick={() => openDoc(d.docType)}
+                        >
+                          {openMut.isPending &&
+                          openMut.variables?.docType === d.docType ? (
+                            <Loader2Icon
+                              data-icon="inline-start"
+                              className="animate-spin"
+                            />
+                          ) : (
                             <HiIcon name="eye" data-icon="inline-start" />
-                            View
-                          </Button>
-                        </a>
+                          )}
+                          View
+                        </Button>
                       ) : (
                         <MiniBadge tone="warning">Missing</MiniBadge>
                       )}

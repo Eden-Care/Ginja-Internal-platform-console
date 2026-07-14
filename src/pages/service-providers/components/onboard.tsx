@@ -31,6 +31,7 @@ import {
 import {
   useCreateProvider,
   useProviderDocuments,
+  useProviderDocumentUrl,
   useServiceProvider,
   useSubmitProvider,
   useUpdateProvider,
@@ -266,9 +267,34 @@ export function ProviderOnboard({
   const updateMut = useUpdateProvider()
   const submitMut = useSubmitProvider()
   const uploadMut = useUploadProviderDocument()
+  const openMut = useProviderDocumentUrl()
   const documentsQ = useProviderDocuments(draftCode ?? "", {
     enabled: !!draftCode,
   })
+
+  /* Open an uploaded document via a freshly-minted pre-signed URL (fetched on
+     click, not the load-time cached one). Opens a blank tab synchronously so it
+     survives popup blockers, then points it at the URL once it resolves. */
+  const openDoc = (docType: string) => {
+    const c = codeRef.current
+    if (!c) return
+    const w = window.open("about:blank", "_blank")
+    openMut.mutate(
+      { code: c, docType },
+      {
+        onSuccess: (url) => {
+          if (w) w.location.href = url
+          else window.open(url, "_blank")
+        },
+        onError: (e) => {
+          w?.close()
+          toast.error("Couldn’t open document", {
+            description: e instanceof Error ? e.message : undefined,
+          })
+        },
+      }
+    )
+  }
 
   /* Resume: seed the editable form once the saved draft loads. Done during
      render (React's "adjust state when data changes" pattern) rather than in an
@@ -632,6 +658,10 @@ export function ProviderOnboard({
                   documents={documentsQ.data ?? []}
                   uploadingSlot={uploadingSlot}
                   onUpload={startUpload}
+                  onOpenDoc={openDoc}
+                  openingDocType={
+                    openMut.isPending ? (openMut.variables?.docType ?? null) : null
+                  }
                 />
               )}
               {cur.k === "review" && (
@@ -1017,11 +1047,15 @@ function StepDocuments({
   documents,
   uploadingSlot,
   onUpload,
+  onOpenDoc,
+  openingDocType,
 }: {
   hasDraft: boolean
   documents: SpDocument[]
   uploadingSlot: string | null
   onUpload: (slotKey: string) => void
+  onOpenDoc: (docType: string) => void
+  openingDocType: string | null
 }) {
   const byType = new Map(documents.map((d) => [d.docType, d]))
   return (
@@ -1061,20 +1095,22 @@ function StepDocuments({
                 </div>
                 <div className="truncate text-[11.5px] text-muted-foreground">
                   {done ? (
-                    doc?.fileUrl ? (
+                    doc ? (
                       <>
-                        <a
-                          href={doc.fileUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="font-medium text-primary underline-offset-2 hover:underline"
+                        <button
+                          type="button"
+                          onClick={() => onOpenDoc(doc.docType)}
+                          disabled={openingDocType === doc.docType}
+                          className="font-medium text-primary underline-offset-2 hover:underline disabled:opacity-60"
                         >
                           {doc.fileName ?? "Uploaded"}
-                        </a>
-                        {" · pending review"}
+                        </button>
+                        {openingDocType === doc.docType
+                          ? " · opening…"
+                          : " · pending review"}
                       </>
                     ) : (
-                      `${doc?.fileName ?? "Uploaded"} · pending review`
+                      "Uploaded · pending review"
                     )
                   ) : d.req ? (
                     "Required — not uploaded"
