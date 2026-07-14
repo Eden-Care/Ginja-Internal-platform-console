@@ -19,6 +19,7 @@ import {
   deactivateProvider,
   fetchProviderAudit,
   fetchProviderDocuments,
+  fetchProviderDocumentUrl,
   fetchProviderReview,
   fetchReviewQueue,
   fetchServiceProvider,
@@ -164,6 +165,15 @@ export function useUploadProviderDocument() {
       uploadProviderDocument(v.code, v.docSlotKey, v.file),
     onSuccess: (_r, v) =>
       qc.invalidateQueries({ queryKey: spKeys.documents(v.code) }),
+  })
+}
+
+/** Fetch a fresh pre-signed URL for a document at click-time (read-only; no
+   cache invalidation). The page opens the returned URL in a new tab. */
+export function useProviderDocumentUrl() {
+  return useMutation({
+    mutationFn: (v: { code: string; docType: string }) =>
+      fetchProviderDocumentUrl(v.code, v.docType),
   })
 }
 

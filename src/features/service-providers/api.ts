@@ -80,6 +80,19 @@ export async function fetchProviderDocuments(code: string): Promise<SpDocument[]
   return (dto ?? []).map(toDocument)
 }
 
+/** GET a FRESH pre-signed URL for one document slot. The `file_url` on the list
+   response is only valid ~1h from page load, so fetch this at click-time to open
+   a document — it never serves an expired link no matter how long the page was open. */
+export async function fetchProviderDocumentUrl(
+  code: string,
+  docType: string
+): Promise<string> {
+  const dto = await apiGet<{ file_url: string }>(
+    `${BASE}/${code}/documents/${docType}/download`
+  )
+  return dto.file_url
+}
+
 /* ------------------------------- writes ------------------------------- */
 
 /** The wizard form (display strings) — mapped to enum bodies here. */
