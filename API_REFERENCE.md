@@ -59,9 +59,9 @@ All endpoints require this scheme unless noted otherwise (the `/dev/token` helpe
 - [Platform Settings · Security](#platform-settings-security) (14)
 - [Platform Settings · Provisioning Tiers](#platform-settings-provisioning-tiers) (5)
 - [Platform Settings · Data Residency](#platform-settings-data-residency) (5)
-- [Claim Clean-up · Service providers](#claim-clean-up-service-providers) (18)
+- [Claim Clean-up · Service providers](#claim-clean-up-service-providers) (30)
 - [My Account](#my-account) (16)
-- [Claim Clean-up · Insurance companies](#claim-clean-up-insurance-companies) (7)
+- [Claim Clean-up · Insurance companies](#claim-clean-up-insurance-companies) (8)
 - [Dashboard](#dashboard) (1)
 - [Schemas](#schemas)
 
@@ -2735,7 +2735,7 @@ Returns one module by its business id (e.g. `MRC000001`), including sub-modules 
 
 **Update a module (PATCH, publish/unpublish)**
 
-`operationId: update_7`
+`operationId: update_8`
 
 Partially updates a module — only the non-null fields are applied. Supplying `sub_modules` replaces
 the whole set; omitting it leaves them unchanged. Setting `status` to `PUBLISHED` (from another
@@ -3996,7 +3996,7 @@ Fetches a single pricing structure by numeric id, including its nested `componen
 
 **Update a pricing structure (PATCH, DRAFT only)**
 
-`operationId: update_6`
+`operationId: update_7`
 
 Partial update — only non-null fields are applied. If `components` is provided, the **entire**
 component/tier set is replaced; if omitted, it is left unchanged.
@@ -5106,7 +5106,7 @@ normally complete automatically when their data is saved; this is the manual ove
 
 **Assign an onboarding step**
 
-`operationId: assign_1`
+`operationId: assign_2`
 
 Assigns one onboarding step (e.g. `documents`) to a member (by id or email) for completion (§8.9),
 and returns the refreshed progress.
@@ -5711,7 +5711,7 @@ is not yet modeled (returned `null`).
 
 **Approval review (by id)**
 
-`operationId: review_1`
+`operationId: review_2`
 
 Full review payload for the "Review · as Approver" screen: the request header + review meta
 (`status`, `own_submission`, `provisioning_complete`, `can_decide`, `sections`, `auto_activate_note`)
@@ -6340,7 +6340,7 @@ EMAIL | SMS | DATA_MIGRATION`.
 
 **Assign provisioning to an engineer**
 
-`operationId: assign`
+`operationId: assign_1`
 
 Assigns a tenant's provisioning to a Platform Engineer (by id/email). The tenant then appears
 in that engineer's `/platform/provisioning/mine` queue.
@@ -6916,7 +6916,7 @@ defaults.
 
 **Current validation ruleset (library)**
 
-`operationId: current`
+`operationId: current_1`
 
 The live (PUBLISHED) ruleset with its grouped rules. **Roles:** `PLATFORM_ADMIN` / `SUPPORT`.
 
@@ -8135,6 +8135,13 @@ Removes a data-residency region from the catalogue.
 | `POST` | `/platform/service-providers` | Onboard a provider (create draft) |
 | `POST` | `/platform/service-providers/{code}/submit` | Submit a draft for approval |
 | `POST` | `/platform/service-providers/{code}/send-back` | Send back to specialist |
+| `GET` | `/platform/service-providers/{code}/rule-extraction/{insurerAccountId}` | Get current extraction (for an insurer) |
+| `POST` | `/platform/service-providers/{code}/rule-extraction/{insurerAccountId}` | Start contract rule extraction (per insurer) |
+| `GET` | `/platform/service-providers/{code}/rule-extraction/{insurerAccountId}/rules` | List extracted rules (for an insurer) |
+| `POST` | `/platform/service-providers/{code}/rule-extraction/{insurerAccountId}/rules` | Add a manual rule |
+| `POST` | `/platform/service-providers/{code}/rule-extraction/{insurerAccountId}/rules/{ruleId}/review` | Review a rule (approve / discard / archive) |
+| `POST` | `/platform/service-providers/{code}/rule-extraction/{insurerAccountId}/review-status` | Advance the review status |
+| `POST` | `/platform/service-providers/{code}/rule-extraction/{insurerAccountId}/assign` | Assign a reviewer |
 | `POST` | `/platform/service-providers/{code}/review/sections/{section}/reviewed` | Mark a section reviewed |
 | `POST` | `/platform/service-providers/{code}/remarks` | Leave a review remark |
 | `POST` | `/platform/service-providers/{code}/remarks/{remarkId}/resolve` | Resolve a remark |
@@ -8144,11 +8151,16 @@ Removes a data-residency region from the catalogue.
 | `POST` | `/platform/service-providers/{code}/approve` | Approve & activate |
 | `GET` | `/platform/service-providers/{code}` | Get a provider / draft |
 | `PATCH` | `/platform/service-providers/{code}` | Save a wizard section (draft) |
+| `PATCH` | `/platform/service-providers/{code}/rule-extraction/{insurerAccountId}/rules/{ruleId}` | Update a rule |
+| `GET` | `/platform/service-providers/{code}/rule-extraction` | List extractions (all insurers) |
+| `GET` | `/platform/service-providers/{code}/rule-extraction/{insurerAccountId}/history` | Extraction history (for an insurer) |
+| `GET` | `/platform/service-providers/{code}/rule-extraction/jobs/{jobId}` | Get an extraction by job id |
 | `GET` | `/platform/service-providers/{code}/review` | Provider review detail |
 | `GET` | `/platform/service-providers/{code}/documents` | List document slots |
 | `GET` | `/platform/service-providers/{code}/documents/{docType}/download` | Download a document |
 | `GET` | `/platform/service-providers/{code}/audit` | Provider audit trail |
 | `GET` | `/platform/service-providers/review-queue` | Provider review queue |
+| `GET` | `/platform/service-providers/active` | List active providers (service lookup) |
 
 ### `GET` `/platform/service-providers`
 
@@ -8161,7 +8173,7 @@ paged, filtered provider list. `q` matches name / account id / draft code / town
 filters by provider type; `status` filters by lifecycle
 (`DRAFT|PENDING_REVIEW|ACTIVE|INACTIVE`); `page`/`size`/`sort` (default `createdAt`) page it.
 
-**Roles:** `PLATFORM_ADMIN` or `SUPPORT`.
+**Roles:** `PLATFORM_ADMIN`, `SUPPORT` or `PLATFORM_APPROVER`.
 
 **Parameters**
 
@@ -8269,6 +8281,237 @@ Returns the provider to `DRAFT` so the onboarding specialist can address open re
 | `200` | Sent back — provider is DRAFT. |
 | `400` | Provider not pending review. |
 | `404` | Not found. |
+
+---
+
+### `GET` `/platform/service-providers/{code}/rule-extraction/{insurerAccountId}`
+
+**Get current extraction (for an insurer)**
+
+`operationId: current`
+
+The current (latest) extraction for the provider + insurer: status, contract metadata, rules (with review state), coverage, flags, warnings. **Roles:** `PLATFORM_ADMIN` / `SUPPORT` / `PLATFORM_APPROVER`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `code` | path | ✓ | string |  |
+| `insurerAccountId` | path | ✓ | string | Insurer account id. |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK. |
+| `404` | No extraction / not found. |
+
+---
+
+### `POST` `/platform/service-providers/{code}/rule-extraction/{insurerAccountId}`
+
+**Start contract rule extraction (per insurer)**
+
+`operationId: start`
+
+Uploads the signed contract + checks (multipart `contract`, `checks`) for the given **insurer**,
+stores them in the document service, and queues an extraction job (returns `job_id`, QUEUED).
+Provider must be ACTIVE and the insurer must exist. A background poller persists the result on
+completion. Audited as `PROVIDER_RULE_EXTRACTION_STARTED`.
+
+**Role:** `PLATFORM_ADMIN`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `code` | path | ✓ | string | Provider account id or draft code. |
+| `insurerAccountId` | path | ✓ | string | Insurer account id. |
+
+**Request body**: `object`
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `contract` | string (binary) | ✓ |  |
+| `checks` | string (binary) | ✓ |  |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `201` | Queued — returns the extraction job. |
+| `400` | Provider not active / missing files / insurer. |
+| `404` | Provider or insurer not found. |
+
+---
+
+### `GET` `/platform/service-providers/{code}/rule-extraction/{insurerAccountId}/rules`
+
+**List extracted rules (for an insurer)**
+
+`operationId: rules`
+
+Rules of the current extraction for the provider + insurer, optionally filtered by `review_status`. **Roles:** `PLATFORM_ADMIN` / `SUPPORT` / `PLATFORM_APPROVER`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `code` | path | ✓ | string |  |
+| `insurerAccountId` | path | ✓ | string | Insurer account id. |
+| `review_status` | query |  | string enum: `PENDING`, `APPROVED`, `DISCARDED`, `ARCHIVED` | Filter by review status. |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK |
+
+---
+
+### `POST` `/platform/service-providers/{code}/rule-extraction/{insurerAccountId}/rules`
+
+**Add a manual rule**
+
+`operationId: add`
+
+Adds a staff-authored rule to the current extraction for the insurer (status APPROVED, id `MANUAL-…`). Audited as `PROVIDER_RULE_ADDED`. **Roles:** `PLATFORM_ADMIN` / `PLATFORM_APPROVER`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `code` | path | ✓ | string |  |
+| `insurerAccountId` | path | ✓ | string | Insurer account id. |
+
+**Request body** (required): [`AddExtractedRuleRequest`](#schema-addextractedrulerequest)
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `description` | string | ✓ | Rule description. _(e.g. `Late charges not allowed after 30 days.`)_ |
+| `rule_category` | string |  |  |
+| `rule_type` | string |  |  |
+| `check_field` | string |  |  |
+| `service_category` | string |  |  |
+| `rule_logic` | string |  |  |
+| `unit_of_application` | string |  |  |
+| `severity` | string |  |  |
+| `source` | string |  |  |
+| `check_ref` | string |  |  |
+| `payer` | string |  |  |
+| `scheme_category` | string |  |  |
+| `comment` | string |  | Optional note recorded as the review comment. |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `201` | Added — returns the extraction. |
+| `400` | Invalid body. |
+| `404` | Extraction not found. |
+
+---
+
+### `POST` `/platform/service-providers/{code}/rule-extraction/{insurerAccountId}/rules/{ruleId}/review`
+
+**Review a rule (approve / discard / archive)**
+
+`operationId: review`
+
+The single rule-review endpoint — `{ action: APPROVE|DISCARD|ARCHIVE, comment }` sets the rule's
+review status. Audited as `PROVIDER_RULE_APPROVED / _DISCARDED / _ARCHIVED`.
+
+**Roles:** `PLATFORM_ADMIN` / `PLATFORM_APPROVER`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `code` | path | ✓ | string |  |
+| `insurerAccountId` | path | ✓ | string | Insurer account id. |
+| `ruleId` | path | ✓ | string | Rule id. |
+
+**Request body** (required): [`ReviewRuleRequest`](#schema-reviewrulerequest)
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `action` | string enum: `APPROVE`, `DISCARD`, `ARCHIVE` | ✓ | Action to apply. _(e.g. `APPROVE`)_ |
+| `comment` | string |  | Optional review comment. _(e.g. `Confirmed against clause 6.i.`)_ |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | Reviewed — returns the extraction. |
+| `404` | Rule / extraction not found. |
+
+---
+
+### `POST` `/platform/service-providers/{code}/rule-extraction/{insurerAccountId}/review-status`
+
+**Advance the review status**
+
+`operationId: reviewStatus`
+
+Moves the review lifecycle forward — `{ status: IN_REVIEW | COMPLETED }`. Allowed for the assigned
+reviewer or a PLATFORM_ADMIN / PLATFORM_APPROVER. Audited as `PROVIDER_RULE_REVIEW_STARTED /
+_COMPLETED`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `code` | path | ✓ | string |  |
+| `insurerAccountId` | path | ✓ | string | Insurer account id. |
+
+**Request body** (required): [`ReviewStatusRequest`](#schema-reviewstatusrequest)
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `status` | string enum: `UNASSIGNED`, `ASSIGNED`, `IN_REVIEW`, `COMPLETED` | ✓ | Target review status. _(e.g. `IN_REVIEW`)_ |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | Updated — returns the extraction. |
+| `400` | No reviewer assigned / invalid status. |
+| `403` | Not the assignee or an ADMIN/APPROVER. |
+| `404` | Extraction not found. |
+
+---
+
+### `POST` `/platform/service-providers/{code}/rule-extraction/{insurerAccountId}/assign`
+
+**Assign a reviewer**
+
+`operationId: assign`
+
+Assigns (or reassigns) an active platform member to review the current extraction's rules for the
+provider + insurer; sets review status to `ASSIGNED`. Audited as `PROVIDER_RULE_REVIEW_ASSIGNED`.
+
+**Roles:** `PLATFORM_ADMIN` / `PLATFORM_APPROVER`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `code` | path | ✓ | string |  |
+| `insurerAccountId` | path | ✓ | string | Insurer account id. |
+
+**Request body** (required): [`AssignReviewerRequest`](#schema-assignreviewerrequest)
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `member_id` | integer (int64) | ✓ | Numeric id of the member to assign as reviewer. _(e.g. `7`)_ |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | Assigned — returns the extraction. |
+| `400` | Member not active / no completed extraction. |
+| `404` | Provider / insurer / member / extraction not found. |
 
 ---
 
@@ -8449,7 +8692,9 @@ Audited as `SERVICE_PROVIDER_DEACTIVATED`. **Role:** `PLATFORM_ADMIN`.
 `operationId: approve`
 
 Approves the provider and activates it — gated on **all sections reviewed and no open remarks**
-(else 400). Records the approver and sets status `ACTIVE`. Audited as `SERVICE_PROVIDER_ACTIVATED`.
+(else 400). **Separation of duties:** a Platform Admin cannot approve a provider they onboarded
+(the maker) — 403; a non-admin maker may. Records the approver and sets status `ACTIVE`. Audited as
+`SERVICE_PROVIDER_ACTIVATED`.
 
 **Roles:** `PLATFORM_APPROVER` / `PLATFORM_ADMIN`.
 
@@ -8465,6 +8710,7 @@ Approves the provider and activates it — gated on **all sections reviewed and 
 |---|---|
 | `200` | Approved — provider is Active. |
 | `400` | Not pending / open remarks / sections unreviewed. |
+| `403` | Separation of duties — admin maker cannot self-approve. |
 | `404` | Not found. |
 
 ---
@@ -8475,7 +8721,7 @@ Approves the provider and activates it — gated on **all sections reviewed and 
 
 `operationId: get_5`
 
-Returns one provider by draft code (`SPO-…`) or account id (`SP-…`). **Roles:** `PLATFORM_ADMIN` or `SUPPORT`.
+Returns one provider by draft code (`SPO-…`) or account id (`SP-…`). **Roles:** `PLATFORM_ADMIN`, `SUPPORT` or `PLATFORM_APPROVER`.
 
 **Parameters**
 
@@ -8545,11 +8791,125 @@ fields at a time). Allowed only while status is `DRAFT`. Audited as `SERVICE_PRO
 
 ---
 
+### `PATCH` `/platform/service-providers/{code}/rule-extraction/{insurerAccountId}/rules/{ruleId}`
+
+**Update a rule**
+
+`operationId: update_6`
+
+Edits a rule's content in place (non-null fields) with an optional comment. Audited as `PROVIDER_RULE_UPDATED`. **Roles:** `PLATFORM_ADMIN` / `PLATFORM_APPROVER`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `code` | path | ✓ | string |  |
+| `insurerAccountId` | path | ✓ | string | Insurer account id. |
+| `ruleId` | path | ✓ | string | Rule id. |
+
+**Request body** (required): [`UpdateExtractedRuleRequest`](#schema-updateextractedrulerequest)
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `description` | string |  |  |
+| `rule_category` | string |  |  |
+| `rule_type` | string |  |  |
+| `check_field` | string |  |  |
+| `service_category` | string |  |  |
+| `rule_logic` | string |  |  |
+| `unit_of_application` | string |  |  |
+| `severity` | string |  |  |
+| `source` | string |  |  |
+| `check_ref` | string |  |  |
+| `payer` | string |  |  |
+| `scheme_category` | string |  |  |
+| `confidence` | number (double) |  |  |
+| `source_quote` | string |  |  |
+| `comment` | string |  | Review comment recorded with the edit. |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | Updated — returns the extraction. |
+| `404` | Rule / extraction not found. |
+
+---
+
+### `GET` `/platform/service-providers/{code}/rule-extraction`
+
+**List extractions (all insurers)**
+
+`operationId: list_8`
+
+Overview of every extraction for the provider across its insurers (newest first). **Roles:** `PLATFORM_ADMIN` / `SUPPORT` / `PLATFORM_APPROVER`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `code` | path | ✓ | string | Provider account id or draft code. |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK |
+
+---
+
+### `GET` `/platform/service-providers/{code}/rule-extraction/{insurerAccountId}/history`
+
+**Extraction history (for an insurer)**
+
+`operationId: history`
+
+All extraction jobs for the provider + insurer (newest first). **Roles:** `PLATFORM_ADMIN` / `SUPPORT` / `PLATFORM_APPROVER`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `code` | path | ✓ | string |  |
+| `insurerAccountId` | path | ✓ | string | Insurer account id. |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK |
+
+---
+
+### `GET` `/platform/service-providers/{code}/rule-extraction/jobs/{jobId}`
+
+**Get an extraction by job id**
+
+`operationId: byJobId`
+
+Fetch a specific extraction (any status) by the `job_id` returned from start — same response as the current-extraction endpoint. **Roles:** `PLATFORM_ADMIN` / `SUPPORT` / `PLATFORM_APPROVER`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `code` | path | ✓ | string | Provider account id or draft code. |
+| `jobId` | path | ✓ | string | Extraction job id. |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK. |
+| `404` | No extraction with that job id for the provider. |
+
+---
+
 ### `GET` `/platform/service-providers/{code}/review`
 
 **Provider review detail**
 
-`operationId: review`
+`operationId: review_1`
 
 Per-section review state (reviewed + open remarks), review status `n/5`, and all remarks. **Roles:** `PLATFORM_APPROVER` / `PLATFORM_ADMIN` / `SUPPORT`.
 
@@ -8572,9 +8932,9 @@ Per-section review state (reviewed + open remarks), review status `n/5`, and all
 
 **List document slots**
 
-`operationId: list_8`
+`operationId: list_9`
 
-Returns every document slot with its upload/review state (or empty when not uploaded). **Roles:** `PLATFORM_ADMIN` or `SUPPORT`.
+Returns every document slot with its upload/review state (or empty when not uploaded). **Roles:** `PLATFORM_ADMIN`, `SUPPORT` or `PLATFORM_APPROVER`.
 
 **Parameters**
 
@@ -8596,7 +8956,7 @@ Returns every document slot with its upload/review state (or empty when not uplo
 
 `operationId: download`
 
-Returns a fresh download reference (URL + metadata) for an uploaded slot. **Roles:** `PLATFORM_ADMIN` or `SUPPORT`.
+Returns a fresh download reference (URL + metadata) for an uploaded slot. **Roles:** `PLATFORM_ADMIN`, `SUPPORT` or `PLATFORM_APPROVER`.
 
 **Parameters**
 
@@ -8620,7 +8980,7 @@ Returns a fresh download reference (URL + metadata) for an uploaded slot. **Role
 
 `operationId: audit`
 
-Chronological activity list for one provider (draft → submit → status changes), newest first — the profile's "Audit trail" tab. **Roles:** `PLATFORM_ADMIN` or `SUPPORT`.
+Chronological activity list for one provider (draft → submit → status changes), newest first — the profile's "Audit trail" tab. **Roles:** `PLATFORM_ADMIN`, `SUPPORT` or `PLATFORM_APPROVER`.
 
 **Parameters**
 
@@ -8650,6 +9010,26 @@ Providers awaiting approval + stats (`awaiting_review`, `open_remarks`, `ready_t
 | Status | Description |
 |---|---|
 | `200` | OK |
+
+---
+
+### `GET` `/platform/service-providers/active`
+
+**List active providers (service lookup)**
+
+`operationId: listActive`
+
+Returns all **ACTIVE** service providers as a plain list (no tiles/paging), ordered by name —
+intended for other services to look up valid providers by `account_id`.
+
+**Access:** an internal role (`PLATFORM_ADMIN`/`SUPPORT`/`PLATFORM_APPROVER`) via JWT, or a
+service caller via the `X-API-Key` header (`ROLE_SERVICE`).
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK — list of active providers. |
 
 ---
 
@@ -8951,6 +9331,7 @@ Providers awaiting approval + stats (`awaiting_review`, `open_remarks`, `ready_t
 | `GET` | `/platform/insurance-companies/{accountId}` | Get an insurance company profile |
 | `PATCH` | `/platform/insurance-companies/{accountId}` | Update an insurance company profile |
 | `GET` | `/platform/insurance-companies/{accountId}/audit` | Insurance company audit trail |
+| `GET` | `/platform/insurance-companies/active` | List active insurance companies (service lookup) |
 
 ### `GET` `/platform/insurance-companies`
 
@@ -9105,7 +9486,7 @@ Returns one insurer profile by account id. **Roles:** `PLATFORM_ADMIN` or `SUPPO
 
 **Update an insurance company profile**
 
-`operationId: update_8`
+`operationId: update_9`
 
 Partial update of an insurer profile — only non-null fields are applied. Status is changed via the
 deactivate/reactivate actions, not here. Audited as `INSURANCE_COMPANY_UPDATED`.
@@ -9183,6 +9564,26 @@ and reason), newest first — the profile's "Audit trail" tab. Returned as a pla
 ```
 
 </details>
+
+---
+
+### `GET` `/platform/insurance-companies/active`
+
+**List active insurance companies (service lookup)**
+
+`operationId: listActive_1`
+
+Returns all **ACTIVE** insurers as a plain list (no tiles/paging), ordered by name — intended for
+other services to look up valid insurers by `account_id`.
+
+**Access:** an internal role (`PLATFORM_ADMIN`/`SUPPORT`/`PLATFORM_APPROVER`) via JWT, or a
+service caller via the `X-API-Key` header (`ROLE_SERVICE`).
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK — list of active insurers. |
 
 ---
 
@@ -9287,6 +9688,27 @@ Invite token + chosen password to activate a member.
 | `token` | string | ✓ | The pending, unexpired invite token e-mailed to the user when they were invited (POST /platform/organization/members) or re-invited (resend-invite). _(e.g. `f47ac10b58cc4372a5670e02b2c3d479`)_ |
 | `password` | string | ✓ | The member's chosen password. _(e.g. `NewPass@123`)_ |
 
+### AddExtractedRuleRequest
+<a id="schema-addextractedrulerequest"></a>
+
+A manually-added contract rule.
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `description` | string | ✓ | Rule description. _(e.g. `Late charges not allowed after 30 days.`)_ |
+| `rule_category` | string |  |  |
+| `rule_type` | string |  |  |
+| `check_field` | string |  |  |
+| `service_category` | string |  |  |
+| `rule_logic` | string |  |  |
+| `unit_of_application` | string |  |  |
+| `severity` | string |  |  |
+| `source` | string |  |  |
+| `check_ref` | string |  |  |
+| `payer` | string |  |  |
+| `scheme_category` | string |  |  |
+| `comment` | string |  | Optional note recorded as the review comment. |
+
 ### AddProviderRemarkRequest
 <a id="schema-addproviderremarkrequest"></a>
 
@@ -9334,6 +9756,15 @@ Assign a tenant's provisioning to a Platform Engineer.
 | Field | Type | Req | Description |
 |---|---|---|---|
 | `assignee` | string | ✓ | The Platform Engineer to assign (id or email). _(e.g. `erin`)_ |
+
+### AssignReviewerRequest
+<a id="schema-assignreviewerrequest"></a>
+
+Assign a reviewer to an extraction's rule set.
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `member_id` | integer (int64) | ✓ | Numeric id of the member to assign as reviewer. _(e.g. `7`)_ |
 
 ### AssignRolesRequest
 <a id="schema-assignrolesrequest"></a>
@@ -9930,6 +10361,25 @@ Retire a suspended payer with a mandatory free-text reason.
 |---|---|---|---|
 | `reason` | string | ✓ | Mandatory reason for retiring the payer (free text). _(e.g. `Contract terminated; data export complete.`)_ |
 
+### ReviewRuleRequest
+<a id="schema-reviewrulerequest"></a>
+
+Approve / discard / archive an extracted rule.
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `action` | string enum: `APPROVE`, `DISCARD`, `ARCHIVE` | ✓ | Action to apply. _(e.g. `APPROVE`)_ |
+| `comment` | string |  | Optional review comment. _(e.g. `Confirmed against clause 6.i.`)_ |
+
+### ReviewStatusRequest
+<a id="schema-reviewstatusrequest"></a>
+
+Set the review status (IN_REVIEW or COMPLETED).
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `status` | string enum: `UNASSIGNED`, `ASSIGNED`, `IN_REVIEW`, `COMPLETED` | ✓ | Target review status. _(e.g. `IN_REVIEW`)_ |
+
 ### RoleResponse
 <a id="schema-roleresponse"></a>
 
@@ -10282,6 +10732,29 @@ The 6-digit TOTP code to confirm enrolment.
 | Field | Type | Req | Description |
 |---|---|---|---|
 | `code` | string | ✓ | The 6-digit code from the authenticator app. _(e.g. `123456`)_ |
+
+### UpdateExtractedRuleRequest
+<a id="schema-updateextractedrulerequest"></a>
+
+Partial edit of an extracted rule; non-null fields applied.
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `description` | string |  |  |
+| `rule_category` | string |  |  |
+| `rule_type` | string |  |  |
+| `check_field` | string |  |  |
+| `service_category` | string |  |  |
+| `rule_logic` | string |  |  |
+| `unit_of_application` | string |  |  |
+| `severity` | string |  |  |
+| `source` | string |  |  |
+| `check_ref` | string |  |  |
+| `payer` | string |  |  |
+| `scheme_category` | string |  |  |
+| `confidence` | number (double) |  |  |
+| `source_quote` | string |  |  |
+| `comment` | string |  | Review comment recorded with the edit. |
 
 ### UpdateInsuranceCompanyRequest
 <a id="schema-updateinsurancecompanyrequest"></a>
