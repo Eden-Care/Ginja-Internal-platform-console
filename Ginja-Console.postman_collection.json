@@ -15,13 +15,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/dev/token?subject=alice&roles=PLATFORM_ADMIN",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "dev",
-                "token"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["dev", "token"],
               "query": [
                 {
                   "key": "subject",
@@ -62,15 +57,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/auth/accept-invite",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "auth",
-                "accept-invite"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "auth", "accept-invite"]
             },
             "auth": {
               "type": "noauth"
@@ -98,15 +86,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "auth",
-                "login"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "auth", "login"]
             },
             "auth": {
               "type": "noauth"
@@ -129,15 +110,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/auth/logout",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "auth",
-                "logout"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "auth", "logout"]
             },
             "auth": {
               "type": "bearer",
@@ -158,16 +132,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/auth/me/sessions",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "auth",
-                "me",
-                "sessions"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "auth", "me", "sessions"]
             },
             "auth": {
               "type": "bearer",
@@ -193,9 +159,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/auth/mfa/login-verify",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "organization",
@@ -227,9 +191,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/auth/mfa/totp/enroll",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "organization",
@@ -263,9 +225,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/auth/mfa/totp/verify",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "organization",
@@ -308,9 +268,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/auth/mfa/sms/enroll",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "organization",
@@ -353,9 +311,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/auth/mfa/sms/verify",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "organization",
@@ -393,9 +349,7 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/auth/mfa/webauthn/register-start",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "organization",
@@ -429,9 +383,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/auth/mfa/webauthn/register-finish",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "organization",
@@ -474,9 +426,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/auth/mfa/webauthn/login-finish",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "organization",
@@ -509,9 +459,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/auth/mfa/backup-codes",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "organization",
@@ -536,9 +484,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/auth/mfa/backup-codes",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "organization",
@@ -569,13 +515,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/dashboard",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "dashboard"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "dashboard"]
             },
             "description": "Aggregated console overview. Roles: PLATFORM_ADMIN/SUPPORT/PLATFORM_APPROVER/PLATFORM_ENGINEER."
           },
@@ -598,14 +539,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/tenant/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "tenant",
-                "auth",
-                "login"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["tenant", "auth", "login"]
             },
             "auth": {
               "type": "noauth"
@@ -638,14 +573,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/members",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "members"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "members"]
             },
             "auth": {
               "type": "bearer",
@@ -675,14 +604,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/members?page=0&size=20&sort=createdAt,desc",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "members"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "members"],
               "query": [
                 {
                   "key": "q",
@@ -730,15 +653,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/members/{{memberId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "members",
-                "{{memberId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "members", "{{memberId}}"]
             },
             "auth": {
               "type": "bearer",
@@ -764,9 +680,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/members/{{memberId}}/status",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "organization",
@@ -808,9 +722,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/members/{{memberId}}/password",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "organization",
@@ -852,9 +764,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/members/{{memberId}}/roles",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "organization",
@@ -891,9 +801,7 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/members/{{memberId}}/resend-invite",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "organization",
@@ -921,9 +829,7 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/members/{{memberId}}/revoke-invite",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "organization",
@@ -951,9 +857,7 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/members/{{memberId}}/sessions",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "organization",
@@ -981,9 +885,7 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/members/{{memberId}}/sessions/revoke",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "organization",
@@ -1012,15 +914,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/members/{{memberId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "members",
-                "{{memberId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "members", "{{memberId}}"]
             },
             "auth": {
               "type": "bearer",
@@ -1041,9 +936,7 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/members/{{memberId}}/roles/{{roleId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "organization",
@@ -1082,9 +975,7 @@
             },
             "url": {
               "raw": "{{baseUrl}}/platform/organization/members/{{memberId}}/activity",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "organization",
@@ -1107,9 +998,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/members/{{memberId}}/unlock",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "organization",
@@ -1134,15 +1023,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/me/profile",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "me",
-                "profile"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "me", "profile"]
             },
             "auth": {
               "type": "bearer",
@@ -1170,15 +1052,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/me/profile",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "me",
-                "profile"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "me", "profile"]
             },
             "auth": {
               "type": "bearer",
@@ -1210,15 +1085,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/me/avatar",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "me",
-                "avatar"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "me", "avatar"]
             },
             "auth": {
               "type": "bearer",
@@ -1251,15 +1119,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/me/avatar",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "me",
-                "avatar"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "me", "avatar"]
             },
             "auth": {
               "type": "bearer",
@@ -1282,15 +1143,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/me/roles",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "me",
-                "roles"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "me", "roles"]
             },
             "auth": {
               "type": "bearer",
@@ -1313,16 +1167,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/me/password/status",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "me",
-                "password",
-                "status"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "me", "password", "status"]
             },
             "auth": {
               "type": "bearer",
@@ -1345,16 +1191,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/me/password/policy",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "me",
-                "password",
-                "policy"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "me", "password", "policy"]
             },
             "auth": {
               "type": "bearer",
@@ -1382,15 +1220,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/me/password",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "me",
-                "password"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "me", "password"]
             },
             "auth": {
               "type": "bearer",
@@ -1422,15 +1253,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/me/mfa",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "me",
-                "mfa"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "me", "mfa"]
             },
             "auth": {
               "type": "bearer",
@@ -1453,9 +1277,7 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/me/mfa/email/enroll",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "organization",
@@ -1491,9 +1313,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/me/mfa/email/verify",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "organization",
@@ -1533,9 +1353,7 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/me/mfa/totp/disable",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "organization",
@@ -1566,15 +1384,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/me/sessions",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "me",
-                "sessions"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "me", "sessions"]
             },
             "auth": {
               "type": "bearer",
@@ -1597,9 +1408,7 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/me/sessions/{{sessionId}}/revoke",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "organization",
@@ -1630,9 +1439,7 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/me/sessions/revoke-others",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "organization",
@@ -1662,15 +1469,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/me/security-activity",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "me",
-                "security-activity"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "me", "security-activity"]
             },
             "auth": {
               "type": "bearer",
@@ -1704,14 +1504,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/roles",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "roles"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "roles"]
             },
             "auth": {
               "type": "bearer",
@@ -1741,14 +1535,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/roles",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "roles"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "roles"]
             },
             "auth": {
               "type": "bearer",
@@ -1769,15 +1557,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/roles/{{roleId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "roles",
-                "{{roleId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "roles", "{{roleId}}"]
             },
             "auth": {
               "type": "bearer",
@@ -1803,15 +1584,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/roles/{{roleId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "roles",
-                "{{roleId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "roles", "{{roleId}}"]
             },
             "auth": {
               "type": "bearer",
@@ -1841,15 +1615,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/roles/{{roleId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "roles",
-                "{{roleId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "roles", "{{roleId}}"]
             },
             "auth": {
               "type": "bearer",
@@ -1875,9 +1642,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/roles/{{roleId}}/permissions",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "organization",
@@ -1914,9 +1679,7 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/roles/{{roleId}}/permissions/{{permissionCode}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "organization",
@@ -1963,9 +1726,7 @@
             },
             "url": {
               "raw": "{{baseUrl}}/platform/organization/roles/{{roleId}}/region-scopes",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "organization",
@@ -1995,14 +1756,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/permissions",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "permissions"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "permissions"]
             },
             "auth": {
               "type": "bearer",
@@ -2032,14 +1787,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/permissions",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "permissions"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "permissions"],
               "query": [
                 {
                   "key": "status",
@@ -2077,15 +1826,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/permissions/search?q=pricing",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "permissions",
-                "search"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "permissions", "search"],
               "query": [
                 {
                   "key": "q",
@@ -2113,15 +1855,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/permissions/{{id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "permissions",
-                "{{id}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "permissions", "{{id}}"]
             },
             "auth": {
               "type": "bearer",
@@ -2142,9 +1877,7 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/permissions/{{id}}/activate",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "organization",
@@ -2172,9 +1905,7 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/permissions/{{id}}/suspend",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "organization",
@@ -2202,15 +1933,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/permissions/{{id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "permissions",
-                "{{id}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "permissions", "{{id}}"]
             },
             "auth": {
               "type": "bearer",
@@ -2236,14 +1960,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/settings/security-policy",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "settings",
-                "security-policy"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "settings", "security-policy"]
             },
             "auth": {
               "type": "bearer",
@@ -2269,14 +1987,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/settings/security-policy",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "settings",
-                "security-policy"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "settings", "security-policy"]
             },
             "auth": {
               "type": "bearer",
@@ -2306,14 +2018,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/settings/data-residency",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "settings",
-                "data-residency"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "settings", "data-residency"]
             },
             "auth": {
               "type": "bearer",
@@ -2339,14 +2045,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/settings/data-residency",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "settings",
-                "data-residency"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "settings", "data-residency"]
             },
             "auth": {
               "type": "bearer",
@@ -2376,15 +2076,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/settings/data-residency/af-east-1",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "settings",
-                "data-residency",
-                "af-east-1"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "settings", "data-residency", "af-east-1"]
             },
             "auth": {
               "type": "bearer",
@@ -2410,15 +2103,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/settings/data-residency/af-west-1",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "settings",
-                "data-residency",
-                "af-west-1"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "settings", "data-residency", "af-west-1"]
             },
             "auth": {
               "type": "bearer",
@@ -2448,15 +2134,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/settings/data-residency/af-west-2",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "settings",
-                "data-residency",
-                "af-west-2"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "settings", "data-residency", "af-west-2"]
             },
             "auth": {
               "type": "bearer",
@@ -2477,14 +2156,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/settings/provisioning-tiers",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "settings",
-                "provisioning-tiers"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "settings", "provisioning-tiers"]
             },
             "auth": {
               "type": "bearer",
@@ -2510,14 +2183,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/settings/provisioning-tiers",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "settings",
-                "provisioning-tiers"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "settings", "provisioning-tiers"]
             },
             "auth": {
               "type": "bearer",
@@ -2547,15 +2214,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/settings/provisioning-tiers/ISOLATED",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "settings",
-                "provisioning-tiers",
-                "ISOLATED"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "settings", "provisioning-tiers", "ISOLATED"]
             },
             "auth": {
               "type": "bearer",
@@ -2581,15 +2241,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/settings/provisioning-tiers/ISOLATED",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "settings",
-                "provisioning-tiers",
-                "ISOLATED"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "settings", "provisioning-tiers", "ISOLATED"]
             },
             "auth": {
               "type": "bearer",
@@ -2619,9 +2272,7 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/settings/provisioning-tiers/DEDICATED",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "settings",
@@ -2653,14 +2304,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/settings/sessions",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "settings",
-                "sessions"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "settings", "sessions"]
             },
             "description": "All active sessions across users, GROUPED BY MEMBER (admin/support). result is an array of MemberSessionsResponse: { member_id, account, user, session_count, sessions[] }, members ordered by most-recent activity. Each sessions[] entry is enriched with browser/os/device + current flag. Per-user 'revoke all' → revoke-all?member_id={member_id}."
           },
@@ -2678,9 +2323,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/settings/sessions/{{sessionId}}/revoke",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "settings",
@@ -2705,15 +2348,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/settings/sessions/revoke-all?member_id=1",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "settings",
-                "sessions",
-                "revoke-all"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "settings", "sessions", "revoke-all"],
               "query": [
                 {
                   "key": "member_id",
@@ -2732,14 +2368,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/settings/notification-templates",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "settings",
-                "notification-templates"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "settings", "notification-templates"]
             },
             "auth": {
               "type": "bearer",
@@ -2766,9 +2396,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/settings/notification-templates/MEMBER_INVITE",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "settings",
@@ -2810,14 +2438,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/settings/mfa-status",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "settings",
-                "mfa-status"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "settings", "mfa-status"]
             },
             "description": "MFA adoption summary + per-user enrolment (admin/support). methods=totp/sms/webauthn; backup_codes/enabled_on null (not modeled)."
           },
@@ -2835,15 +2457,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/settings/mfa-status/{{memberId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "settings",
-                "mfa-status",
-                "{{memberId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "settings", "mfa-status", "{{memberId}}"]
             },
             "description": "One user's MFA detail (admin/support)."
           },
@@ -2861,9 +2476,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/settings/mfa-status/{{memberId}}/remind",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "settings",
@@ -2888,14 +2501,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/settings/password-status?page=0&size=20",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "settings",
-                "password-status"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "settings", "password-status"],
               "query": [
                 {
                   "key": "q",
@@ -2947,9 +2554,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/settings/password-status/{{memberId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "settings",
@@ -2973,9 +2578,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/settings/password-status/{{memberId}}/force-reset",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "settings",
@@ -3000,14 +2603,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/settings/localization",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "settings",
-                "localization"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "settings", "localization"]
             },
             "description": "Platform-default locale/formatting (admin/support)."
           },
@@ -3038,14 +2635,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/platform/settings/localization",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "settings",
-                "localization"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "settings", "localization"]
             },
             "description": "Partial update of localization settings (admin)."
           },
@@ -3063,14 +2654,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/settings/validation-rules",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "settings",
-                "validation-rules"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "settings", "validation-rules"]
             },
             "description": "Current published validation ruleset + grouped rules (admin/support)."
           },
@@ -3088,15 +2673,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/settings/validation-rules/versions",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "settings",
-                "validation-rules",
-                "versions"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "settings", "validation-rules", "versions"]
             },
             "description": "Ruleset version history (admin/support)."
           },
@@ -3123,15 +2701,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/platform/settings/validation-rules/draft",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "settings",
-                "validation-rules",
-                "draft"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "settings", "validation-rules", "draft"]
             },
             "description": "Create/return an editable DRAFT cloning current rules (admin)."
           },
@@ -3162,15 +2733,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/platform/settings/validation-rules/draft",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "settings",
-                "validation-rules",
-                "draft"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "settings", "validation-rules", "draft"]
             },
             "description": "Save the draft's grouped rules (admin)."
           },
@@ -3197,9 +2761,7 @@
             },
             "url": {
               "raw": "{{baseUrl}}/platform/settings/validation-rules/draft/publish",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "settings",
@@ -3233,9 +2795,7 @@
             },
             "url": {
               "raw": "{{baseUrl}}/platform/settings/validation-rules/versions/1/rollback",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "settings",
@@ -3274,15 +2834,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/platform/settings/validation-rules/test",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "settings",
-                "validation-rules",
-                "test"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "settings", "validation-rules", "test"]
             },
             "description": "Live-test a value against a rule pattern + normalize steps (admin/support)."
           },
@@ -3305,14 +2858,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/modules",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "modules"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "modules"]
             },
             "auth": {
               "type": "bearer",
@@ -3342,15 +2889,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/modules/availability?code=CLAIMS&name=Claims Management",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "modules",
-                "availability"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "modules", "availability"],
               "query": [
                 {
                   "key": "code",
@@ -3390,14 +2930,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/modules?page=0&size=20&sort=code,asc",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "modules"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "modules"],
               "query": [
                 {
                   "key": "status",
@@ -3445,15 +2979,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/modules/search?q=claim",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "modules",
-                "search"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "modules", "search"],
               "query": [
                 {
                   "key": "q",
@@ -3496,15 +3023,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/modules/{{moduleId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "modules",
-                "{{moduleId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "modules", "{{moduleId}}"]
             },
             "auth": {
               "type": "bearer",
@@ -3530,15 +3050,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/modules/{{moduleId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "modules",
-                "{{moduleId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "modules", "{{moduleId}}"]
             },
             "auth": {
               "type": "bearer",
@@ -3568,9 +3081,7 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/modules/{{moduleId}}/activity?page=0&size=20&sort=createdAt,desc",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "organization",
@@ -3615,9 +3126,7 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/modules/{{moduleId}}/versions",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "organization",
@@ -3646,9 +3155,7 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/modules/{{moduleId}}/versions/compare?from=1.0&to=1.1",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "organization",
@@ -3690,9 +3197,7 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/modules/{{moduleId}}/versions/1.0/rollback",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "organization",
@@ -3728,14 +3233,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/audit-logs?entity_type=OrgMember&entity_id=MBR000001&page=0&size=20&sort=createdAt,desc",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "audit-logs"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "audit-logs"],
               "query": [
                 {
                   "key": "module",
@@ -3808,15 +3307,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/platform/organization/audit-logs/modules",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "audit-logs",
-                "modules"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "audit-logs", "modules"]
             }
           }
         },
@@ -3832,9 +3324,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/audit-logs/export?format=csv",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "organization",
@@ -3863,13 +3353,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/pricing-structures",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "pricing-structures"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "pricing-structures"]
             },
             "auth": {
               "type": "bearer",
@@ -3900,13 +3385,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/pricing-structures",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "pricing-structures"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "pricing-structures"],
               "query": [
                 {
                   "key": "status",
@@ -3934,14 +3414,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/pricing-structures/{{id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "pricing-structures",
-                "{{id}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "pricing-structures", "{{id}}"]
             },
             "auth": {
               "type": "bearer",
@@ -3967,14 +3441,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/pricing-structures/{{id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "pricing-structures",
-                "{{id}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "pricing-structures", "{{id}}"]
             },
             "auth": {
               "type": "bearer",
@@ -4004,15 +3472,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/pricing-structures/{{id}}/activate",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "pricing-structures",
-                "{{id}}",
-                "activate"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "pricing-structures", "{{id}}", "activate"]
             },
             "auth": {
               "type": "bearer",
@@ -4033,15 +3494,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/pricing-structures/{{id}}/archive",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "pricing-structures",
-                "{{id}}",
-                "archive"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "pricing-structures", "{{id}}", "archive"]
             },
             "auth": {
               "type": "bearer",
@@ -4072,15 +3526,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/platform/pricing-structures/{{id}}/activity",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "pricing-structures",
-                "{{id}}",
-                "activity"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "pricing-structures", "{{id}}", "activity"]
             }
           }
         },
@@ -4096,14 +3543,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/pricing-structures/tenant",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "pricing-structures",
-                "tenant"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "pricing-structures", "tenant"]
             },
             "description": "Minimal ACTIVE pricing structures for the onboarding subscription-model picker (no components/tiers). PLATFORM_ADMIN."
           },
@@ -4126,13 +3567,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/payers",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "payers"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "payers"]
             },
             "auth": {
               "type": "bearer",
@@ -4162,13 +3598,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/payers?status=DRAFT&payer_type=INSURER&from_date=2026-01-01&to_date=2026-12-31&page=0&size=20&sort=createdAt,desc",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "payers"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "payers"],
               "query": [
                 {
                   "key": "status",
@@ -4225,14 +3656,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/payers/tenant-lookup?legal_entity_name=Globex Insurance Ltd",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "payers",
-                "tenant-lookup"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "payers", "tenant-lookup"],
               "query": [
                 {
                   "key": "legal_entity_name",
@@ -4265,14 +3690,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/payers/subdomain-check?value=Acme Health",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "payers",
-                "subdomain-check"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "payers", "subdomain-check"],
               "query": [
                 {
                   "key": "value",
@@ -4300,14 +3719,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/payers/{{payerId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "payers",
-                "{{payerId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "payers", "{{payerId}}"]
             },
             "auth": {
               "type": "bearer",
@@ -4333,15 +3746,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/payers/{{payerId}}/tenants",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "payers",
-                "{{payerId}}",
-                "tenants"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "payers", "{{payerId}}", "tenants"]
             },
             "auth": {
               "type": "bearer",
@@ -4376,15 +3782,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/payers/{{payerId}}/entitlements",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "payers",
-                "{{payerId}}",
-                "entitlements"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "payers", "{{payerId}}", "entitlements"]
             },
             "auth": {
               "type": "bearer",
@@ -4419,15 +3818,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/payers/{{payerId}}/subscription",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "payers",
-                "{{payerId}}",
-                "subscription"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "payers", "{{payerId}}", "subscription"]
             },
             "auth": {
               "type": "bearer",
@@ -4457,9 +3849,7 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/payers/{{payerId}}/tenants/{{tenantId}}/documents",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "payers",
@@ -4521,9 +3911,7 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/payers/{{payerId}}/tenants/{{tenantId}}/documents",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "payers",
@@ -4569,9 +3957,7 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/payers/{{payerId}}/tenants/{{tenantId}}/documents/{{documentId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "payers",
@@ -4602,9 +3988,7 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/payers/{{payerId}}/tenants/{{tenantId}}/activate",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "payers",
@@ -4633,15 +4017,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/payers/{{payerId}}/submit",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "payers",
-                "{{payerId}}",
-                "submit"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "payers", "{{payerId}}", "submit"]
             },
             "auth": {
               "type": "bearer",
@@ -4672,15 +4049,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/platform/payers/{{payerId}}/activity",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "payers",
-                "{{payerId}}",
-                "activity"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "payers", "{{payerId}}", "activity"]
             }
           }
         },
@@ -4701,9 +4071,7 @@
             },
             "url": {
               "raw": "{{baseUrl}}/platform/payers/{{payerId}}/tenants/{{tenantId}}/activity",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "payers",
@@ -4740,9 +4108,7 @@
             },
             "url": {
               "raw": "{{baseUrl}}/platform/payers/{{payerId}}/tenants/{{tenantId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "payers",
@@ -4767,9 +4133,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/payers/{{payerId}}/tenants/{{tenantId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "payers",
@@ -4799,14 +4163,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/payers/onboarding-drafts",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "payers",
-                "onboarding-drafts"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "payers", "onboarding-drafts"],
               "query": [
                 {
                   "key": "assignee",
@@ -4827,15 +4185,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/payers/{{payerId}}/steps",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "payers",
-                "{{payerId}}",
-                "steps"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "payers", "{{payerId}}", "steps"]
             },
             "auth": {
               "type": "bearer",
@@ -4861,9 +4212,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/payers/{{payerId}}/steps/{{stepKey}}/assign",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "payers",
@@ -4901,9 +4250,7 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/payers/{{payerId}}/steps/{{stepKey}}/complete",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "payers",
@@ -4942,15 +4289,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/payers/{{payerId}}/approve",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "payers",
-                "{{payerId}}",
-                "approve"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "payers", "{{payerId}}", "approve"]
             },
             "auth": {
               "type": "bearer",
@@ -4986,15 +4326,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/payers/{{payerId}}/reject",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "payers",
-                "{{payerId}}",
-                "reject"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "payers", "{{payerId}}", "reject"]
             },
             "auth": {
               "type": "bearer",
@@ -5029,15 +4362,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/payers/{{payerId}}/request-info",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "payers",
-                "{{payerId}}",
-                "request-info"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "payers", "{{payerId}}", "request-info"]
             },
             "auth": {
               "type": "bearer",
@@ -5072,9 +4398,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/payers/{{payerId}}/sections/{{sectionKey}}/approve",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "payers",
@@ -5118,9 +4442,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/payers/{{payerId}}/sections/{{sectionKey}}/reject",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "payers",
@@ -5164,9 +4486,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/payers/{{payerId}}/sections/{{sectionKey}}/request-info",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "payers",
@@ -5215,15 +4535,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/platform/payers/{{payerId}}/approval-activity",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "payers",
-                "{{payerId}}",
-                "approval-activity"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "payers", "{{payerId}}", "approval-activity"]
             }
           }
         }
@@ -5240,13 +4553,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/approvals?status=pending",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "approvals"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "approvals"],
               "query": [
                 {
                   "key": "status",
@@ -5280,14 +4588,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/approvals/{{payerId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "approvals",
-                "{{payerId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "approvals", "{{payerId}}"]
             },
             "description": "Full review payload for one request: header + review meta (status, can_decide, sections, auto_activate_note) + full payer aggregate. PLATFORM_APPROVER."
           },
@@ -5311,15 +4613,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/payers/{{payerId}}/suspend",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "payers",
-                "{{payerId}}",
-                "suspend"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "payers", "{{payerId}}", "suspend"]
             },
             "auth": {
               "type": "bearer",
@@ -5350,15 +4645,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/payers/{{payerId}}/reactivate",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "payers",
-                "{{payerId}}",
-                "reactivate"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "payers", "{{payerId}}", "reactivate"]
             },
             "auth": {
               "type": "bearer",
@@ -5394,15 +4682,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/payers/{{payerId}}/retire",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "payers",
-                "{{payerId}}",
-                "retire"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "payers", "{{payerId}}", "retire"]
             },
             "auth": {
               "type": "bearer",
@@ -5438,9 +4719,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/payers/{{payerId}}/lifecycle-requests/{{lifecycleRequestId}}/approve",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "payers",
@@ -5484,9 +4763,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/payers/{{payerId}}/lifecycle-requests/{{lifecycleRequestId}}/reject",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "payers",
@@ -5525,9 +4802,7 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/payers/{{payerId}}/lifecycle-requests",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "payers",
@@ -5560,13 +4835,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/provisioning",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "provisioning"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "provisioning"],
               "query": [
                 {
                   "key": "stage",
@@ -5599,14 +4869,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/provisioning/mine",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "provisioning",
-                "mine"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "provisioning", "mine"]
             },
             "auth": {
               "type": "bearer",
@@ -5627,14 +4891,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/provisioning/{{tenantId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "provisioning",
-                "{{tenantId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "provisioning", "{{tenantId}}"]
             },
             "auth": {
               "type": "bearer",
@@ -5660,15 +4918,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/provisioning/{{tenantId}}/assign",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "provisioning",
-                "{{tenantId}}",
-                "assign"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "provisioning", "{{tenantId}}", "assign"]
             },
             "auth": {
               "type": "bearer",
@@ -5703,9 +4954,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/provisioning/{{tenantId}}/sections/{{section}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "provisioning",
@@ -5743,9 +4992,7 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/provisioning/{{tenantId}}/sections/{{section}}/test",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "provisioning",
@@ -5779,15 +5026,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/provisioning/{{tenantId}}/stage",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "provisioning",
-                "{{tenantId}}",
-                "stage"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "provisioning", "{{tenantId}}", "stage"]
             },
             "auth": {
               "type": "bearer",
@@ -5817,9 +5057,7 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/provisioning/{{tenantId}}/sections/{{section}}/remarks",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "provisioning",
@@ -5848,15 +5086,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/provisioning/{{tenantId}}/remarks",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "provisioning",
-                "{{tenantId}}",
-                "remarks"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "provisioning", "{{tenantId}}", "remarks"]
             },
             "auth": {
               "type": "bearer",
@@ -5877,9 +5108,7 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/provisioning/remarks/{{remarkId}}/resolve",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "provisioning",
@@ -5907,9 +5136,7 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/provisioning/{{tenantId}}/sections/{{section}}/approve",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "provisioning",
@@ -5944,13 +5171,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/dashboard",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "dashboard"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "dashboard"]
             },
             "auth": {
               "type": "bearer",
@@ -5972,14 +5194,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/provisioning/metrics",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "provisioning",
-                "metrics"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "provisioning", "metrics"]
             },
             "auth": {
               "type": "bearer",
@@ -6001,14 +5217,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/approvals/metrics",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "approvals",
-                "metrics"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "approvals", "metrics"]
             },
             "auth": {
               "type": "bearer",
@@ -6030,15 +5240,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/modules/metrics",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "modules",
-                "metrics"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "modules", "metrics"]
             },
             "auth": {
               "type": "bearer",
@@ -6060,15 +5263,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/members/metrics",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "members",
-                "metrics"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "members", "metrics"]
             },
             "auth": {
               "type": "bearer",
@@ -6090,15 +5286,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/organization/roles/metrics",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "organization",
-                "roles",
-                "metrics"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "organization", "roles", "metrics"]
             },
             "auth": {
               "type": "bearer",
@@ -6120,14 +5309,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/platform/payers/metrics",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "payers",
-                "metrics"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "payers", "metrics"]
             },
             "auth": {
               "type": "bearer",
@@ -6160,13 +5343,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/insurance-companies?page=0&size=20",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "insurance-companies"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "insurance-companies"],
               "query": [
                 {
                   "key": "q",
@@ -6210,13 +5388,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/platform/insurance-companies?page=0&size=20",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "platform",
-                    "insurance-companies"
-                  ],
+                  "host": ["{{baseUrl}}"],
+                  "path": ["platform", "insurance-companies"],
                   "query": [
                     {
                       "key": "q",
@@ -6262,6 +5435,31 @@
           ]
         },
         {
+          "name": "GET /platform/insurance-companies/active · service lookup",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "X-API-Key",
+                "value": "{{serviceApiKey}}",
+                "disabled": true,
+                "description": "Service-to-service auth alternative to the bearer token."
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/insurance-companies/active",
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "insurance-companies", "active"]
+            },
+            "description": "Active insurers only, plain list, for cross-service lookup. Any authenticated caller."
+          },
+          "response": []
+        },
+        {
           "name": "POST /platform/insurance-companies · create",
           "request": {
             "method": "POST",
@@ -6277,13 +5475,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/insurance-companies",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "insurance-companies"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "insurance-companies"]
             },
             "description": "Create an insurer profile; generates account id (INS-YYYY-NNNN), status ACTIVE. ADMIN.",
             "body": {
@@ -6313,13 +5506,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/platform/insurance-companies",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "platform",
-                    "insurance-companies"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["platform", "insurance-companies"]
                 },
                 "description": "Create an insurer profile; generates account id (INS-YYYY-NNNN), status ACTIVE. ADMIN.",
                 "body": {
@@ -6358,9 +5546,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/insurance-companies/{{insuranceAccountId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "insurance-companies",
@@ -6382,9 +5568,7 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/platform/insurance-companies/{{insuranceAccountId}}",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
+                  "host": ["{{baseUrl}}"],
                   "path": [
                     "platform",
                     "insurance-companies",
@@ -6423,9 +5607,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/insurance-companies/{{insuranceAccountId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "insurance-companies",
@@ -6460,9 +5642,7 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/platform/insurance-companies/{{insuranceAccountId}}",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
+                  "host": ["{{baseUrl}}"],
                   "path": [
                     "platform",
                     "insurance-companies",
@@ -6510,9 +5690,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/insurance-companies/{{insuranceAccountId}}/deactivate",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "insurance-companies",
@@ -6548,9 +5726,7 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/platform/insurance-companies/{{insuranceAccountId}}/deactivate",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
+                  "host": ["{{baseUrl}}"],
                   "path": [
                     "platform",
                     "insurance-companies",
@@ -6595,9 +5771,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/insurance-companies/{{insuranceAccountId}}/reactivate",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "insurance-companies",
@@ -6620,9 +5794,7 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/platform/insurance-companies/{{insuranceAccountId}}/reactivate",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
+                  "host": ["{{baseUrl}}"],
                   "path": [
                     "platform",
                     "insurance-companies",
@@ -6658,9 +5830,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/insurance-companies/{{insuranceAccountId}}/audit",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "insurance-companies",
@@ -6683,9 +5853,7 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/platform/insurance-companies/{{insuranceAccountId}}/audit",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
+                  "host": ["{{baseUrl}}"],
                   "path": [
                     "platform",
                     "insurance-companies",
@@ -6726,13 +5894,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/service-providers?page=0&size=20",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "service-providers"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "service-providers"],
               "query": [
                 {
                   "key": "q",
@@ -6781,13 +5944,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/platform/service-providers?page=0&size=20",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "platform",
-                    "service-providers"
-                  ],
+                  "host": ["{{baseUrl}}"],
+                  "path": ["platform", "service-providers"],
                   "query": [
                     {
                       "key": "q",
@@ -6838,6 +5996,31 @@
           ]
         },
         {
+          "name": "GET /platform/service-providers/active · service lookup",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "X-API-Key",
+                "value": "{{serviceApiKey}}",
+                "disabled": true,
+                "description": "Service-to-service auth alternative to the bearer token."
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/service-providers/active",
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "service-providers", "active"]
+            },
+            "description": "Active providers only, plain list, for cross-service lookup. Any authenticated caller."
+          },
+          "response": []
+        },
+        {
           "name": "POST /platform/service-providers · create draft",
           "request": {
             "method": "POST",
@@ -6853,13 +6036,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/service-providers",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "service-providers"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "service-providers"]
             },
             "description": "Start an onboarding draft from the Provider profile section (name required); generates SPO-…, status DRAFT. ADMIN.",
             "body": {
@@ -6889,13 +6067,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/platform/service-providers",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "platform",
-                    "service-providers"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["platform", "service-providers"]
                 },
                 "description": "Start an onboarding draft from the Provider profile section (name required); generates SPO-…, status DRAFT. ADMIN.",
                 "body": {
@@ -6934,14 +6107,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/service-providers/{{providerCode}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "service-providers",
-                "{{providerCode}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "service-providers", "{{providerCode}}"]
             },
             "description": "One provider by draft code (SPO-…) or account id (SP-…)."
           },
@@ -6958,14 +6125,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/platform/service-providers/{{providerCode}}",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "platform",
-                    "service-providers",
-                    "{{providerCode}}"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["platform", "service-providers", "{{providerCode}}"]
                 },
                 "description": "One provider by draft code (SPO-…) or account id (SP-…)."
               },
@@ -6999,14 +6160,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/service-providers/{{providerCode}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "service-providers",
-                "{{providerCode}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "service-providers", "{{providerCode}}"]
             },
             "description": "Partial save of a wizard section (DRAFT only). ADMIN.",
             "body": {
@@ -7036,14 +6191,8 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/platform/service-providers/{{providerCode}}",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "path": [
-                    "platform",
-                    "service-providers",
-                    "{{providerCode}}"
-                  ]
+                  "host": ["{{baseUrl}}"],
+                  "path": ["platform", "service-providers", "{{providerCode}}"]
                 },
                 "description": "Partial save of a wizard section (DRAFT only). ADMIN.",
                 "body": {
@@ -7082,9 +6231,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/service-providers/{{providerCode}}/submit",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "service-providers",
@@ -7107,9 +6254,7 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/platform/service-providers/{{providerCode}}/submit",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
+                  "host": ["{{baseUrl}}"],
                   "path": [
                     "platform",
                     "service-providers",
@@ -7149,9 +6294,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/service-providers/{{providerCode}}/deactivate",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "service-providers",
@@ -7187,9 +6330,7 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/platform/service-providers/{{providerCode}}/deactivate",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
+                  "host": ["{{baseUrl}}"],
                   "path": [
                     "platform",
                     "service-providers",
@@ -7234,9 +6375,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/service-providers/{{providerCode}}/reactivate",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "service-providers",
@@ -7259,9 +6398,7 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/platform/service-providers/{{providerCode}}/reactivate",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
+                  "host": ["{{baseUrl}}"],
                   "path": [
                     "platform",
                     "service-providers",
@@ -7297,9 +6434,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/service-providers/{{providerCode}}/audit",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "service-providers",
@@ -7322,9 +6457,7 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/platform/service-providers/{{providerCode}}/audit",
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
+                  "host": ["{{baseUrl}}"],
                   "path": [
                     "platform",
                     "service-providers",
@@ -7360,9 +6493,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/service-providers/{{providerCode}}/documents",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "service-providers",
@@ -7396,9 +6527,7 @@
             },
             "url": {
               "raw": "{{baseUrl}}/platform/service-providers/{{providerCode}}/documents/SIGNED_PARTNERSHIP_CONTRACT",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "service-providers",
@@ -7423,9 +6552,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/service-providers/{{providerCode}}/documents/SIGNED_PARTNERSHIP_CONTRACT/download",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "service-providers",
@@ -7451,14 +6578,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/service-providers/review-queue",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "platform",
-                "service-providers",
-                "review-queue"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "service-providers", "review-queue"]
             },
             "description": "Providers awaiting review + stats. APPROVER/ADMIN/SUPPORT."
           },
@@ -7476,9 +6597,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/service-providers/{{providerCode}}/review",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "service-providers",
@@ -7506,9 +6625,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/service-providers/{{providerCode}}/remarks",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "service-providers",
@@ -7541,9 +6658,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/service-providers/{{providerCode}}/remarks/{{remarkId}}/resolve",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "service-providers",
@@ -7569,9 +6684,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/service-providers/{{providerCode}}/review/sections/REGISTRATION/reviewed",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "service-providers",
@@ -7598,9 +6711,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/service-providers/{{providerCode}}/approve",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "service-providers",
@@ -7628,9 +6739,7 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/platform/service-providers/{{providerCode}}/send-back",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "platform",
                 "service-providers",
@@ -7652,6 +6761,627 @@
           "response": []
         }
       ]
+    },
+    {
+      "name": "Rule Extraction & Review",
+      "item": [
+        {
+          "name": "GET  …/rule-extraction · overview (all insurers)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/service-providers/{{providerCode}}/rule-extraction",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "platform",
+                "service-providers",
+                "{{providerCode}}",
+                "rule-extraction"
+              ]
+            },
+            "description": "All extractions for the provider across insurers."
+          },
+          "response": []
+        },
+        {
+          "name": "GET  …/rule-extraction/jobs/{jobId}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/service-providers/{{providerCode}}/rule-extraction/jobs/{{jobId}}",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "platform",
+                "service-providers",
+                "{{providerCode}}",
+                "rule-extraction",
+                "jobs",
+                "{{jobId}}"
+              ]
+            },
+            "description": "Fetch one extraction by job_id (any status) — same response as the current endpoint."
+          },
+          "response": []
+        },
+        {
+          "name": "POST …/rule-extraction/{insurer} · start (multipart)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "contract",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/platform/service-providers/{{providerCode}}/rule-extraction/{{insurerAccountId}}",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "platform",
+                "service-providers",
+                "{{providerCode}}",
+                "rule-extraction",
+                "{{insurerAccountId}}"
+              ]
+            },
+            "description": "Store the contract in the document service and queue an extraction job (201, job_id QUEUED). Only the contract is uploaded — the document service fetches the active Rules Extraction Checks catalogue itself. Provider must be ACTIVE; insurer must exist. Role: PLATFORM_ADMIN."
+          },
+          "response": []
+        },
+        {
+          "name": "GET  …/rule-extraction/{insurer} · current",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/service-providers/{{providerCode}}/rule-extraction/{{insurerAccountId}}",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "platform",
+                "service-providers",
+                "{{providerCode}}",
+                "rule-extraction",
+                "{{insurerAccountId}}"
+              ]
+            },
+            "description": "Current extraction for provider+insurer: status, metadata, rules, coverage, flags, warnings."
+          },
+          "response": []
+        },
+        {
+          "name": "GET  …/rule-extraction/{insurer}/history",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/service-providers/{{providerCode}}/rule-extraction/{{insurerAccountId}}/history",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "platform",
+                "service-providers",
+                "{{providerCode}}",
+                "rule-extraction",
+                "{{insurerAccountId}}",
+                "history"
+              ]
+            },
+            "description": "Extraction jobs for provider+insurer."
+          },
+          "response": []
+        },
+        {
+          "name": "GET  …/rule-extraction/{insurer}/rules",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/service-providers/{{providerCode}}/rule-extraction/{{insurerAccountId}}/rules?review_status=PENDING",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "platform",
+                "service-providers",
+                "{{providerCode}}",
+                "rule-extraction",
+                "{{insurerAccountId}}",
+                "rules"
+              ],
+              "query": [
+                {
+                  "key": "review_status",
+                  "value": "PENDING",
+                  "description": "PENDING|APPROVED|DISCARDED|ARCHIVED",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Rules of current extraction, filterable by review_status."
+          },
+          "response": []
+        },
+        {
+          "name": "POST …/{insurer}/rules/{ruleId}/review",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/service-providers/{{providerCode}}/rule-extraction/{{insurerAccountId}}/rules/{{ruleId}}/review",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "platform",
+                "service-providers",
+                "{{providerCode}}",
+                "rule-extraction",
+                "{{insurerAccountId}}",
+                "rules",
+                "{{ruleId}}",
+                "review"
+              ]
+            },
+            "description": "One endpoint: approve/discard/archive via action. ADMIN/APPROVER.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"APPROVE\",\n  \"comment\": \"Confirmed against clause 6.i.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH …/{insurer}/rules/{ruleId} · update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/service-providers/{{providerCode}}/rule-extraction/{{insurerAccountId}}/rules/{{ruleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "platform",
+                "service-providers",
+                "{{providerCode}}",
+                "rule-extraction",
+                "{{insurerAccountId}}",
+                "rules",
+                "{{ruleId}}"
+              ]
+            },
+            "description": "Edit rule fields in place + comment. ADMIN/APPROVER.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Updated rule text\",\n  \"severity\": \"HIGH\",\n  \"comment\": \"Clarified severity.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST …/{insurer}/rules · add manual rule",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/service-providers/{{providerCode}}/rule-extraction/{{insurerAccountId}}/rules",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "platform",
+                "service-providers",
+                "{{providerCode}}",
+                "rule-extraction",
+                "{{insurerAccountId}}",
+                "rules"
+              ]
+            },
+            "description": "Add a manual rule (MANUAL-…, APPROVED). ADMIN/APPROVER.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Late charges not allowed after 30 days.\",\n  \"rule_category\": \"Claim Submission\",\n  \"severity\": \"HIGH\",\n  \"comment\": \"Added from annexure.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST …/{insurer}/assign · assign reviewer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"member_id\": 7\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/platform/service-providers/{{providerCode}}/rule-extraction/{{insurerAccountId}}/assign",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "platform",
+                "service-providers",
+                "{{providerCode}}",
+                "rule-extraction",
+                "{{insurerAccountId}}",
+                "assign"
+              ]
+            },
+            "description": "Assign an active member to review the rules → status ASSIGNED. ADMIN/APPROVER."
+          },
+          "response": []
+        },
+        {
+          "name": "POST …/{insurer}/review-status · advance",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"IN_REVIEW\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/platform/service-providers/{{providerCode}}/rule-extraction/{{insurerAccountId}}/review-status",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "platform",
+                "service-providers",
+                "{{providerCode}}",
+                "rule-extraction",
+                "{{insurerAccountId}}",
+                "review-status"
+              ]
+            },
+            "description": "Advance review (IN_REVIEW|COMPLETED). Assignee or ADMIN/APPROVER."
+          },
+          "response": []
+        },
+        {
+          "name": "POST …/rule-extraction/{insurer}/publish · publish rules book",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/service-providers/{{providerCode}}/rule-extraction/{{insurerAccountId}}/publish",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "platform",
+                "service-providers",
+                "{{providerCode}}",
+                "rule-extraction",
+                "{{insurerAccountId}}",
+                "publish"
+              ]
+            },
+            "description": "Publish the reviewed rules as the contract's rules book (In review → Published). Requires all rules decided. 409 if already published. Roles: ADMIN/APPROVER."
+          },
+          "response": []
+        },
+        {
+          "name": "GET  …/rule-extraction/{insurer}/contract · source doc URL",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/service-providers/{{providerCode}}/rule-extraction/{{insurerAccountId}}/contract",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "platform",
+                "service-providers",
+                "{{providerCode}}",
+                "rule-extraction",
+                "{{insurerAccountId}}",
+                "contract"
+              ]
+            },
+            "description": "Fresh, time-limited download URL for the source contract document (review-screen source viewer). Roles: ADMIN/SUPPORT/APPROVER."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Rule Review",
+      "item": [
+        {
+          "name": "GET  /rule-review/dashboard · reviewer dashboard (assigned to me)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/rule-review/dashboard?assignee_id={{memberId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "rule-review", "dashboard"],
+              "query": [
+                {
+                  "key": "assignee_id",
+                  "value": "{{memberId}}",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Contracts assigned to the current reviewer with provider + insurer names, progress and due dates, plus tile counts (assigned to me / rules to review / completed). ADMIN may add ?assignee_id= to view another reviewer."
+          },
+          "response": []
+        }
+      ],
+      "description": "Claim Clean-up · reviewer dashboard — contracts assigned to a reviewer for rule review."
+    },
+    {
+      "name": "Rules Extraction Checks",
+      "item": [
+        {
+          "name": "GET  …/rules-checks · list",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "X-API-Key",
+                "value": "{{serviceApiKey}}",
+                "disabled": true,
+                "description": "Service-to-service auth alternative to the bearer token (reads only; writes stay ADMIN)."
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/rule-extraction/rules-checks?category=Pricing&active=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "rule-extraction", "rules-checks"],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "Pricing"
+                },
+                {
+                  "key": "active",
+                  "value": "true"
+                }
+              ]
+            },
+            "description": "The rules-extraction check catalogue, ordered by sort order then check id. Filters: category (case-insensitive), active. Roles: ADMIN / SUPPORT / SERVICE (X-API-Key)."
+          },
+          "response": []
+        },
+        {
+          "name": "GET  …/rules-checks/{checkId} · one",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "X-API-Key",
+                "value": "{{serviceApiKey}}",
+                "disabled": true,
+                "description": "Service-to-service auth alternative to the bearer token (reads only; writes stay ADMIN)."
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/rule-extraction/rules-checks/{{checkId}}",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "platform",
+                "rule-extraction",
+                "rules-checks",
+                "{{checkId}}"
+              ]
+            },
+            "description": "One check by CHK-NNN id. Roles: ADMIN / SUPPORT / SERVICE."
+          },
+          "response": []
+        },
+        {
+          "name": "POST …/rules-checks · create (ADMIN)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/rule-extraction/rules-checks",
+              "host": ["{{baseUrl}}"],
+              "path": ["platform", "rule-extraction", "rules-checks"]
+            },
+            "description": "Create a check; check_id (CHK-NNN) is generated. category + criticality required. → 201. Role: ADMIN.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category\": \"Pricing\",\n  \"rule_type\": \"NEGOTIATED_FEE_SCHEDULE\",\n  \"criticality\": \"MANDATORY\",\n  \"extraction_guidance\": \"Does the contract fix rates for named services? Extract the fee schedule.\",\n  \"fields_to_extract\": \"service name; line amount; currency; scheme category\",\n  \"trigger_keywords\": \"tariff; agreed rate; schedule of fees\",\n  \"typical_location\": \"Contract schedule; fees clause\",\n  \"if_missing\": \"Flag: no rate basis\",\n  \"rule_check_mapping\": \"line_amount <= tariff_rate\",\n  \"triggered_at\": \"BILLING\",\n  \"consequence_of_breach\": \"Amount above the agreed rate is not payable\",\n  \"sort_order\": 21,\n  \"active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH …/rules-checks/{checkId} · update (ADMIN)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/rule-extraction/rules-checks/{{checkId}}",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "platform",
+                "rule-extraction",
+                "rules-checks",
+                "{{checkId}}"
+              ]
+            },
+            "description": "Partial update; only non-null fields applied (incl. active toggle). Role: ADMIN.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"active\": false,\n  \"extraction_guidance\": \"Revised guidance.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE …/rules-checks/{checkId} · delete (ADMIN)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platform/rule-extraction/rules-checks/{{checkId}}",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "platform",
+                "rule-extraction",
+                "rules-checks",
+                "{{checkId}}"
+              ]
+            },
+            "description": "Hard-delete a check. (Use active=false to keep the row but exclude it from extraction.) Role: ADMIN."
+          },
+          "response": []
+        }
+      ],
+      "description": "CRUD over the master rules-extraction check catalogue (CHK-NNN). Reads open to ADMIN/SUPPORT and service callers (X-API-Key → SERVICE); writes ADMIN only."
     }
   ],
   "variable": [
@@ -7742,6 +7472,26 @@
     {
       "key": "providerCode",
       "value": "SPO-1200"
+    },
+    {
+      "key": "ruleId",
+      "value": "LCT-PREA-001"
+    },
+    {
+      "key": "insurerAccountId",
+      "value": "INS-2026-0002"
+    },
+    {
+      "key": "jobId",
+      "value": "343308d5-9ee8-48c3-a799-ee29d908db80"
+    },
+    {
+      "key": "serviceApiKey",
+      "value": ""
+    },
+    {
+      "key": "checkId",
+      "value": "CHK-009"
     }
   ]
 }

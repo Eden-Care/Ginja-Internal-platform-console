@@ -30,6 +30,7 @@ it.
 Login cred for testing
 
 Admin: admin@ginja.ai/Admin@12345
+PLATFORM_APPROVER: approver@ginja.ai/Approver@123456
 
 ## First-launch scope (READ THIS)
 

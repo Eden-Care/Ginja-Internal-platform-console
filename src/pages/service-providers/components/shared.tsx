@@ -4,7 +4,10 @@ import { CheckIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { HiIcon } from "@/components/hifi/icon"
 import { MiniBadge } from "@/components/console/tagpill"
-import { SP_STATUS_TONE, type SpStatus } from "@/features/service-providers/types"
+import {
+  SP_STATUS_TONE,
+  type SpStatus,
+} from "@/features/service-providers/types"
 
 /**
  * Column template shared by every service-provider table (directory, review
@@ -106,6 +109,16 @@ export function CopyGlyph({
         <HiIcon name="copy" className={iconClass} />
       )}
     </button>
+  )
+}
+
+/** One key→value line of a detail sheet — hi-fi `.ins-drow`. */
+export function DetailRow({ k, v }: { k: string; v: React.ReactNode }) {
+  return (
+    <div className="flex items-baseline justify-between gap-3 border-b py-2.5 text-[13px] last:border-b-0">
+      <span className="shrink-0 text-[12px] text-muted-foreground">{k}</span>
+      <span className="min-w-0 text-right text-foreground">{v}</span>
+    </div>
   )
 }
 

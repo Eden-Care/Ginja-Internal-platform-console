@@ -20,7 +20,10 @@ import {
   useServiceProvider,
 } from "@/features/service-providers/use-service-providers"
 import type { SpAuditTone } from "@/features/service-providers/types"
-import { BackLink, CopyGlyph, SpAvatar, SpStatus } from "./shared"
+import type { Insurer } from "@/features/insurers/types"
+import { useExtractionsOverview } from "@/features/rule-extraction/use-rule-extraction"
+import { BackLink, CopyGlyph, DetailRow, SpAvatar, SpStatus } from "./shared"
+import { SpInsurerList, SpInsurerWorkspace } from "./insurer-links"
 
 const AUD_TONE: Record<SpAuditTone, string> = {
   success: "bg-success-subtle text-success-subtle-foreground",
@@ -33,21 +36,13 @@ const AUD_GLYPH: Record<SpAuditTone, string> = {
   neutral: "pencil",
 }
 
-function DetailRow({ k, v }: { k: string; v: React.ReactNode }) {
-  return (
-    <div className="flex items-baseline justify-between gap-3 border-b py-2.5 text-[13px] last:border-b-0">
-      <span className="shrink-0 text-[12px] text-muted-foreground">{k}</span>
-      <span className="min-w-0 text-right text-foreground">{v}</span>
-    </div>
-  )
-}
-
 /**
  * Service-provider record (hi-fi `ProviderDrawer`, rendered as a full page),
  * bound to `GET /platform/service-providers/{code}` + `…/audit`, with real
- * Approve / Mark-Inactive / Reactivate mutations. The "Insurers" tab is kept
- * but shows a pending-backend state — the provider⇆insurer directory-sync has
- * no endpoint yet.
+ * Approve / Mark-Inactive / Reactivate mutations. The "Insurers" tab is the
+ * per-insurer contracts & rule-extraction workspace, LIVE against
+ * `…/{code}/rule-extraction` (the insurer *directory-sync* links model is
+ * still pending backend — see insurer-links.tsx).
  */
 export function ProviderRecord({
   code,
@@ -68,9 +63,19 @@ export function ProviderRecord({
   const audit = auditQ.data ?? []
 
   const [tab, setTab] = React.useState("overview")
-  const [confirm, setConfirm] = React.useState<"activate" | "deactivate" | null>(
-    null
-  )
+  const [confirm, setConfirm] = React.useState<
+    "activate" | "deactivate" | null
+  >(null)
+  // Per-insurer workspace: which insurer is open.
+  const [openIns, setOpenIns] = React.useState<Insurer | null>(null)
+  const overviewQ = useExtractionsOverview(rec?.displayId ?? "", !!rec)
+  // Distinct insurers with a current extraction — the overview also lists
+  // superseded/failed attempts, so dedupe by insurer and honour `current`.
+  const extractionCount = new Set(
+    (overviewQ.data ?? [])
+      .filter((x) => x.insurerAccountId && x.current)
+      .map((x) => x.insurerAccountId)
+  ).size
 
   const busy =
     deactivateMut.isPending || reactivateMut.isPending || approveMut.isPending
@@ -243,7 +248,9 @@ export function ProviderRecord({
             onClick={() => setConfirm("activate")}
           >
             <HiIcon name="checkCircle" />
-            {rec.status === "Pending review" ? "Approve & activate" : "Activate"}
+            {rec.status === "Pending review"
+              ? "Approve & activate"
+              : "Activate"}
           </Button>
         ) : null}
       </div>
@@ -257,7 +264,9 @@ export function ProviderRecord({
       {rec.status === "Inactive" ? (
         <Note tone="warn" icon={<HiIcon name="ban" />}>
           <b>Inactive.</b>
-          {deactEntry ? ` Marked by ${deactEntry.by} on ${deactEntry.when}.` : ""}{" "}
+          {deactEntry
+            ? ` Marked by ${deactEntry.by} on ${deactEntry.when}.`
+            : ""}{" "}
           {rec.statusReason}
         </Note>
       ) : null}
@@ -266,9 +275,18 @@ export function ProviderRecord({
         value={tab}
         onChange={setTab}
         tabs={[
-          { k: "overview", label: "Overview", icon: <HiIcon name="hospital" /> },
+          {
+            k: "overview",
+            label: "Overview",
+            icon: <HiIcon name="hospital" />,
+          },
           { k: "services", label: "Services", icon: <HiIcon name="layers" /> },
-          { k: "insurers", label: "Insurers", icon: <HiIcon name="shield" /> },
+          {
+            k: "insurers",
+            label: "Insurers",
+            icon: <HiIcon name="shield" />,
+            count: extractionCount,
+          },
           {
             k: "audit",
             label: "Audit trail",
@@ -280,7 +298,10 @@ export function ProviderRecord({
 
       {tab === "overview" ? (
         <Panel>
-          <PanelHead icon={<HiIcon name="hospital" />} title="Provider profile" />
+          <PanelHead
+            icon={<HiIcon name="hospital" />}
+            title="Provider profile"
+          />
           <PanelBody>
             <div className="grid gap-x-10 sm:grid-cols-2">
               {rows.map(([k, v]) => (
@@ -316,25 +337,16 @@ export function ProviderRecord({
         </Panel>
       ) : null}
 
-      {tab === "insurers" ? (
-        <Panel>
-          <PanelHead icon={<HiIcon name="shield" />} title="Linked insurers" />
-          <PanelBody>
-            <div className="flex flex-col items-center gap-2.5 rounded-[14px] border border-dashed border-input bg-muted/30 px-6 py-12 text-center">
-              <span className="grid size-[52px] place-items-center rounded-[14px] border bg-card text-muted-foreground shadow-xs [&>svg]:size-[22px]">
-                <HiIcon name="shield" />
-              </span>
-              <p className="max-w-[52ch] text-[13px] leading-[1.55] text-muted-foreground [&_b]:font-semibold [&_b]:text-foreground">
-                <b>Insurer links are pending backend integration.</b>
-                <br />
-                The provider⇆insurer directory sync (contracts, policyholders &
-                claim rules per insurer) isn’t exposed by the API yet — this tab
-                will populate once that endpoint ships.
-              </p>
-              <MiniBadge tone="info">Pending backend</MiniBadge>
-            </div>
-          </PanelBody>
-        </Panel>
+      {tab === "insurers" && !openIns ? (
+        <SpInsurerList provider={rec} onOpen={(ins) => setOpenIns(ins)} />
+      ) : null}
+      {tab === "insurers" && openIns ? (
+        <SpInsurerWorkspace
+          provider={rec}
+          insurer={openIns}
+          readonly={readonly}
+          onBack={() => setOpenIns(null)}
+        />
       ) : null}
 
       {tab === "audit" ? (
@@ -365,7 +377,9 @@ export function ProviderRecord({
                       <HiIcon name={AUD_GLYPH[a.tone]} />
                     </span>
                     <div className="min-w-0">
-                      <div className="text-[12.5px] font-semibold">{a.action}</div>
+                      <div className="text-[12.5px] font-semibold">
+                        {a.action}
+                      </div>
                       <div className="mt-0.5 text-[11.5px] leading-[1.45] text-muted-foreground">
                         {a.detail}
                       </div>
@@ -422,8 +436,8 @@ export function ProviderRecord({
             {rec.status === "Pending review"
               ? "Approving activates the provider for Claim Clean-up (all review sections must be cleared with no open remarks). "
               : "Reactivate this provider. "}
-            It can then submit claims through Claim Clean-up. This is recorded in
-            the audit trail with your name.
+            It can then submit claims through Claim Clean-up. This is recorded
+            in the audit trail with your name.
           </p>
         }
         confirmLabel={

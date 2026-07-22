@@ -26,6 +26,11 @@ import { TenantProvisioningPage } from "@/pages/tenant-provisioning"
 import { ProvisioningDetailPage } from "@/pages/tenant-provisioning/detail"
 import { InsurersPage } from "@/pages/insurers"
 import { ServiceProvidersPage } from "@/pages/service-providers"
+import { ServiceProviderRecordPage } from "@/pages/service-providers/record"
+import { OnboardServiceProviderPage } from "@/pages/service-providers/onboard"
+import { RuleReviewPage } from "@/pages/rule-review"
+import { RuleReviewRecordPage } from "@/pages/rule-review/record"
+import { RuleChecksPage } from "@/pages/rule-checks"
 import { ModuleRegistryPage } from "@/pages/module-registry"
 import { ModuleRecordPage } from "@/pages/module-registry/record"
 import { ModuleFormPage } from "@/pages/module-registry/form-page"
@@ -106,6 +111,24 @@ function AppShell() {
               path="service-providers"
               element={<ServiceProvidersPage />}
             />
+            <Route
+              path="service-providers/onboard"
+              element={<OnboardServiceProviderPage />}
+            />
+            <Route
+              path="service-providers/:code"
+              element={<ServiceProviderRecordPage />}
+            />
+            <Route
+              path="service-providers/:code/edit"
+              element={<OnboardServiceProviderPage />}
+            />
+            <Route path="rule-review" element={<RuleReviewPage />} />
+            <Route
+              path="rule-review/:providerCode/:insurerAccountId"
+              element={<RuleReviewRecordPage />}
+            />
+            <Route path="rule-checks" element={<RuleChecksPage />} />
             <Route path="module-registry" element={<ModuleRegistryPage />} />
             <Route
               path="module-registry/new"

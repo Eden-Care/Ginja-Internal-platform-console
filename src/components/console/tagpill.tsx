@@ -20,7 +20,13 @@ export function Tagpill({
   )
 }
 
-type BadgeTone = "success" | "warning" | "neutral" | "info" | "error"
+export type BadgeTone =
+  | "success"
+  | "warning"
+  | "neutral"
+  | "info"
+  | "error"
+  | "primary"
 
 const BADGE_TONE: Record<BadgeTone, string> = {
   success: "bg-success-subtle text-success-subtle-foreground",
@@ -28,6 +34,7 @@ const BADGE_TONE: Record<BadgeTone, string> = {
   info: "bg-info-subtle text-info-subtle-foreground",
   neutral: "bg-muted text-muted-foreground",
   error: "bg-destructive-subtle text-destructive-subtle-foreground",
+  primary: "bg-primary/12 text-primary",
 }
 
 /** Small status badge with a leading LED dot. */
