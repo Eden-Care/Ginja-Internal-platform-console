@@ -1,6 +1,7 @@
 import * as React from "react"
 import { LockIcon, SearchIcon, TriangleAlertIcon } from "lucide-react"
 import { toast } from "sonner"
+import { useNavigate } from "react-router-dom"
 
 import { cn } from "@/lib/utils"
 import { ApiError } from "@/lib/api/client"
@@ -19,26 +20,15 @@ import { useServiceProvidersDirectory } from "@/features/service-providers/use-s
 import {
   PROVIDER_TYPE_TO_ENUM,
   SP_TYPES,
-  type ServiceProvider,
 } from "@/features/service-providers/types"
 import { RegionPill, SpAvatar, SpStatus, spGrid } from "./components/shared"
-import { ProviderOnboard } from "./components/onboard"
-import { ProviderCreated } from "./components/created"
-import { ProviderRecord } from "./components/record"
 import {
   ProviderReview,
   SPApprovedHistory,
   SPReviewQueue,
 } from "./components/review"
 
-type View =
-  | "list"
-  | "onboard"
-  | "created"
-  | "record"
-  | "review-queue"
-  | "review"
-  | "review-history"
+type View = "list" | "review-queue" | "review" | "review-history"
 
 const STATUS_PARAM: Record<string, "ACTIVE" | "PENDING_REVIEW" | "INACTIVE" | undefined> = {
   All: undefined,
@@ -56,10 +46,10 @@ const STATUS_PARAM: Record<string, "ACTIVE" | "PENDING_REVIEW" | "INACTIVE" | un
 export function ServiceProvidersPage() {
   const { isReadonly } = useAccess()
   const readonly = isReadonly("providers")
+  const navigate = useNavigate()
 
   const [view, setView] = React.useState<View>("list")
   const [code, setCode] = React.useState("")
-  const [created, setCreated] = React.useState<ServiceProvider | null>(null)
   const [q, setQ] = React.useState("")
   const [qDebounced, setQDebounced] = React.useState("")
   const [typeF, setTypeF] = React.useState("All")
@@ -78,28 +68,6 @@ export function ServiceProvidersPage() {
     })
   const forbidden = error instanceof ApiError && error.status === 403
 
-  if (view === "onboard")
-    return (
-      <ProviderOnboard
-        initialCode={code || undefined}
-        onBack={() => setView("list")}
-        onDone={(rec) => {
-          setCreated(rec)
-          setView("created")
-        }}
-      />
-    )
-  if (view === "created" && created)
-    return (
-      <ProviderCreated
-        provider={created}
-        onList={() => setView("list")}
-        onView={() => {
-          setCode(created.code)
-          setView("record")
-        }}
-      />
-    )
   if (view === "review-queue")
     return (
       <SPReviewQueue
@@ -118,19 +86,10 @@ export function ServiceProvidersPage() {
   if (view === "review-history")
     return (
       <SPApprovedHistory
-        onOpen={(c) => {
-          setCode(c)
-          setView("record")
-        }}
+        onOpen={(c) =>
+          navigate(`/service-providers/${encodeURIComponent(c)}`)
+        }
         onBack={() => setView("review-queue")}
-      />
-    )
-  if (view === "record")
-    return (
-      <ProviderRecord
-        code={code}
-        readonly={readonly}
-        onClose={() => setView("list")}
       />
     )
 
@@ -171,10 +130,7 @@ export function ServiceProvidersPage() {
               </Button>
               <Button
                 className={hifiBtn}
-                onClick={() => {
-                  setCode("")
-                  setView("onboard")
-                }}
+                onClick={() => navigate("/service-providers/onboard")}
               >
                 <HiIcon name="plus" />
                 Onboard provider
@@ -291,15 +247,20 @@ export function ServiceProvidersPage() {
                   key={x.code}
                   role="button"
                   tabIndex={0}
-                  onClick={() => {
-                    setCode(x.code)
-                    setView(x.status === "Draft" ? "onboard" : "record")
-                  }}
+                  onClick={() =>
+                    navigate(
+                      x.status === "Draft"
+                        ? `/service-providers/${encodeURIComponent(x.code)}/edit`
+                        : `/service-providers/${encodeURIComponent(x.code)}`
+                    )
+                  }
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      setCode(x.code)
-                      setView(x.status === "Draft" ? "onboard" : "record")
-                    }
+                    if (e.key === "Enter")
+                      navigate(
+                        x.status === "Draft"
+                          ? `/service-providers/${encodeURIComponent(x.code)}/edit`
+                          : `/service-providers/${encodeURIComponent(x.code)}`
+                      )
                   }}
                   className={cn(
                     spGrid,

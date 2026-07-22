@@ -59,9 +59,11 @@ All endpoints require this scheme unless noted otherwise (the `/dev/token` helpe
 - [Platform Settings · Security](#platform-settings-security) (14)
 - [Platform Settings · Provisioning Tiers](#platform-settings-provisioning-tiers) (5)
 - [Platform Settings · Data Residency](#platform-settings-data-residency) (5)
-- [Claim Clean-up · Service providers](#claim-clean-up-service-providers) (30)
+- [Claim Clean-up · Service providers](#claim-clean-up-service-providers) (32)
+- [Claim Clean-up · Rules-extraction checks](#claim-clean-up-rules-extraction-checks) (5)
 - [My Account](#my-account) (16)
 - [Claim Clean-up · Insurance companies](#claim-clean-up-insurance-companies) (8)
+- [Claim Clean-up · Rule review](#claim-clean-up-rule-review) (1)
 - [Dashboard](#dashboard) (1)
 - [Schemas](#schemas)
 
@@ -2142,7 +2144,7 @@ _Creatable permission catalogue assigned to roles; surfaced as PERM_* authoritie
 
 **List permissions (filter)**
 
-`operationId: list_4`
+`operationId: list_5`
 
 Returns the permission catalogue, with optional filters: `status` (`ACTIVE`/`INACTIVE`),
 `group_code` (e.g. `TENANT_MANAGEMENT`), and `sensitive` (`true`/`false`). Sorted by code.
@@ -2196,7 +2198,7 @@ Returns the permission catalogue, with optional filters: `status` (`ACTIVE`/`INA
 
 **Create a permission**
 
-`operationId: create_4`
+`operationId: create_5`
 
 Registers a new permission in the catalogue. The `code` is normalised to UPPER_SNAKE and becomes the
 `PERM_<code>` authority carried in a member's login JWT (via the roles they hold).
@@ -2353,7 +2355,7 @@ authority again on the member's next login.
 
 **Get a permission**
 
-`operationId: get_10`
+`operationId: get_11`
 
 Returns a single permission by its numeric id.
 
@@ -2400,7 +2402,7 @@ Returns a single permission by its numeric id.
 
 **Delete a permission**
 
-`operationId: delete_2`
+`operationId: delete_3`
 
 Removes a permission from the catalogue.
 
@@ -2511,7 +2513,7 @@ _The Configuration-library module catalogue (register, list/filter, search, upda
 
 **List modules (filter + pagination)**
 
-`operationId: list_5`
+`operationId: list_6`
 
 Returns the module catalogue as a paged envelope, with optional `status` and `owner_team` filters.
 Each row carries the module's metadata, its sub-modules, and the derived `tenants` count (number of
@@ -2680,7 +2682,7 @@ the prior current version is simply archived and remains in the history.
 
 **Get a module by business id**
 
-`operationId: get_7`
+`operationId: get_8`
 
 Returns one module by its business id (e.g. `MRC000001`), including sub-modules and the derived
 `tenants` count.
@@ -2735,7 +2737,7 @@ Returns one module by its business id (e.g. `MRC000001`), including sub-modules 
 
 **Update a module (PATCH, publish/unpublish)**
 
-`operationId: update_8`
+`operationId: update_9`
 
 Partially updates a module — only the non-null fields are applied. Supplying `sub_modules` replaces
 the whole set; omitting it leaves them unchanged. Setting `status` to `PUBLISHED` (from another
@@ -3624,7 +3626,7 @@ _Versioned, tiered pricing catalogue (DRAFT → ACTIVE → ARCHIVED) bound to su
 
 **List pricing structures**
 
-`operationId: list_3`
+`operationId: list_4`
 
 Returns all pricing structures, optionally filtered by lifecycle status. Each entry includes its
 nested `components[]` and `tiers[]`. Two are seeded **ACTIVE** (Transaction-Based, % of Gross Premium).
@@ -3695,7 +3697,7 @@ to a Payer subscription (`PUT /platform/payers/{id}/subscription`).
 
 **Create a pricing structure (DRAFT)**
 
-`operationId: create_3`
+`operationId: create_4`
 
 Authors a new versioned commercial proposal. It is created in **DRAFT** status with its full
 `components[]` (each carrying a `tiers[]` volume-discount schedule). `model` is
@@ -3928,7 +3930,7 @@ attachable to a Payer subscription via `PUT /platform/payers/{id}/subscription`.
 
 **Get a pricing structure**
 
-`operationId: get_6`
+`operationId: get_7`
 
 Fetches a single pricing structure by numeric id, including its nested `components[]` and `tiers[]`.
 
@@ -3996,7 +3998,7 @@ Fetches a single pricing structure by numeric id, including its nested `componen
 
 **Update a pricing structure (PATCH, DRAFT only)**
 
-`operationId: update_7`
+`operationId: update_8`
 
 Partial update — only non-null fields are applied. If `components` is provided, the **entire**
 component/tier set is replaced; if omitted, it is left unchanged.
@@ -6526,7 +6528,7 @@ on payer submit.
 
 **Get a tenant's provisioning detail**
 
-`operationId: get_9`
+`operationId: get_10`
 
 Returns one tenant's `ProvisioningResponse` including its full `sections[]` (DATABASE,
 DOMAINS_SSL, EMAIL, SMS, DATA_MIGRATION) with config, test results, and review status.
@@ -7480,7 +7482,7 @@ Single user's password status for the detail drawer. **Roles:** `PLATFORM_ADMIN`
 
 **List notification template mappings**
 
-`operationId: list_7`
+`operationId: list_8`
 
 Returns every notification type and the template it currently maps to. `active:false` means the
 adapter skips sending that type (per-type kill switch).
@@ -8141,6 +8143,7 @@ Removes a data-residency region from the catalogue.
 | `POST` | `/platform/service-providers/{code}/rule-extraction/{insurerAccountId}/rules` | Add a manual rule |
 | `POST` | `/platform/service-providers/{code}/rule-extraction/{insurerAccountId}/rules/{ruleId}/review` | Review a rule (approve / discard / archive) |
 | `POST` | `/platform/service-providers/{code}/rule-extraction/{insurerAccountId}/review-status` | Advance the review status |
+| `POST` | `/platform/service-providers/{code}/rule-extraction/{insurerAccountId}/publish` | Publish the rules book |
 | `POST` | `/platform/service-providers/{code}/rule-extraction/{insurerAccountId}/assign` | Assign a reviewer |
 | `POST` | `/platform/service-providers/{code}/review/sections/{section}/reviewed` | Mark a section reviewed |
 | `POST` | `/platform/service-providers/{code}/remarks` | Leave a review remark |
@@ -8154,6 +8157,7 @@ Removes a data-residency region from the catalogue.
 | `PATCH` | `/platform/service-providers/{code}/rule-extraction/{insurerAccountId}/rules/{ruleId}` | Update a rule |
 | `GET` | `/platform/service-providers/{code}/rule-extraction` | List extractions (all insurers) |
 | `GET` | `/platform/service-providers/{code}/rule-extraction/{insurerAccountId}/history` | Extraction history (for an insurer) |
+| `GET` | `/platform/service-providers/{code}/rule-extraction/{insurerAccountId}/contract` | Download the source contract |
 | `GET` | `/platform/service-providers/{code}/rule-extraction/jobs/{jobId}` | Get an extraction by job id |
 | `GET` | `/platform/service-providers/{code}/review` | Provider review detail |
 | `GET` | `/platform/service-providers/{code}/documents` | List document slots |
@@ -8290,7 +8294,7 @@ Returns the provider to `DRAFT` so the onboarding specialist can address open re
 
 `operationId: current`
 
-The current (latest) extraction for the provider + insurer: status, contract metadata, rules (with review state), coverage, flags, warnings. **Roles:** `PLATFORM_ADMIN` / `SUPPORT` / `PLATFORM_APPROVER`.
+The current (latest) extraction for the provider + insurer: status, contract metadata, rules (with review state), coverage, flags, warnings. Returns `200` with a `null` result and the "no rule extraction" message when the provider has no extraction yet for the insurer. **Roles:** `PLATFORM_ADMIN` / `SUPPORT` / `PLATFORM_APPROVER`.
 
 **Parameters**
 
@@ -8303,8 +8307,8 @@ The current (latest) extraction for the provider + insurer: status, contract met
 
 | Status | Description |
 |---|---|
-| `200` | OK. |
-| `404` | No extraction / not found. |
+| `200` | OK — the extraction, or a null result with a "no rule extraction" message when none exists yet. |
+| `404` | Provider not found. |
 
 ---
 
@@ -8314,10 +8318,15 @@ The current (latest) extraction for the provider + insurer: status, contract met
 
 `operationId: start`
 
-Uploads the signed contract + checks (multipart `contract`, `checks`) for the given **insurer**,
-stores them in the document service, and queues an extraction job (returns `job_id`, QUEUED).
-Provider must be ACTIVE and the insurer must exist. A background poller persists the result on
-completion. Audited as `PROVIDER_RULE_EXTRACTION_STARTED`.
+Uploads the signed contract (multipart `contract`) for the given **insurer**, stores it in the
+document service, and queues an extraction job (returns `job_id`, QUEUED). The checks are no
+longer uploaded — the document service fetches the active **Rules Extraction Checks** catalogue
+(`/platform/rule-extraction/rules-checks`). Provider must be ACTIVE and the insurer must exist.
+A background poller persists the result on completion. Audited as `PROVIDER_RULE_EXTRACTION_STARTED`.
+
+**Duplicate guard:** the contract is fingerprinted (SHA-256). If the same PDF was already
+submitted for this provider + insurer (any non-FAILED run), the existing extraction is returned
+with **200** and message `PDF already processed` — no new (billable) job is queued.
 
 **Role:** `PLATFORM_ADMIN`.
 
@@ -8333,14 +8342,14 @@ completion. Audited as `PROVIDER_RULE_EXTRACTION_STARTED`.
 | Field | Type | Req | Description |
 |---|---|---|---|
 | `contract` | string (binary) | ✓ |  |
-| `checks` | string (binary) | ✓ |  |
 
 **Responses**
 
 | Status | Description |
 |---|---|
 | `201` | Queued — returns the extraction job. |
-| `400` | Provider not active / missing files / insurer. |
+| `200` | Duplicate PDF — returns the existing extraction (no new job). |
+| `400` | Provider not active / missing contract / insurer. |
 | `404` | Provider or insurer not found. |
 
 ---
@@ -8477,6 +8486,36 @@ _COMPLETED`.
 | `200` | Updated — returns the extraction. |
 | `400` | No reviewer assigned / invalid status. |
 | `403` | Not the assignee or an ADMIN/APPROVER. |
+| `404` | Extraction not found. |
+
+---
+
+### `POST` `/platform/service-providers/{code}/rule-extraction/{insurerAccountId}/publish`
+
+**Publish the rules book**
+
+`operationId: publish_1`
+
+Finalizes the reviewed rules as the contract's published **rules book** (contract status
+In review → Published). Requires the current (COMPLETED) extraction to have every rule decided
+(no PENDING). Audited as `PROVIDER_RULE_BOOK_PUBLISHED`.
+
+**Roles:** `PLATFORM_ADMIN` / `PLATFORM_APPROVER`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `code` | path | ✓ | string |  |
+| `insurerAccountId` | path | ✓ | string | Insurer account id. |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | Published — returns the extraction. |
+| `400` | Rules still pending / nothing to publish. |
+| `409` | Already published. |
 | `404` | Extraction not found. |
 
 ---
@@ -8840,7 +8879,7 @@ Edits a rule's content in place (non-null fields) with an optional comment. Audi
 
 **List extractions (all insurers)**
 
-`operationId: list_8`
+`operationId: list_9`
 
 Overview of every extraction for the provider across its insurers (newest first). **Roles:** `PLATFORM_ADMIN` / `SUPPORT` / `PLATFORM_APPROVER`.
 
@@ -8878,6 +8917,30 @@ All extraction jobs for the provider + insurer (newest first). **Roles:** `PLATF
 | Status | Description |
 |---|---|
 | `200` | OK |
+
+---
+
+### `GET` `/platform/service-providers/{code}/rule-extraction/{insurerAccountId}/contract`
+
+**Download the source contract**
+
+`operationId: contract`
+
+Returns a freshly-issued, time-limited download URL for the current extraction's source contract document (for the review screen's source viewer). **Roles:** `PLATFORM_ADMIN` / `SUPPORT` / `PLATFORM_APPROVER`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `code` | path | ✓ | string |  |
+| `insurerAccountId` | path | ✓ | string | Insurer account id. |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK — returns the download URL. |
+| `404` | Extraction / contract document not found. |
 
 ---
 
@@ -8932,7 +8995,7 @@ Per-section review state (reviewed + open remarks), review status `n/5`, and all
 
 **List document slots**
 
-`operationId: list_9`
+`operationId: list_10`
 
 Returns every document slot with its upload/review state (or empty when not uploaded). **Roles:** `PLATFORM_ADMIN`, `SUPPORT` or `PLATFORM_APPROVER`.
 
@@ -9030,6 +9093,161 @@ service caller via the `X-API-Key` header (`ROLE_SERVICE`).
 | Status | Description |
 |---|---|
 | `200` | OK — list of active providers. |
+
+---
+
+## Claim Clean-up · Rules-extraction checks
+
+| Method | Path | Summary |
+|---|---|---|
+| `GET` | `/platform/rule-extraction/rules-checks` | List rules-extraction checks |
+| `POST` | `/platform/rule-extraction/rules-checks` | Create a rules-extraction check |
+| `GET` | `/platform/rule-extraction/rules-checks/{checkId}` | Get a rules-extraction check |
+| `PATCH` | `/platform/rule-extraction/rules-checks/{checkId}` | Update a rules-extraction check |
+| `DELETE` | `/platform/rule-extraction/rules-checks/{checkId}` | Delete a rules-extraction check |
+
+### `GET` `/platform/rule-extraction/rules-checks`
+
+**List rules-extraction checks**
+
+`operationId: list_3`
+
+The check catalogue, ordered by sort order then check id. Optional filters: `category` (exact, case-insensitive) and `active`. **Roles:** `PLATFORM_ADMIN` / `SUPPORT` / `SERVICE` (`X-API-Key`).
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `category` | query |  | string | Filter by category (case-insensitive). |
+| `active` | query |  | boolean | Return only active checks. |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK |
+
+---
+
+### `POST` `/platform/rule-extraction/rules-checks`
+
+**Create a rules-extraction check**
+
+`operationId: create_3`
+
+Adds a check; the `check_id` (`CHK-NNN`) is generated. `category` and `criticality` are required. Audited as `RULES_CHECK_CREATED`. **Role:** `PLATFORM_ADMIN`.
+
+**Request body** (required): [`CreateRulesCheckRequest`](#schema-createrulescheckrequest)
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `category` | string | ✓ | Check category. _(e.g. `Pricing`)_ |
+| `rule_type` | string |  | Rule type code. _(e.g. `NEGOTIATED_FEE_SCHEDULE`)_ |
+| `extraction_guidance` | string |  | Extraction guidance for the LLM. |
+| `fields_to_extract` | string |  | Semicolon-delimited fields to extract. |
+| `trigger_keywords` | string |  | Semicolon-delimited trigger keywords. |
+| `typical_location` | string |  | Typical location in the contract. |
+| `criticality` | string enum: `MANDATORY`, `EXPECTED`, `OPTIONAL` | ✓ | Criticality. _(e.g. `MANDATORY`)_ |
+| `if_missing` | string |  | What to do if missing. |
+| `rule_check_mapping` | string |  | Rule-check mapping expression. |
+| `triggered_at` | string |  | Semicolon-delimited stages, e.g. BILLING; VISIT CLOSE. |
+| `consequence_of_breach` | string |  | Consequence of breach. |
+| `sort_order` | integer (int32) |  | Display sort order. Defaults to 0. |
+| `active` | boolean |  | Whether the check is active. Defaults to true. |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `201` | Created — returns the check. |
+| `400` | Invalid body. |
+
+---
+
+### `GET` `/platform/rule-extraction/rules-checks/{checkId}`
+
+**Get a rules-extraction check**
+
+`operationId: get_6`
+
+One check by its `CHK-NNN` id. **Roles:** `PLATFORM_ADMIN` / `SUPPORT` / `SERVICE`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `checkId` | path | ✓ | string | Check id. |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK. |
+| `404` | Check not found. |
+
+---
+
+### `PATCH` `/platform/rule-extraction/rules-checks/{checkId}`
+
+**Update a rules-extraction check**
+
+`operationId: update_7`
+
+Partial update — only non-null fields are applied (incl. the `active` toggle). Audited as `RULES_CHECK_UPDATED`. **Role:** `PLATFORM_ADMIN`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `checkId` | path | ✓ | string | Check id. |
+
+**Request body** (required): [`UpdateRulesCheckRequest`](#schema-updaterulescheckrequest)
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `category` | string |  |  |
+| `rule_type` | string |  |  |
+| `extraction_guidance` | string |  |  |
+| `fields_to_extract` | string |  |  |
+| `trigger_keywords` | string |  |  |
+| `typical_location` | string |  |  |
+| `criticality` | string enum: `MANDATORY`, `EXPECTED`, `OPTIONAL` |  |  |
+| `if_missing` | string |  |  |
+| `rule_check_mapping` | string |  |  |
+| `triggered_at` | string |  |  |
+| `consequence_of_breach` | string |  |  |
+| `sort_order` | integer (int32) |  |  |
+| `active` | boolean |  |  |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | Updated — returns the check. |
+| `404` | Check not found. |
+
+---
+
+### `DELETE` `/platform/rule-extraction/rules-checks/{checkId}`
+
+**Delete a rules-extraction check**
+
+`operationId: delete_2`
+
+Hard-deletes a check. (Use the `active` toggle to keep the row but exclude it from extraction.) Audited as `RULES_CHECK_DELETED`. **Role:** `PLATFORM_ADMIN`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `checkId` | path | ✓ | string | Check id. |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | Deleted. |
+| `404` | Check not found. |
 
 ---
 
@@ -9337,7 +9555,7 @@ service caller via the `X-API-Key` header (`ROLE_SERVICE`).
 
 **Insurance companies directory**
 
-`operationId: list_6`
+`operationId: list_7`
 
 Status tiles (`total`, `active`, `inactive`) over the full population plus a paged, filtered
 company list. `q` matches name / account id / country; `status` filters by lifecycle
@@ -9365,7 +9583,7 @@ company list. `q` matches name / account id / country; `status` filters by lifec
 
 **Create an insurance company**
 
-`operationId: create_5`
+`operationId: create_6`
 
 Creates an insurer profile and generates a unique, permanent account id (`INS-YYYY-NNNN`). The
 profile is created with status `ACTIVE`. Audited as `INSURANCE_COMPANY_CREATED`.
@@ -9463,7 +9681,7 @@ audit trail). Audited as `INSURANCE_COMPANY_DEACTIVATED`.
 
 **Get an insurance company profile**
 
-`operationId: get_8`
+`operationId: get_9`
 
 Returns one insurer profile by account id. **Roles:** `PLATFORM_ADMIN` or `SUPPORT`.
 
@@ -9486,7 +9704,7 @@ Returns one insurer profile by account id. **Roles:** `PLATFORM_ADMIN` or `SUPPO
 
 **Update an insurance company profile**
 
-`operationId: update_9`
+`operationId: update_10`
 
 Partial update of an insurer profile — only non-null fields are applied. Status is changed via the
 deactivate/reactivate actions, not here. Audited as `INSURANCE_COMPANY_UPDATED`.
@@ -9584,6 +9802,34 @@ service caller via the `X-API-Key` header (`ROLE_SERVICE`).
 | Status | Description |
 |---|---|
 | `200` | OK — list of active insurers. |
+
+---
+
+## Claim Clean-up · Rule review
+
+| Method | Path | Summary |
+|---|---|---|
+| `GET` | `/platform/rule-review/dashboard` | Reviewer dashboard (assigned to me) |
+
+### `GET` `/platform/rule-review/dashboard`
+
+**Reviewer dashboard (assigned to me)**
+
+`operationId: dashboard`
+
+Contracts assigned to the current reviewer for rule review, with provider + insurer names, review progress (reviewed/total) and due dates, plus the summary tiles (assigned to me, rules to review, completed). A `PLATFORM_ADMIN` may pass `assignee_id` to view another reviewer's queue. **Roles:** `PLATFORM_ADMIN` / `PLATFORM_APPROVER`.
+
+**Parameters**
+
+| Name | In | Req | Type | Description |
+|---|---|---|---|---|
+| `assignee_id` | query |  | integer (int64) | Reviewer member id (ADMIN only; defaults to the current user). |
+
+**Responses**
+
+| Status | Description |
+|---|---|
+| `200` | OK |
 
 ---
 
@@ -9969,6 +10215,27 @@ Payload to create a CUSTOM role (name, colour and permissions).
 | `description` | string |  | Optional longer description of the role. _(e.g. `Finance + claims`)_ |
 | `hex_color` | string |  | Accent colour for the role badge, as a hex string. _(e.g. `#6741D9`)_ |
 | `permission_codes` | array&lt;string&gt; |  | Permission codes that define this role (each must exist in the catalogue). |
+
+### CreateRulesCheckRequest
+<a id="schema-createrulescheckrequest"></a>
+
+A new rules-extraction check.
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `category` | string | ✓ | Check category. _(e.g. `Pricing`)_ |
+| `rule_type` | string |  | Rule type code. _(e.g. `NEGOTIATED_FEE_SCHEDULE`)_ |
+| `extraction_guidance` | string |  | Extraction guidance for the LLM. |
+| `fields_to_extract` | string |  | Semicolon-delimited fields to extract. |
+| `trigger_keywords` | string |  | Semicolon-delimited trigger keywords. |
+| `typical_location` | string |  | Typical location in the contract. |
+| `criticality` | string enum: `MANDATORY`, `EXPECTED`, `OPTIONAL` | ✓ | Criticality. _(e.g. `MANDATORY`)_ |
+| `if_missing` | string |  | What to do if missing. |
+| `rule_check_mapping` | string |  | Rule-check mapping expression. |
+| `triggered_at` | string |  | Semicolon-delimited stages, e.g. BILLING; VISIT CLOSE. |
+| `consequence_of_breach` | string |  | Consequence of breach. |
+| `sort_order` | integer (int32) |  | Display sort order. Defaults to 0. |
+| `active` | boolean |  | Whether the check is active. Defaults to true. |
 
 ### CreateServiceProviderRequest
 <a id="schema-createserviceproviderrequest"></a>
@@ -10883,6 +11150,27 @@ Partial update of a CUSTOM role; only non-null fields apply.
 | `description` | string |  | New description. Null to leave unchanged. _(e.g. `Reviews submitted claims`)_ |
 | `hex_color` | string |  | New accent colour (hex). Null to leave unchanged. _(e.g. `#E03131`)_ |
 | `permission_codes` | array&lt;string&gt; |  | Replacement permission set (codes). When provided, replaces the role's whole permission set; null leaves it unchanged. |
+
+### UpdateRulesCheckRequest
+<a id="schema-updaterulescheckrequest"></a>
+
+Partial update of a rules-extraction check.
+
+| Field | Type | Req | Description |
+|---|---|---|---|
+| `category` | string |  |  |
+| `rule_type` | string |  |  |
+| `extraction_guidance` | string |  |  |
+| `fields_to_extract` | string |  |  |
+| `trigger_keywords` | string |  |  |
+| `typical_location` | string |  |  |
+| `criticality` | string enum: `MANDATORY`, `EXPECTED`, `OPTIONAL` |  |  |
+| `if_missing` | string |  |  |
+| `rule_check_mapping` | string |  |  |
+| `triggered_at` | string |  |  |
+| `consequence_of_breach` | string |  |  |
+| `sort_order` | integer (int32) |  |  |
+| `active` | boolean |  |  |
 
 ### UpdateSecurityPolicyLockout
 <a id="schema-updatesecuritypolicylockout"></a>
