@@ -225,7 +225,7 @@ export function CheckSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-full gap-0 p-0 sm:max-w-xl [&_svg]:[stroke-width:1.75]"
+        className="w-full gap-0 p-0 sm:max-w-2xl [&_svg]:[stroke-width:1.75]"
       >
         <SheetHeader className="border-b p-5">
           <div className="flex items-center gap-2.5">

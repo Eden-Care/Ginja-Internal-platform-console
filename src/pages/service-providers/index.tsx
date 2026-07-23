@@ -14,6 +14,7 @@ import { Tagpill } from "@/components/console/tagpill"
 import { Note } from "@/components/console/note"
 import { ConsoleSelect, Seg } from "@/components/console/form-atoms"
 import { LoadingSpinner } from "@/components/common/loading"
+import Pagination from "@/components/common/custom-pagination"
 import { HiIcon } from "@/components/hifi/icon"
 import { hifiBtn } from "@/components/hifi/button"
 import { useServiceProvidersDirectory } from "@/features/service-providers/use-service-providers"
@@ -38,13 +39,26 @@ const STATUS_PARAM: Record<string, "ACTIVE" | "PENDING_REVIEW" | "INACTIVE" | un
 }
 
 /**
+ * Where a directory row opens — mirrors the tenant pattern (maker wizard vs.
+ * record page vs. reviewer screen are kept separate):
+ * - Draft → the onboarding wizard (maker resumes / edits).
+ * - Pending review / Active / Inactive → the read-only record page.
+ * A Pending row opened by an Approver is special-cased in `openRow` below to go
+ * to the review screen (remarks / approve / send-back) instead.
+ */
+const rowHref = (p: { status: string; code: string }) =>
+  p.status === "Draft"
+    ? `/service-providers/${encodeURIComponent(p.code)}/edit`
+    : `/service-providers/${encodeURIComponent(p.code)}`
+
+/**
  * Service Providers directory (hi-fi `ProvidersDirectory`) — the "Claim
  * Clean-up (LAMU)" hospital/clinic registry, bound to
  * `/platform/service-providers`. A local view state machine drives the
  * directory, the onboarding wizard, the record page and the approver flow.
  */
 export function ServiceProvidersPage() {
-  const { isReadonly } = useAccess()
+  const { isReadonly, role } = useAccess()
   const readonly = isReadonly("providers")
   const navigate = useNavigate()
 
@@ -54,17 +68,26 @@ export function ServiceProvidersPage() {
   const [qDebounced, setQDebounced] = React.useState("")
   const [typeF, setTypeF] = React.useState("All")
   const [status, setStatus] = React.useState("All")
+  const [page, setPage] = React.useState(0)
+  const [size, setSize] = React.useState(20)
 
   React.useEffect(() => {
     const t = setTimeout(() => setQDebounced(q), 300)
     return () => clearTimeout(t)
   }, [q])
 
+  // Any change to the search/filter set resets to the first page.
+  React.useEffect(() => {
+    setPage(0)
+  }, [qDebounced, typeF, status])
+
   const { data, isLoading, isError, error, refetch } =
     useServiceProvidersDirectory({
       q: qDebounced.trim() || undefined,
       type: typeF === "All" ? undefined : PROVIDER_TYPE_TO_ENUM[typeF],
       status: STATUS_PARAM[status],
+      page,
+      size,
     })
   const forbidden = error instanceof ApiError && error.status === 403
 
@@ -100,6 +123,20 @@ export function ServiceProvidersPage() {
     inactive: 0,
   }
   const list = data?.providers ?? []
+  const totalElements = data?.totalElements ?? 0
+  const totalPages = data?.totalPages ?? 0
+
+  /* Row open. A Pending provider means different things by role (maker-checker):
+     an Approver opens the review screen (remarks / approve / send-back); everyone
+     else follows rowHref (Draft → wizard, else → record page). */
+  const openRow = (x: { status: string; code: string }) => {
+    if (x.status === "Pending review" && role.checker) {
+      setCode(x.code)
+      setView("review")
+      return
+    }
+    navigate(rowHref(x))
+  }
 
   return (
     <div className="flex flex-col gap-5">
@@ -197,7 +234,7 @@ export function ServiceProvidersPage() {
             ]}
           />
           <Tagpill>
-            {list.length} of {summary.total}
+            {totalElements} of {summary.total}
           </Tagpill>
         </div>
 
@@ -247,20 +284,9 @@ export function ServiceProvidersPage() {
                   key={x.code}
                   role="button"
                   tabIndex={0}
-                  onClick={() =>
-                    navigate(
-                      x.status === "Draft"
-                        ? `/service-providers/${encodeURIComponent(x.code)}/edit`
-                        : `/service-providers/${encodeURIComponent(x.code)}`
-                    )
-                  }
+                  onClick={() => openRow(x)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter")
-                      navigate(
-                        x.status === "Draft"
-                          ? `/service-providers/${encodeURIComponent(x.code)}/edit`
-                          : `/service-providers/${encodeURIComponent(x.code)}`
-                      )
+                    if (e.key === "Enter") openRow(x)
                   }}
                   className={cn(
                     spGrid,
@@ -313,6 +339,20 @@ export function ServiceProvidersPage() {
             </>
           )}
         </Panel>
+
+        {!isLoading && !isError && totalElements > 0 ? (
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            totalElements={totalElements}
+            pageSize={size}
+            onPageChange={setPage}
+            onPageSizeChange={(v) => {
+              setSize(Number(v))
+              setPage(0)
+            }}
+          />
+        ) : null}
       </div>
     </div>
   )

@@ -455,101 +455,56 @@ function ExtractionSummary({ x }: { x: Extraction }) {
   const covGrid =
     "grid grid-cols-[90px_minmax(0,1fr)_110px_150px_60px] items-center gap-3"
 
-  return (
-    <div className="flex flex-col gap-3.5">
-      <Panel>
-        <PanelHead
-          icon={<HiIcon name="fileText" />}
-          title="Contract metadata"
-          action={
-            x.model ? (
-              <span className="mono text-[11.5px] text-muted-foreground">
-                {x.model}
-              </span>
-            ) : undefined
-          }
-        />
-        <PanelBody>
-          <div className="grid gap-x-10 sm:grid-cols-2">
-            {(
-              [
-                ["Document type", m?.documentType ?? "—"],
-                ["Payer / administrator", m?.payerName ?? "—"],
-                ["Healthcare provider", m?.healthcareProvider ?? "—"],
-                ["Scheme category", scheme ?? "—"],
-                ["Duration", m?.durationTerm ?? "—"],
-                ["Services covered", m?.servicesCovered ?? "—"],
-              ] as [string, string][]
-            ).map(([k, v]) => (
-              <DetailRow key={k} k={k} v={v} />
-            ))}
-          </div>
-          {m && m.missingFields.length > 0 ? (
-            <Note
-              tone="warn"
-              icon={<HiIcon name="alert" />}
-              className="mt-3 text-[12px]"
-            >
-              <b>{m.missingFields.length} fields not found in document:</b>{" "}
-              {m.missingFields.join(", ").replace(/_/g, " ")}.
-            </Note>
-          ) : null}
-        </PanelBody>
-      </Panel>
-
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {stats.map(([l, n, ic, tone]) => (
-          <div
-            key={l}
-            className="flex items-center gap-[11px] rounded-xl border bg-card px-[15px] py-[13px] shadow-xs"
-          >
-            <span
-              className={cn(
-                "grid size-9 shrink-0 place-items-center rounded-[9px] [&>svg]:size-[15px]",
-                CS_TONE[tone]
-              )}
-            >
-              <HiIcon name={ic} />
+  const metaPanel = (
+    <Panel>
+      <PanelHead
+        icon={<HiIcon name="fileText" />}
+        title="Contract metadata"
+        action={
+          x.model ? (
+            <span className="mono text-[11.5px] text-muted-foreground">
+              {x.model}
             </span>
-            <div>
-              <div className="text-[20px] leading-none font-bold tabular-nums">
-                {n}
-              </div>
-              <div className="mt-[3px] text-[11.5px] text-muted-foreground">
-                {l}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {x.flags.length > 0 ? (
-        <div className="flex flex-col gap-1.5 rounded-[9px] bg-warning-subtle px-3 py-2.5 text-[12.5px] text-warning-subtle-foreground">
-          <div className="flex items-center gap-[7px] font-semibold [&>svg]:size-[15px]">
-            <HiIcon name="alert" />
-            {x.flags.length} flag{x.flags.length !== 1 ? "s" : ""} requiring
-            follow-up
-          </div>
-          <ul className="m-0 list-disc pl-[30px] text-[12px] leading-[1.6]">
-            {x.flags.map((f, i) => (
-              <li key={i}>{f}</li>
-            ))}
-          </ul>
+          ) : undefined
+        }
+      />
+      <PanelBody>
+        <div className="grid">
+          {(
+            [
+              ["Document type", m?.documentType ?? "—"],
+              ["Payer / administrator", m?.payerName ?? "—"],
+              ["Healthcare provider", m?.healthcareProvider ?? "—"],
+              ["Scheme category", scheme ?? "—"],
+              ["Duration", m?.durationTerm ?? "—"],
+              ["Services covered", m?.servicesCovered ?? "—"],
+            ] as [string, string][]
+          ).map(([k, v]) => (
+            <DetailRow key={k} k={k} v={v} />
+          ))}
         </div>
-      ) : null}
-      {x.warnings.length > 0 ? (
-        <div className="flex items-start gap-2.5 rounded-[9px] bg-muted px-3 py-2.5 text-[12px] text-muted-foreground [&>svg]:mt-px [&>svg]:size-3.5 [&>svg]:shrink-0">
-          <HiIcon name="info" />
-          <span>{x.warnings.join(" ")}</span>
-        </div>
-      ) : null}
+        {m && m.missingFields.length > 0 ? (
+          <Note
+            tone="warn"
+            icon={<HiIcon name="alert" />}
+            className="mt-3 text-[12px]"
+          >
+            <b>{m.missingFields.length} fields not found in document:</b>{" "}
+            {m.missingFields.join(", ").replace(/_/g, " ")}.
+          </Note>
+        ) : null}
+      </PanelBody>
+    </Panel>
+  )
 
-      {cov.length > 0 ? (
-        <Panel>
-          <PanelHead
-            icon={<HiIcon name="shieldCheck" />}
-            title="Coverage checks"
-          />
+  const covPanel = (
+    <Panel className="overflow-hidden">
+      <PanelHead
+        icon={<HiIcon name="shieldCheck" />}
+        title="Coverage checks"
+      />
+      <div className="overflow-x-auto">
+        <div className="min-w-[560px]">
           <div
             className={cn(
               covGrid,
@@ -581,8 +536,69 @@ function ExtractionSummary({ x }: { x: Extraction }) {
               <div className="text-[12.5px]">{c.ruleCount || "—"}</div>
             </div>
           ))}
-        </Panel>
+        </div>
+      </div>
+    </Panel>
+  )
+
+  return (
+    <div className="flex flex-col gap-3.5">
+      {/* numbers first */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {stats.map(([l, n, ic, tone]) => (
+          <div
+            key={l}
+            className="flex items-center gap-3 rounded-xl border bg-card px-4 py-4 shadow-xs"
+          >
+            <span
+              className={cn(
+                "grid size-10 shrink-0 place-items-center rounded-[10px] [&>svg]:size-[17px]",
+                CS_TONE[tone]
+              )}
+            >
+              <HiIcon name={ic} />
+            </span>
+            <div>
+              <div className="text-[24px] leading-none font-bold tabular-nums">
+                {n}
+              </div>
+              <div className="mt-1 text-[12px] text-muted-foreground">{l}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* alerts span full width so they stay prominent */}
+      {x.flags.length > 0 ? (
+        <div className="flex flex-col gap-1.5 rounded-[9px] bg-warning-subtle px-3 py-2.5 text-[12.5px] text-warning-subtle-foreground">
+          <div className="flex items-center gap-[7px] font-semibold [&>svg]:size-[15px]">
+            <HiIcon name="alert" />
+            {x.flags.length} flag{x.flags.length !== 1 ? "s" : ""} requiring
+            follow-up
+          </div>
+          <ul className="m-0 list-disc pl-[30px] text-[12px] leading-[1.6]">
+            {x.flags.map((f, i) => (
+              <li key={i}>{f}</li>
+            ))}
+          </ul>
+        </div>
       ) : null}
+      {x.warnings.length > 0 ? (
+        <div className="flex items-start gap-2.5 rounded-[9px] bg-muted px-3 py-2.5 text-[12px] text-muted-foreground [&>svg]:mt-px [&>svg]:size-3.5 [&>svg]:shrink-0">
+          <HiIcon name="info" />
+          <span>{x.warnings.join(" ")}</span>
+        </div>
+      ) : null}
+
+      {/* left: coverage checks · right: metadata */}
+      {cov.length > 0 ? (
+        <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-[minmax(0,1fr)_minmax(0,400px)] lg:items-start">
+          {covPanel}
+          {metaPanel}
+        </div>
+      ) : (
+        metaPanel
+      )}
     </div>
   )
 }
@@ -1269,6 +1285,74 @@ function AddRuleDialog({
   )
 }
 
+/* ---------- source contract side panel (reviewer workspace) ----------
+   Faithful port of the design's `rev-doc` panel (RuleReviewScreen in v4.html):
+   a document-viewer mock — title + skeleton body lines + two highlighted source
+   clauses + hint. UI only for now — the backend exposes no rendered document
+   text/spans, so the body is the design's static placeholder. */
+function SourceContract({
+  x,
+  className,
+}: {
+  x: Extraction
+  className?: string
+}) {
+  const payer =
+    x.metadata?.payerName && x.metadata.payerName !== "—"
+      ? x.metadata.payerName
+      : "Payer"
+  const line = "my-[7px] h-[7px] rounded-[3px] bg-border"
+  const clause =
+    "my-[10px] rounded-r-[6px] border-l-2 border-warning bg-warning-subtle/50 px-[9px] py-[7px] text-[11px] leading-[1.5]"
+
+  return (
+    <aside
+      className={cn(
+        "overflow-hidden rounded-xl border bg-card shadow-xs",
+        className
+      )}
+    >
+      <div className="flex items-center gap-[7px] border-b bg-muted/40 px-[13px] py-[11px] text-[12px] font-semibold [&>svg]:size-3.5 [&>svg]:text-muted-foreground">
+        <HiIcon name="fileText" />
+        Source contract
+        <span className="flex-1" />
+        <Button variant="ghost" size="sm" className={hifiBtn}>
+          <HiIcon name="download" />
+          Download
+        </Button>
+      </div>
+
+      <div className="min-h-[420px] bg-muted/20 p-4">
+        <div className="mb-3 text-[12px] font-bold">
+          {payer} — Healthcare Services Agreement
+        </div>
+        <div className={cn(line, "w-[60%]")} />
+        <div className={line} />
+        <div className={cn(line, "w-[80%]")} />
+        <div className={clause}>
+          <b className="mono text-[10px]">6. iii</b> LCT may at own discretion
+          decline to pay invoices submitted after thirty (30) days from the date
+          of service.
+        </div>
+        <div className={cn(line, "w-[70%]")} />
+        <div className={line} />
+        <div className={clause}>
+          <b className="mono text-[10px]">Annexure 4</b> Invoices without an
+          eTIMS receipt linked to the IAX PIN will not be payable.
+        </div>
+        <div className={cn(line, "w-[50%]")} />
+        <div className={cn(line, "w-[90%]")} />
+        <div className={cn(line, "w-[40%]")} />
+        <div className="mt-[14px] flex gap-[6px] text-[11px] leading-[1.5] text-muted-foreground [&>svg]:mt-px [&>svg]:size-3 [&>svg]:shrink-0">
+          <HiIcon name="info" />
+          Full document viewer — scroll to cross-check each rule against its
+          source clause.
+        </div>
+      </div>
+    </aside>
+  )
+}
+
 export function ContractResults({
   provider,
   insurer,
@@ -1359,6 +1443,28 @@ export function ContractResults({
             ),
         }
 
+  const rulesColumn = (
+    <div className="flex flex-col gap-3">
+      {canAdd ? (
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-[11.5px] text-muted-foreground">
+            Missing a rule the extractor didn’t catch? Add it manually.
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            className={hifiBtn}
+            onClick={() => setAddOpen(true)}
+          >
+            <HiIcon name="plus" />
+            Add rule
+          </Button>
+        </div>
+      ) : null}
+      <RulesByCategory rules={x.rules} ops={ops} />
+    </div>
+  )
+
   return (
     <div className="flex flex-col gap-3.5">
       <BackLink label={backLabel} onClick={onBack} />
@@ -1417,26 +1523,17 @@ export function ContractResults({
         ]}
       />
 
+      {/* Reviewer workspace shows the rules side-by-side with the source
+          contract (design's rev-split); the provider record is single-column. */}
       {tab === "rules" ? (
-        <div className="flex flex-col gap-3">
-          {canAdd ? (
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-[11.5px] text-muted-foreground">
-                Missing a rule the extractor didn’t catch? Add it manually.
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                className={hifiBtn}
-                onClick={() => setAddOpen(true)}
-              >
-                <HiIcon name="plus" />
-                Add rule
-              </Button>
-            </div>
-          ) : null}
-          <RulesByCategory rules={x.rules} ops={ops} />
-        </div>
+        reviewMode ? (
+          <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
+            {rulesColumn}
+            <SourceContract x={x} className="lg:sticky lg:top-3" />
+          </div>
+        ) : (
+          rulesColumn
+        )
       ) : null}
       {tab === "summary" ? <ExtractionSummary x={x} /> : null}
 

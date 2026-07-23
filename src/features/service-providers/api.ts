@@ -40,14 +40,19 @@ export type ListParams = {
   status?: "DRAFT" | "PENDING_REVIEW" | "ACTIVE" | "INACTIVE"
   page?: number
   size?: number
+  /** Spring Data sort, e.g. `createdAt,desc` (newest first — the default). */
+  sort?: string
 }
 
-/** GET the directory — summary tiles + a page of providers (mapped). */
+/** GET the directory — summary tiles + a page of providers (mapped). Sorted by
+   `createdAt,desc` so freshly onboarded providers surface at the top. */
 export async function fetchServiceProvidersDirectory(
   params: ListParams = {}
 ): Promise<SpDirectory> {
+  const { page = 0, size = 20, sort = "createdAt,desc", q, type, status } = params
   const dto = await apiGet<DirectoryDTO>(BASE, {
-    params: { page: 0, size: 200, ...params },
+    // axios drops `undefined` params, so unset filters are simply omitted.
+    params: { page, size, sort, q, type, status },
   })
   console.log(`[GET ${BASE}] directory`, dto)
   return {
@@ -59,6 +64,9 @@ export async function fetchServiceProvidersDirectory(
     },
     providers: dto.providers.content.map(toServiceProvider),
     totalElements: dto.providers.total_elements,
+    page: dto.providers.page,
+    size: dto.providers.size,
+    totalPages: dto.providers.total_pages,
   }
 }
 

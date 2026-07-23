@@ -240,17 +240,14 @@ export function ProviderRecord({
             Mark Inactive
           </Button>
         ) : null}
-        {!readonly &&
-        (rec.status === "Inactive" || rec.status === "Pending review") ? (
+        {!readonly && rec.status === "Inactive" ? (
           <Button
             className={hifiBtn}
             disabled={busy}
             onClick={() => setConfirm("activate")}
           >
             <HiIcon name="checkCircle" />
-            {rec.status === "Pending review"
-              ? "Approve & activate"
-              : "Activate"}
+            Activate
           </Button>
         ) : null}
       </div>

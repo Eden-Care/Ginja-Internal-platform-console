@@ -291,6 +291,9 @@ export type SpDirectory = {
   summary: { total: number; active: number; pendingReview: number; inactive: number }
   providers: ServiceProvider[]
   totalElements: number
+  page: number
+  size: number
+  totalPages: number
 }
 
 export type SpAuditEntry = {

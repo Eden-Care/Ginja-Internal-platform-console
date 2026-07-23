@@ -47,6 +47,17 @@ import { AccessRolesPage } from "@/pages/access/roles"
 import { PlatformSettingsPage } from "@/pages/platform-settings"
 import { AuditLogPage } from "@/pages/audit-log"
 import { MyAccountPage } from "@/pages/my-account"
+// EXPERIMENT — routed service-provider detail prototype (mock data).
+import {
+  ExpDirectory,
+  ExpRecordLayout,
+  ExpOverviewTab,
+  ExpServicesTab,
+  ExpInsurersTab,
+  ExpAuditTab,
+  ExpWorkspacePage,
+  ExpExtractionResults,
+} from "@/pages/experiments/sp-detail"
 
 function ThemeToggle() {
   const { theme, setTheme } = useTheme()
@@ -177,6 +188,27 @@ function AppShell() {
             />
             <Route path="audit-log" element={<AuditLogPage />} />
             <Route path="my-account" element={<MyAccountPage />} />
+
+            {/* EXPERIMENT — routed service-provider detail prototype. Nested
+               routes + <Outlet> so every drill-down is a real, refresh-safe
+               URL. Self-contained (mock data); delete this block + the
+               experiments/ folder to remove. */}
+            <Route path="experiments/sp" element={<ExpDirectory />} />
+            <Route path="experiments/sp/:code" element={<ExpRecordLayout />}>
+              <Route index element={<ExpOverviewTab />} />
+              <Route path="services" element={<ExpServicesTab />} />
+              <Route path="insurers" element={<ExpInsurersTab />} />
+              <Route path="audit" element={<ExpAuditTab />} />
+            </Route>
+            <Route
+              path="experiments/sp/:code/insurers/:insurerId"
+              element={<ExpWorkspacePage />}
+            />
+            <Route
+              path="experiments/sp/:code/insurers/:insurerId/contracts/:jobId"
+              element={<ExpExtractionResults />}
+            />
+
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
