@@ -261,7 +261,6 @@ export function RuleChecksPage() {
                 <TableHead>Rule type</TableHead>
                 <TableHead className="w-[120px]">Criticality</TableHead>
                 <TableHead>Triggered at</TableHead>
-                <TableHead className="w-[70px] text-right">Sort</TableHead>
                 <TableHead className="w-[90px]">Status</TableHead>
               </TableRow>
             </TableHeader>
@@ -308,9 +307,6 @@ export function RuleChecksPage() {
                       ) : (
                         "—"
                       )}
-                    </TableCell>
-                    <TableCell className="mono text-right text-[12.5px] text-muted-foreground">
-                      {c.sortOrder}
                     </TableCell>
                     <TableCell>
                       <span className="inline-flex items-center gap-1.5 text-[12px] text-muted-foreground">

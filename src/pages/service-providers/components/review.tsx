@@ -857,7 +857,9 @@ export function SPApprovedHistory({
   const [q, setQ] = React.useState("")
 
   const queueQ = useReviewQueue()
-  const approvedQ = useServiceProvidersDirectory({ status: "ACTIVE" })
+  // This tab lists every approved provider and filters client-side, so pull a
+  // large page rather than the directory's default 20.
+  const approvedQ = useServiceProvidersDirectory({ status: "ACTIVE", size: 200 })
 
   const inReview = queueQ.data?.queue ?? []
   const approved = approvedQ.data?.providers ?? []
