@@ -23,13 +23,6 @@ import {
   SP_TYPES,
 } from "@/features/service-providers/types"
 import { RegionPill, SpAvatar, SpStatus, spGrid } from "./components/shared"
-import {
-  ProviderReview,
-  SPApprovedHistory,
-  SPReviewQueue,
-} from "./components/review"
-
-type View = "list" | "review-queue" | "review" | "review-history"
 
 const STATUS_PARAM: Record<string, "ACTIVE" | "PENDING_REVIEW" | "INACTIVE" | undefined> = {
   All: undefined,
@@ -54,16 +47,15 @@ const rowHref = (p: { status: string; code: string }) =>
 /**
  * Service Providers directory (hi-fi `ProvidersDirectory`) — the "Claim
  * Clean-up (LAMU)" hospital/clinic registry, bound to
- * `/platform/service-providers`. A local view state machine drives the
- * directory, the onboarding wizard, the record page and the approver flow.
+ * `/platform/service-providers`. Rows route to the onboarding wizard, the
+ * record page or the approver review flow (`/provider-review`, its own routed
+ * area) via `openRow`.
  */
 export function ServiceProvidersPage() {
   const { isReadonly, role } = useAccess()
   const readonly = isReadonly("providers")
   const navigate = useNavigate()
 
-  const [view, setView] = React.useState<View>("list")
-  const [code, setCode] = React.useState("")
   const [q, setQ] = React.useState("")
   const [qDebounced, setQDebounced] = React.useState("")
   const [typeF, setTypeF] = React.useState("All")
@@ -91,31 +83,6 @@ export function ServiceProvidersPage() {
     })
   const forbidden = error instanceof ApiError && error.status === 403
 
-  if (view === "review-queue")
-    return (
-      <SPReviewQueue
-        onOpen={(c) => {
-          setCode(c)
-          setView("review")
-        }}
-        onHistory={() => setView("review-history")}
-        onBack={() => setView("list")}
-      />
-    )
-  if (view === "review")
-    return (
-      <ProviderReview code={code} onBack={() => setView("review-queue")} />
-    )
-  if (view === "review-history")
-    return (
-      <SPApprovedHistory
-        onOpen={(c) =>
-          navigate(`/service-providers/${encodeURIComponent(c)}`)
-        }
-        onBack={() => setView("review-queue")}
-      />
-    )
-
   const summary = data?.summary ?? {
     total: 0,
     active: 0,
@@ -131,8 +98,7 @@ export function ServiceProvidersPage() {
      else follows rowHref (Draft → wizard, else → record page). */
   const openRow = (x: { status: string; code: string }) => {
     if (x.status === "Pending review" && role.checker) {
-      setCode(x.code)
-      setView("review")
+      navigate(`/provider-review/${encodeURIComponent(x.code)}`)
       return
     }
     navigate(rowHref(x))
@@ -149,7 +115,7 @@ export function ServiceProvidersPage() {
               <Button
                 variant="outline"
                 className={hifiBtn}
-                onClick={() => setView("review-queue")}
+                onClick={() => navigate("/provider-review")}
               >
                 <HiIcon name="clock" />
                 Review queue

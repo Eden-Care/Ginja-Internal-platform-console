@@ -795,7 +795,7 @@ export function SpContracts({
 
 /* ---------- upload (signed contract; checks come from the platform
    Rules Extraction Checks catalogue server-side) ---------- */
-function FileSlot({
+export function FileSlot({
   label,
   hint,
   accept,
@@ -1107,7 +1107,7 @@ const EMPTY_FORM: AddRuleForm = {
   comment: "",
 }
 
-function AddRuleDialog({
+export function AddRuleDialog({
   open,
   insurerName,
   busy,
@@ -1570,7 +1570,7 @@ export function ContractResults({
 
 /* ---------- extraction-level review workflow (assign → start → complete) */
 
-function MemberPicker({
+export function MemberPicker({
   label,
   emphasis,
   busy,

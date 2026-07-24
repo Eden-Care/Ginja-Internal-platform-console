@@ -27,7 +27,13 @@ import { ProvisioningDetailPage } from "@/pages/tenant-provisioning/detail"
 import { InsurersPage } from "@/pages/insurers"
 import { ServiceProvidersPage } from "@/pages/service-providers"
 import { ServiceProviderRecordPage } from "@/pages/service-providers/record"
+import { ServiceProviderInsurerPage } from "@/pages/service-providers/insurer"
+import { ServiceProviderContractPage } from "@/pages/service-providers/contract"
 import { OnboardServiceProviderPage } from "@/pages/service-providers/onboard"
+import {
+  ProviderReviewDetailPage,
+  ProviderReviewQueuePage,
+} from "@/pages/service-providers/provider-review"
 import { RuleReviewPage } from "@/pages/rule-review"
 import { RuleReviewRecordPage } from "@/pages/rule-review/record"
 import { RuleChecksPage } from "@/pages/rule-checks"
@@ -50,13 +56,9 @@ import { MyAccountPage } from "@/pages/my-account"
 // EXPERIMENT — routed service-provider detail prototype (mock data).
 import {
   ExpDirectory,
-  ExpRecordLayout,
-  ExpOverviewTab,
-  ExpServicesTab,
-  ExpInsurersTab,
-  ExpAuditTab,
-  ExpWorkspacePage,
-  ExpExtractionResults,
+  ExpRecordPage,
+  ExpInsurerPage,
+  ExpContractPage,
 } from "@/pages/experiments/sp-detail"
 
 function ThemeToggle() {
@@ -134,6 +136,22 @@ function AppShell() {
               path="service-providers/:code/edit"
               element={<OnboardServiceProviderPage />}
             />
+            <Route
+              path="service-providers/:code/insurers/:insurerId"
+              element={<ServiceProviderInsurerPage />}
+            />
+            <Route
+              path="service-providers/:code/insurers/:insurerId/contracts/:jobId"
+              element={<ServiceProviderContractPage />}
+            />
+            <Route
+              path="provider-review"
+              element={<ProviderReviewQueuePage />}
+            />
+            <Route
+              path="provider-review/:code"
+              element={<ProviderReviewDetailPage />}
+            />
             <Route path="rule-review" element={<RuleReviewPage />} />
             <Route
               path="rule-review/:providerCode/:insurerAccountId"
@@ -194,19 +212,14 @@ function AppShell() {
                URL. Self-contained (mock data); delete this block + the
                experiments/ folder to remove. */}
             <Route path="experiments/sp" element={<ExpDirectory />} />
-            <Route path="experiments/sp/:code" element={<ExpRecordLayout />}>
-              <Route index element={<ExpOverviewTab />} />
-              <Route path="services" element={<ExpServicesTab />} />
-              <Route path="insurers" element={<ExpInsurersTab />} />
-              <Route path="audit" element={<ExpAuditTab />} />
-            </Route>
+            <Route path="experiments/sp/:code" element={<ExpRecordPage />} />
             <Route
               path="experiments/sp/:code/insurers/:insurerId"
-              element={<ExpWorkspacePage />}
+              element={<ExpInsurerPage />}
             />
             <Route
               path="experiments/sp/:code/insurers/:insurerId/contracts/:jobId"
-              element={<ExpExtractionResults />}
+              element={<ExpContractPage />}
             />
 
             <Route path="*" element={<Navigate to="/" replace />} />

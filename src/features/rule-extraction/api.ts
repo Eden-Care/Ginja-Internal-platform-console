@@ -24,13 +24,16 @@ export async function fetchExtractionsOverview(
 }
 
 /** GET …/rule-extraction/{ins} — the current (latest) full extraction.
-    404s when the pair has none — callers treat that as "no contract yet". */
+    When the pair has none the API replies **200 with a null result** (older
+    behaviour was a 404); both are surfaced as `null` = "no contract yet". */
 export async function fetchCurrentExtraction(
   code: string,
   insurerAccountId: string
-): Promise<Extraction> {
-  const dto = await apiGet<ExtractionDTO>(`${base(code)}/${insurerAccountId}`)
-  return toExtraction(dto)
+): Promise<Extraction | null> {
+  const dto = await apiGet<ExtractionDTO | null>(
+    `${base(code)}/${insurerAccountId}`
+  )
+  return dto ? toExtraction(dto) : null
 }
 
 /** GET …/rule-extraction/jobs/{jobId} — one extraction by job id, any
@@ -168,6 +171,32 @@ export async function setReviewStatus(
     { status }
   )
   return toExtraction(dto)
+}
+
+/** POST …/{ins}/publish — finalise the reviewed rules as the published rules
+    book (In review → Published). Requires the current COMPLETED extraction to
+    have every rule decided (no PENDING); 409 when already published.
+    ADMIN/APPROVER. Returns the full extraction. */
+export async function publishRulesBook(
+  code: string,
+  insurerAccountId: string
+): Promise<Extraction> {
+  const dto = await apiPost<ExtractionDTO>(
+    `${base(code)}/${insurerAccountId}/publish`
+  )
+  return toExtraction(dto)
+}
+
+/** GET …/{ins}/contract — a short-lived presigned URL for the source contract
+    of the current extraction. */
+export async function fetchContractUrl(
+  code: string,
+  insurerAccountId: string
+): Promise<string> {
+  const dto = await apiGet<{ file_url: string }>(
+    `${base(code)}/${insurerAccountId}/contract`
+  )
+  return dto.file_url
 }
 
 /** GET …/rules?review_status= — rules of the current extraction, filtered. */

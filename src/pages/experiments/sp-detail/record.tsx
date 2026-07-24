@@ -1,12 +1,7 @@
 import * as React from "react"
-import {
-  Link,
-  Navigate,
-  Outlet,
-  useOutletContext,
-  useParams,
-} from "react-router-dom"
+import { Link, Navigate, useParams } from "react-router-dom"
 import { toast } from "sonner"
+import { SearchIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -32,7 +27,6 @@ import {
   EXTRACT_TONE,
   REVIEW_LABEL,
   REVIEW_TONE,
-  RoutedTabBar,
   SpStatusBadge,
   spInitials,
 } from "./shared"
@@ -48,19 +42,21 @@ const AUD_GLYPH: Record<ExpAuditTone, string> = {
   neutral: "pencil",
 }
 
-/* ------------------------------------------------------------ layout */
+/* --------------------------------------------------------------- page */
 
-/** Route element for `/experiments/sp/:code` — head + routed tabs + <Outlet>. */
-export function ExpRecordLayout() {
+/**
+ * EXPERIMENT — service-provider record as a SINGLE PAGE (no tabs). Profile +
+ * services (both onboarding-captured) live in one card; the insurer workspace
+ * list — the operational content — sits below it; the audit trail fills the 30%
+ * rail. Opening an insurer still routes out to its own cockpit.
+ */
+export function ExpRecordPage() {
   const { code } = useParams<{ code: string }>()
   const rec = getProvider(code)
 
   if (!rec) return <Navigate to={EXP_ROOT} replace />
 
   const base = `${EXP_ROOT}/${encodeURIComponent(rec.code)}`
-  const insurerCount = EXP_INSURERS.filter((i) =>
-    currentExtraction(rec.code, i.accountId)
-  ).length
 
   return (
     <div className="flex flex-col gap-4">
@@ -119,32 +115,39 @@ export function ExpRecordLayout() {
         </Note>
       ) : null}
 
-      <RoutedTabBar
-        tabs={[
-          { k: "overview", label: "Overview", icon: <HiIcon name="hospital" />, href: base, end: true },
-          { k: "services", label: "Services", icon: <HiIcon name="layers" />, href: `${base}/services` },
-          { k: "insurers", label: "Insurers", icon: <HiIcon name="shield" />, count: insurerCount, href: `${base}/insurers` },
-          { k: "audit", label: "Audit trail", icon: <HiIcon name="fileText" />, count: rec.audit.length, href: `${base}/audit` },
-        ]}
-      />
-
-      <Outlet context={rec} />
+      {/* single-page body: profile + insurers (main) · audit (rail) */}
+      <div className="grid gap-4 lg:grid-cols-10">
+        <div className="flex flex-col gap-5 lg:col-span-7">
+          <ProfileCard rec={rec} />
+          <InsurersSection rec={rec} base={base} />
+        </div>
+        <aside className="lg:col-span-3 lg:self-start">
+          <AuditRail rec={rec} />
+        </aside>
+      </div>
     </div>
   )
 }
 
-const useRec = () => useOutletContext<ExpProvider>()
+/* ------------------------------------------------- profile + services card */
 
-/* --------------------------------------------------------------- tabs */
+function ProfileCard({ rec }: { rec: ExpProvider }) {
+  // Reference detail — collapsed by default; expand for the full record.
+  const [open, setOpen] = React.useState(false)
 
-export function ExpOverviewTab() {
-  const rec = useRec()
   const integrationTone =
     rec.integration === "Done"
       ? "success"
       : rec.integration === "In progress"
         ? "warning"
         : "neutral"
+
+  const integrationBadge =
+    rec.integration !== "—" ? (
+      <MiniBadge tone={integrationTone}>{rec.integration}</MiniBadge>
+    ) : (
+      "—"
+    )
 
   const rows: [string, React.ReactNode][] = [
     ["Account ID", <span className="mono font-semibold">{rec.displayId}</span>],
@@ -155,14 +158,7 @@ export function ExpOverviewTab() {
     ["Location", `${rec.town}, ${rec.county}, ${rec.country}`],
     ["HIMS", rec.hims],
     ["Claims / month", Number(rec.claimsMonth).toLocaleString()],
-    [
-      "Integration",
-      rec.integration !== "—" ? (
-        <MiniBadge tone={integrationTone}>{rec.integration}</MiniBadge>
-      ) : (
-        "—"
-      ),
-    ],
+    ["Integration", integrationBadge],
     ["Registration", <span className="mono">{rec.reg}</span>],
     ["KRA PIN", <span className="mono">{rec.kra}</span>],
     ["SHIF / SHA", <span className="mono">{rec.shif}</span>],
@@ -180,73 +176,168 @@ export function ExpOverviewTab() {
 
   return (
     <Panel>
-      <PanelHead icon={<HiIcon name="hospital" />} title="Provider profile" />
+      <PanelHead
+        icon={<HiIcon name="hospital" />}
+        title="Provider profile"
+        action={
+          <button
+            type="button"
+            onClick={() => setOpen((o) => !o)}
+            className="inline-flex items-center gap-1 text-[12px] font-medium text-primary hover:underline [&>svg]:size-3.5"
+          >
+            {open ? "Show less" : "Show all details"}
+            <HiIcon
+              name="chevronDown"
+              className={cn("transition-transform", open && "rotate-180")}
+            />
+          </button>
+        }
+      />
       <PanelBody>
-        <div className="grid gap-x-10 sm:grid-cols-2">
-          {rows.map(([k, v]) => (
-            <DetailRow key={k} k={k} v={v} />
-          ))}
+        {open ? (
+          <div className="grid gap-x-10 sm:grid-cols-2">
+            {rows.map(([k, v]) => (
+              <DetailRow key={k} k={k} v={v} />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
+            <MiniFact label="Primary contact" value={`${rec.contact} · ${rec.role}`} />
+            <MiniFact label="HIMS" value={rec.hims} />
+            <MiniFact label="Integration" value={integrationBadge} />
+            <MiniFact label="Claims / month" value={Number(rec.claimsMonth).toLocaleString()} />
+          </div>
+        )}
+
+        <div className="mt-4 border-t pt-4">
+          <div className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.04em] text-muted-foreground uppercase [&>svg]:size-3.5">
+            <HiIcon name="layers" />
+            Services offered
+          </div>
+          {rec.services.length ? (
+            <div className="flex flex-wrap gap-2">
+              {rec.services.map((s) => (
+                <MiniBadge key={s} tone="neutral">
+                  <HiIcon name="check" className="size-[11px]" />
+                  {s}
+                </MiniBadge>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[13px] text-muted-foreground">No services recorded.</p>
+          )}
         </div>
       </PanelBody>
     </Panel>
   )
 }
 
-export function ExpServicesTab() {
-  const rec = useRec()
+function MiniFact({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="min-w-0">
+      <div className="text-[10.5px] font-medium tracking-[0.04em] text-muted-foreground uppercase">
+        {label}
+      </div>
+      <div className="mt-1 truncate text-[13px] font-medium">{value}</div>
+    </div>
+  )
+}
+
+/* -------------------------------------------------------- insurers section */
+
+const INS_FILTERS = ["All", "With contracts", "In progress", "No contracts"] as const
+type InsFilter = (typeof INS_FILTERS)[number]
+
+function InsurersSection({ rec, base }: { rec: ExpProvider; base: string }) {
+  const [q, setQ] = React.useState("")
+  const [filter, setFilter] = React.useState<InsFilter>("All")
+
+  const items = EXP_INSURERS.map((ins) => ({
+    ins,
+    x: currentExtraction(rec.code, ins.accountId),
+  }))
+
+  const counts: Record<InsFilter, number> = {
+    All: items.length,
+    "With contracts": items.filter((i) => i.x).length,
+    "In progress": items.filter((i) => i.x && i.x.reviewStatus !== "COMPLETED").length,
+    "No contracts": items.filter((i) => !i.x).length,
+  }
+
+  const filtered = items.filter(({ ins, x }) => {
+    if (filter === "With contracts" && !x) return false
+    if (filter === "No contracts" && x) return false
+    if (filter === "In progress" && !(x && x.reviewStatus !== "COMPLETED")) return false
+    if (q.trim() && !ins.name.toLowerCase().includes(q.trim().toLowerCase())) return false
+    return true
+  })
+
   return (
     <Panel>
-      <PanelHead icon={<HiIcon name="layers" />} title="Clinical services offered" />
-      <PanelBody>
-        <div className="flex flex-wrap gap-2">
-          {rec.services.map((s) => (
-            <MiniBadge key={s} tone="success">
-              <HiIcon name="check" className="size-[11px]" />
-              {s}
-            </MiniBadge>
-          ))}
-        </div>
-      </PanelBody>
-    </Panel>
-  )
-}
-
-export function ExpInsurersTab() {
-  const rec = useRec()
-  const base = `${EXP_ROOT}/${encodeURIComponent(rec.code)}`
-
-  return (
-    <div className="flex flex-col gap-3.5">
-      <div className="flex items-center gap-[11px] rounded-[11px] border bg-muted/40 px-[13px] py-[11px]">
-        <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/12 text-primary [&>svg]:size-[15px]">
-          <HiIcon name="refresh" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="text-[12.5px] font-semibold">
-            Insurers from the platform directory
+      <PanelHead
+        icon={<HiIcon name="shield" />}
+        title="Insurers"
+        action={
+          <span className="text-[11px] text-muted-foreground tabular-nums">
+            {items.length}
+          </span>
+        }
+      />
+      <PanelBody className="p-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex h-[34px] min-w-[180px] flex-1 items-center gap-2 rounded-[8px] border border-input bg-background px-2.5">
+            <SearchIcon className="size-[15px] shrink-0 text-muted-foreground" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search insurers…"
+              aria-label="Search insurers"
+              className="min-w-0 flex-1 bg-transparent text-[13px] text-foreground outline-none placeholder:text-muted-foreground"
+            />
           </div>
-          <div className="mt-px text-[11px] text-muted-foreground">
-            Upload a contract per insurer for {rec.name}. Each opens its own
-            workspace at a real URL.
+          <div className="flex flex-wrap gap-1.5">
+            {INS_FILTERS.map((f) => {
+              const active = filter === f
+              return (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => setFilter(f)}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] font-medium transition-colors",
+                    active
+                      ? "border-primary/50 bg-primary/10 text-primary"
+                      : "border-transparent bg-muted text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {f}
+                  <span
+                    className={cn(
+                      "rounded-full px-1 text-[10px] tabular-nums",
+                      active ? "bg-primary/15" : "bg-background/70"
+                    )}
+                  >
+                    {counts[f]}
+                  </span>
+                </button>
+              )
+            })}
           </div>
         </div>
-      </div>
 
-      <div className="flex flex-col gap-2.5">
-        {EXP_INSURERS.map((ins) => {
-          const x = currentExtraction(rec.code, ins.accountId)
-          return (
+        <div className="mt-2 divide-y">
+          {filtered.map(({ ins, x }) => (
             <Link
               key={ins.accountId}
               to={`${base}/insurers/${encodeURIComponent(ins.accountId)}`}
-              className="flex w-full items-start gap-3 rounded-xl border bg-card p-[13px] text-left transition-[border-color,box-shadow] hover:border-primary/50 hover:shadow-xs"
+              className="-mx-4 flex items-start gap-3 px-4 py-3 transition-colors hover:bg-muted/40"
             >
-              <span className="grid size-10 shrink-0 place-items-center rounded-[10px] bg-primary/10 text-[13px] font-bold text-primary">
+              <span className="grid size-9 shrink-0 place-items-center rounded-[10px] bg-primary/10 text-[12px] font-bold text-primary">
                 {spInitials(ins.name)}
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-[13.5px] font-semibold">{ins.name}</span>
+                  <span className="text-[13px] font-semibold">{ins.name}</span>
                   {x ? (
                     <MiniBadge tone={EXTRACT_TONE[x.status]}>
                       {x.status === "COMPLETED" ? "Contract extracted" : x.status}
@@ -262,33 +353,61 @@ export function ExpInsurersTab() {
                 </div>
                 <div className="mt-[3px] text-[11.5px] text-muted-foreground">
                   {ins.companyTypeLabel} · {ins.country}
-                  {x ? ` · ${x.contractFilename}` : ""}
-                  {x?.assigneeName ? ` · reviewer ${x.assigneeName}` : ""}
                 </div>
+                {x ? (
+                  <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground [&>span]:inline-flex [&>span]:min-w-0 [&>span]:items-center [&>span]:gap-1.5 [&_svg]:size-[12px] [&_svg]:shrink-0">
+                    <span>
+                      <HiIcon name="fileText" />
+                      <span className="truncate" title={x.contractFilename}>
+                        {x.contractFilename}
+                      </span>
+                    </span>
+                    {x.assigneeName ? (
+                      <span>
+                        <HiIcon name="userCheck" />
+                        {x.assigneeName}
+                      </span>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
-              <div className="flex shrink-0 items-center gap-4 pl-1.5">
+              <div className="flex shrink-0 items-center gap-3 pl-1.5">
                 <div className="text-center">
-                  <b className="block text-[15px] font-bold tabular-nums">
+                  <b className="block text-[14px] font-bold tabular-nums">
                     {x ? x.rules.length : 0}
                   </b>
                   <span className="text-[10px] text-muted-foreground">rules</span>
                 </div>
-                <HiIcon name="chevronRight" className="size-4 text-muted-foreground" />
+                <HiIcon name="chevronRight" className="size-4 self-center text-muted-foreground" />
               </div>
             </Link>
-          )
-        })}
-      </div>
-    </div>
+          ))}
+          {filtered.length === 0 ? (
+            <div className="py-8 text-center text-[12.5px] text-muted-foreground">
+              No insurers match.
+            </div>
+          ) : null}
+        </div>
+      </PanelBody>
+    </Panel>
   )
 }
 
-export function ExpAuditTab() {
-  const rec = useRec()
+/* ------------------------------------------------------------- audit rail */
+
+function AuditRail({ rec }: { rec: ExpProvider }) {
   return (
     <Panel>
-      <PanelHead icon={<HiIcon name="fileText" />} title="Audit trail" />
-      <PanelBody>
+      <PanelHead
+        icon={<HiIcon name="fileText" />}
+        title="Audit trail"
+        action={
+          <span className="text-[11px] text-muted-foreground tabular-nums">
+            {rec.audit.length}
+          </span>
+        }
+      />
+      <PanelBody className="max-h-[70vh] overflow-y-auto p-4">
         <div className="flex flex-col gap-0.5">
           {rec.audit.map((a) => (
             <div key={a.id} className="flex gap-[11px] border-b py-[11px] last:border-b-0">

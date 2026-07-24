@@ -1,9 +1,13 @@
 /**
- * EXPERIMENT — self-contained mock data for the "service-provider detail, but
- * routed" prototype. Deliberately decoupled from `src/features/*` so the whole
- * `experiments/` tree can be deleted in one go. Mirrors the real DTO shapes
- * closely enough that porting the winning IA back onto the live page is a
- * mechanical swap (mock lookups → TanStack Query hooks).
+ * EXPERIMENT — self-contained mock data for the routed service-provider detail
+ * prototype. The extraction shape mirrors the REAL API payload
+ * (`GET …/rule-extraction/{insurerAccountId}` / `…/jobs/{jobId}`) 1:1 so the
+ * UI is validated against real data — rules carry source_quote / rule_logic /
+ * check_field / unit_of_application / scheme / payer / manual + per-rule review
+ * trail; the extraction carries metadata (contract summary + missing_fields),
+ * the coverage matrix (criticality + 4 statuses + notes), flags, review due
+ * date and the publish workflow. Client types are camelCase (the mapper the
+ * live feature folder would apply is baked into the fixtures).
  */
 
 export type ExpStatus = "Active" | "Pending review" | "Inactive" | "Draft"
@@ -59,21 +63,59 @@ export type ExpInsurer = {
   status: "Active" | "Inactive"
 }
 
-export type ExpRuleStatus = "APPROVED" | "PENDING" | "DISCARDED" | "ARCHIVED"
-export type ExpSeverity = "HIGH" | "MEDIUM" | "LOW"
+export type ExpRuleStatus = "PENDING" | "APPROVED" | "DISCARDED" | "ARCHIVED"
+export type ExpSeverity = "CRITICAL" | "HIGH" | "MEDIUM" | "LOW"
 
+/** Mirrors the API rule object (camelCased). */
 export type ExpRule = {
   ruleId: string
-  category: string
-  title: string
+  payer: string
+  schemeCategory: string
+  category: string // rule_category
+  ruleType: string // rule_type enum
   description: string
+  checkField: string
+  serviceCategory: string
+  ruleLogic: string
+  unitOfApplication: string
   severity: ExpSeverity
-  status: ExpRuleStatus
-  confidence: number
-  clause: string
+  source: string // clause reference
   checkRef: string
-  service: string
-  type: string
+  confidence: number // 0..1
+  sourceQuote: string
+  status: ExpRuleStatus // review_status
+  reviewComment: string | null
+  reviewedByName: string | null
+  reviewedAt: string | null
+  manual: boolean
+}
+
+export type ExpCoverageStatus =
+  | "EXTRACTED"
+  | "RECORDED_ABSENT"
+  | "MISSING_FLAGGED"
+  | "SKIPPED"
+export type ExpCriticality = "MANDATORY" | "EXPECTED" | "OPTIONAL"
+export type ExpCoverage = {
+  checkId: string
+  category: string
+  criticality: ExpCriticality
+  status: ExpCoverageStatus
+  ruleCount: number
+  note: string
+}
+
+export type ExpContractMeta = {
+  documentType: string
+  payerName: string
+  healthcareProvider: string
+  signedDate: string
+  effectiveDate: string
+  durationTerm: string
+  servicesCovered: string
+  supersedes: string
+  linkedMasterAgreement: string
+  missingFields: string[]
 }
 
 export type ExpExtractionStatus = "COMPLETED" | "RUNNING" | "QUEUED" | "FAILED"
@@ -84,21 +126,35 @@ export type ExpReviewStatus =
   | "COMPLETED"
 
 export type ExpExtraction = {
+  id: number
   jobId: string
-  providerCode: string
+  providerCode: string // account_id
+  providerName: string
+  contractCode: string
   insurerAccountId: string
-  contractFilename: string
+  insurerName: string
   status: ExpExtractionStatus
-  reviewStatus: ExpReviewStatus
-  assigneeName?: string
-  assignedBy?: string
-  createdBy: string
-  created: string
-  completed: string
-  model: string
   current: boolean
+  published: boolean
+  publishedAt: string | null
+  publishedByName: string | null
+  reviewStatus: ExpReviewStatus
+  assigneeId: number | null
+  assigneeName: string | null
+  assignedByName: string | null
+  assignedAt: string | null
+  reviewDueAt: string | null
+  reviewCompletedAt: string | null
+  contractFileId: string
+  contractFilename: string
+  model: string
+  metadata: ExpContractMeta
   rules: ExpRule[]
-  coverage: { name: string; status: "EXTRACTED" | "MISSING_FLAGGED" | "RECORDED_ABSENT" }[]
+  coverage: ExpCoverage[]
+  flags: string[]
+  createdByName: string
+  createdAt: string
+  completedAt: string
 }
 
 /* ------------------------------------------------------------------ data */
@@ -111,83 +167,177 @@ export const EXP_INSURERS: ExpInsurer[] = [
   { accountId: "INS-RAD-005", name: "Radiant Insurance", companyTypeLabel: "Health insurer", country: "Rwanda", city: "Kigali", regulator: "NBR", status: "Active" },
 ]
 
-const RULES_BRITAM: ExpRule[] = [
-  { ruleId: "LCT-CLAI-001", category: "Claim submission", title: "Submission Deadline", description: "LCT may at its discretion decline to pay invoices submitted more than 30 days after the date of service.", severity: "HIGH", status: "APPROVED", confidence: 97, clause: "Clause 6(iii)", checkRef: "CHK-019", service: "All services", type: "Deadline" },
-  { ruleId: "LCT-CLAI-002", category: "Claim submission", title: "Pre-authorisation required", description: "Inpatient admissions must be pre-authorised at least 24 hours in advance except in emergencies.", severity: "HIGH", status: "PENDING", confidence: 91, clause: "Clause 4(i)", checkRef: "CHK-004", service: "Inpatient", type: "Authorisation" },
-  { ruleId: "LCT-CLAI-003", category: "Claim submission", title: "Itemised invoice", description: "Every claim must be accompanied by an itemised invoice referencing the applicable benefit code.", severity: "MEDIUM", status: "PENDING", confidence: 88, clause: "Clause 6(i)", checkRef: "CHK-011", service: "All services", type: "Documentation" },
-  { ruleId: "LCT-COVR-001", category: "Coverage & limits", title: "Outpatient annual limit", description: "Outpatient benefit is capped at KES 150,000 per member per annum.", severity: "MEDIUM", status: "APPROVED", confidence: 95, clause: "Schedule A", checkRef: "CHK-031", service: "Outpatient", type: "Limit" },
-  { ruleId: "LCT-COVR-002", category: "Coverage & limits", title: "Exclusion — cosmetic", description: "Cosmetic and aesthetic procedures are excluded unless medically necessary and pre-approved.", severity: "LOW", status: "APPROVED", confidence: 93, clause: "Schedule B", checkRef: "CHK-052", service: "All services", type: "Exclusion" },
-  { ruleId: "LCT-PAY-001", category: "Payment terms", title: "Net settlement window", description: "Approved invoices are settled within 45 days of a clean claim submission.", severity: "MEDIUM", status: "PENDING", confidence: 84, clause: "Clause 9", checkRef: "CHK-070", service: "All services", type: "Payment" },
-  { ruleId: "LCT-PAY-002", category: "Payment terms", title: "Co-payment", description: "A KES 500 co-payment applies to each outpatient consultation.", severity: "LOW", status: "DISCARDED", confidence: 62, clause: "Clause 9(ii)", checkRef: "CHK-072", service: "Outpatient", type: "Co-pay" },
+/** The real LCT contract rules (from the live API sample). A few are pre-decided
+    so the review meter / filters show variety. */
+const rule = (r: Omit<ExpRule, "payer" | "schemeCategory" | "reviewComment" | "reviewedByName" | "reviewedAt" | "manual"> & Partial<ExpRule>): ExpRule => ({
+  payer: "LCT Africa Limited",
+  schemeCategory: "Capitation",
+  reviewComment: null,
+  reviewedByName: null,
+  reviewedAt: null,
+  manual: false,
+  ...r,
+})
+
+const reviewed = (by: string): Pick<ExpRule, "reviewedByName" | "reviewedAt"> => ({
+  reviewedByName: by,
+  reviewedAt: "23 Jul 2026 · 13:10",
+})
+
+const LCT_RULES: ExpRule[] = [
+  rule({ ruleId: "LCT-CLAI-001", category: "Claim Submission", ruleType: "SUBMISSION_DEADLINE", description: "LCT may at its discretion decline to pay invoices submitted more than 30 days after the date of service.", checkField: "days_since_service", serviceCategory: "All", ruleLogic: "<= 30DAYS from date of service (else discretionary decline)", unitOfApplication: "per claim/invoice", severity: "HIGH", source: "Clause 6.iii", checkRef: "CHK-019", confidence: 0.95, sourceQuote: "LCT may at own discretion decline to pay invoices submitted after thirty (30) days from the date of service.", status: "APPROVED", ...reviewed("Harshad") }),
+  rule({ ruleId: "LCT-CLAI-002", category: "Claim Submission", ruleType: "SUBMISSION_DEADLINE", description: "No late charges will be allowed after 30 days from date of discharge; supplementary/late invoices must be accompanied by a letter of clarification.", checkField: "days_since_discharge", serviceCategory: "All", ruleLogic: "<= 30DAYS from date of discharge for late charges (else not allowed)", unitOfApplication: "per late charge", severity: "HIGH", source: "Clause 6.ii", checkRef: "CHK-019", confidence: 0.9, sourceQuote: "A letter of clarification detailing the services given must accompany all late charges. No late charges will be allowed after 30 days from date of discharge.", status: "PENDING" }),
+  rule({ ruleId: "LCT-CLAI-003", category: "Claim Submission", ruleType: "SUBMISSION_DEADLINE", description: "Any claim generated off the system must have Proof of Authorization from LCT and copies must be submitted via email not later than 24 hours from the time of approval, else it is unpayable.", checkField: "hours_since_approval", serviceCategory: "All", ruleLogic: "<= 24HOURS from time of approval (else automatically unpayable)", unitOfApplication: "per off-system claim", severity: "CRITICAL", source: "Clause 6.vii", checkRef: "CHK-019", confidence: 0.85, sourceQuote: "Any claim generated off the system must have a Proof of Authorization from LCT. Copies of such a claim must be submitted through email not later than 24-hours from the time of approval. Any claim submitted after this time shall be declared unpayable and as such shall not form part of LCT's liability.", status: "PENDING" }),
+  rule({ ruleId: "LCT-DOCU-001", category: "Documentation", ruleType: "ELIGIBILITY_VERIFICATION", description: "Scheme members must be identified using the LCT Healthcare Passport or any other method chosen by LCT before provision of services; LCT indemnifies the provider for claims arising from compliance with the identification/pre-authorization procedures.", checkField: "verification_artifact", serviceCategory: "All", ruleLogic: "REQUIRED (LCT Healthcare Passport OR LCT-chosen method)", unitOfApplication: "per visit / per member", severity: "HIGH", source: "Clause 1.3", checkRef: "CHK-013", confidence: 0.9, sourceQuote: "The mode of identification shall be limited to the LCT Healthcare Passport or any other method chosen by LCT. LCT shall indemnify the Healthcare Service Provider for any claims arising out of compliance with the said identification and pre-authorization procedures and requirements.", status: "APPROVED", ...reviewed("Harshad") }),
+  rule({ ruleId: "LCT-DOCU-002", category: "Documentation", ruleType: "ELIGIBILITY_VERIFICATION", description: "Before provision of any services, correct and accurate member identification and benefits management must be verified using LCT Solutions, and members must authorize service provision using biometric features (e.g. fingerprints) where possible; where biometric identification is not possible, explicit authorization of the insurer/corporate must be sought.", checkField: "verification_artifact", serviceCategory: "All", ruleLogic: "REQUIRED (biometric verification; fallback explicit insurer/corporate authorization)", unitOfApplication: "per visit / per member", severity: "HIGH", source: "Clause 19 – Schedule of Service Level Agreements", checkRef: "CHK-013", confidence: 0.85, sourceQuote: "To ensure that members authorize the provision of services using immediate biometric features including but not limited to fingerprints and in all cases where possible.", status: "PENDING" }),
+  rule({ ruleId: "LCT-DOCU-003", category: "Documentation", ruleType: "DOCUMENT_COMPLETION", description: "The provider must process claims to ensure they are valid and properly completed, attaching the discharge summary and medical report before discharge at no extra cost.", checkField: "document_name", serviceCategory: "Inpatient", ruleLogic: "REQUIRED before discharge (discharge summary + medical report)", unitOfApplication: "per claim / per admission", severity: "MEDIUM", source: "Clause 6.i", checkRef: "CHK-014", confidence: 0.9, sourceQuote: "The Healthcare Service Provider will process claims to ensure they are valid and properly completed, attaching the discharge summary and medical report before discharge at no extra cost.", status: "APPROVED", ...reviewed("Harshad") }),
+  rule({ ruleId: "LCT-DOCU-004", category: "Documentation", ruleType: "DOCUMENT_COMPLETION", description: "The claim must include a fully documented claim form, invoice (with an ETIMS receipt against the IAX KRA PIN) and a system generated LCT report; all services requiring preauthorization must be processed through the LCT system with approval evidence submitted alongside the claim.", checkField: "document_name", serviceCategory: "All", ruleLogic: "REQUIRED (fully documented claim form + invoice + ETIMS receipt + LCT report + preauth evidence)", unitOfApplication: "per claim", severity: "HIGH", source: "Clause 6.i", checkRef: "CHK-014", confidence: 0.85, sourceQuote: "The claim must include fully documented claim form, invoice, including an ETIMS receipt generated against the Insurance Administration Exchange (Africa) Limited (IAX) KRA PIN and a system generated LCT report.", status: "PENDING" }),
+  rule({ ruleId: "LCT-DOCU-005", category: "Documentation", ruleType: "INVOICE_FORMAT", description: "Billing must include correct invoice details, namely Amount and Invoice Number; the diagnosis details must be included when uploading claim documents.", checkField: "required_granularity", serviceCategory: "All", ruleLogic: "REQUIRED (Amount + Invoice Number + diagnosis details)", unitOfApplication: "per invoice", severity: "MEDIUM", source: "Clause 19 – Schedule of Service Level Agreements", checkRef: "CHK-015", confidence: 0.75, sourceQuote: "Include the correct invoice details when billing that is Amount and Invoice Number.", status: "PENDING" }),
+  rule({ ruleId: "LCT-DOCU-006", category: "Documentation", ruleType: "INVOICE_FORMAT", description: "Surgical cases are billed as all-inclusive packages per the surgical packages schedule (package rate exception to per-item billing).", checkField: "package_exception", serviceCategory: "Inpatient / Surgical", ruleLogic: "billed_as_package == TRUE (<= SCHEDULE_RATE(item))", unitOfApplication: "per surgical package", severity: "MEDIUM", source: "Annexure 3 – Surgical Packages", checkRef: "CHK-015", confidence: 0.7, sourceQuote: "For surgical cases, refer to the surgical packages (all inclusive)", status: "DISCARDED", reviewComment: "Duplicate of the tariff schedule rule — not a distinct clean-up rule.", ...reviewed("Harshad") }),
+  rule({ ruleId: "LCT-EXCL-001", schemeCategory: "Capitation schemes", category: "Exclusions", ruleType: "EXCLUSION_NOT_PAYABLE", description: "Provider must manage key exclusions based on the exclusion list provided by LCT as an appendix, amended from time to time in writing. The exclusion schedule itself is not enumerated in this agreement and must be obtained separately.", checkField: "excluded_service_list; scheme_scope", serviceCategory: "All services", ruleLogic: "service IN not_payable_list (per LCT-provided exclusion appendix)", unitOfApplication: "per service", severity: "HIGH", source: "Clause 1.2", checkRef: "CHK-012", confidence: 0.75, sourceQuote: "…to manage key exclusions based on the list provided by LCT as an appendix to this Agreement and as amended from time to time in writing.", status: "PENDING" }),
+  rule({ ruleId: "LCT-EXCL-002", schemeCategory: "Capitation schemes", category: "Exclusions", ruleType: "EXCLUSION_NOT_PAYABLE", description: "Invoices without an eTIMS receipt linked to the Insurance Administration Exchange (Africa) Limited (IAX) KRA PIN are not payable.", checkField: "excluded_service_list; scheme_scope", serviceCategory: "All claims/invoices", ruleLogic: "invoice WITHOUT eTIMS_receipt_linked_to_IAX_PIN => NOT_PAYABLE", unitOfApplication: "per invoice", severity: "CRITICAL", source: "Annexure 4", checkRef: "CHK-012", confidence: 0.7, sourceQuote: "Invoices without an eTIMS receipt linked to the Insurance Administration Exchange (Africa) Limited (IAX) PIN will not be payable.", status: "PENDING" }),
+  rule({ ruleId: "LCT-EXCL-003", schemeCategory: "Capitation schemes", category: "Exclusions", ruleType: "EXCLUSION_NOT_PAYABLE", description: "Any claim generated off the system and submitted through email later than 24 hours from the time of approval shall be declared unpayable and shall not form part of LCT's liability.", checkField: "excluded_service_list; scheme_scope", serviceCategory: "Off-system claims", ruleLogic: "off_system_claim submitted > 24H after approval => UNPAYABLE", unitOfApplication: "per claim", severity: "HIGH", source: "Clause 6(vii)", checkRef: "CHK-012", confidence: 0.6, sourceQuote: "Any claim submitted after this time shall be declared unpayable and as such shall not form part of LCT's liability.", status: "PENDING" }),
+  rule({ ruleId: "LCT-PREA-001", category: "Preauthorization", ruleType: "PREAUTH_CATEGORY", description: "All services requiring preauthorization must be processed through the LCT system, with approval evidence submitted alongside the claim.", checkField: "preauth_reference", serviceCategory: "All preauth-required services", ruleLogic: "REQUIRED (approval evidence submitted with claim)", unitOfApplication: "per service/claim", severity: "CRITICAL", source: "Clause 6.i", checkRef: "CHK-009", confidence: 0.95, sourceQuote: "Additionally, all services requiring preauthorization must be processed through the LCT system, with approval evidence submitted alongside the claim.", status: "APPROVED", ...reviewed("Harshad") }),
+  rule({ ruleId: "LCT-PREA-002", category: "Preauthorization", ruleType: "PREAUTH_CATEGORY", description: "External appliances and assistive devices (hearing aids, crutches, clubfoot brace, walking frames) require preauthorization.", checkField: "preauth_reference", serviceCategory: "External Appliances & Assistive Devices", ruleLogic: "REQUIRED", unitOfApplication: "per service", severity: "HIGH", source: "Annexure 1 – Tariffs & Access Rules", checkRef: "CHK-009", confidence: 0.93, sourceQuote: "Will need preauthorization", status: "PENDING" }),
+  rule({ ruleId: "LCT-PREA-003", category: "Preauthorization", ruleType: "PREAUTH_CATEGORY", description: "Oncology services are accessible on preauthorization and are co-insured by SHIF.", checkField: "preauth_reference", serviceCategory: "Oncology Services", ruleLogic: "REQUIRED", unitOfApplication: "per service", severity: "HIGH", source: "Annexure 1 – Tariffs & Access Rules (Oncology)", checkRef: "CHK-009", confidence: 0.94, sourceQuote: "Services are accessible on preauthorization.", status: "PENDING" }),
+  rule({ ruleId: "LCT-UTIL-007", category: "Utilization", ruleType: "LENGTH_OF_STAY_LIMIT", description: "Normal delivery maternity admission has a maximum hospital stay of 48 hours; complications beyond this require preauthorization.", checkField: "length_of_stay_hours", serviceCategory: "Maternity - Normal Delivery", ruleLogic: "<= 48 HOURS", unitOfApplication: "per admission", severity: "HIGH", source: "Annexure 1 - Maternity, Neonate and Child Health Services", checkRef: "CHK-016", confidence: 0.93, sourceQuote: "Normal delivery – maximum hospital stay of 48 hours", status: "APPROVED", ...reviewed("Harshad") }),
+  rule({ ruleId: "LCT-UTIL-008", category: "Utilization", ruleType: "LENGTH_OF_STAY_LIMIT", description: "C-section maternity admission has a maximum hospital stay of 72 hours; complications beyond this require preauthorization.", checkField: "length_of_stay_hours", serviceCategory: "Maternity - Caesarean Section", ruleLogic: "<= 72 HOURS", unitOfApplication: "per admission", severity: "HIGH", source: "Annexure 1 - Maternity, Neonate and Child Health Services", checkRef: "CHK-016", confidence: 0.93, sourceQuote: "C-section - maximum stay of 72 hours", status: "PENDING" }),
 ]
 
-const RULES_CIC: ExpRule[] = [
-  { ruleId: "CIC-CLAI-001", category: "Claim submission", title: "Submission Deadline", description: "Claims must be lodged within 60 days of discharge or the date of the last service rendered.", severity: "HIGH", status: "PENDING", confidence: 90, clause: "Art. 5", checkRef: "CHK-019", service: "All services", type: "Deadline" },
-  { ruleId: "CIC-COVR-001", category: "Coverage & limits", title: "Maternity waiting period", description: "Maternity benefits are subject to a 10-month waiting period from policy inception.", severity: "MEDIUM", status: "PENDING", confidence: 87, clause: "Art. 8", checkRef: "CHK-040", service: "Maternity", type: "Waiting period" },
-  { ruleId: "CIC-PAY-001", category: "Payment terms", title: "Settlement window", description: "Clean claims are paid within 30 days.", severity: "MEDIUM", status: "APPROVED", confidence: 92, clause: "Art. 12", checkRef: "CHK-070", service: "All services", type: "Payment" },
+const LCT_COVERAGE: ExpCoverage[] = [
+  { checkId: "CHK-001", category: "Pricing", criticality: "MANDATORY", status: "EXTRACTED", ruleCount: 1, note: "1 rule(s) extracted" },
+  { checkId: "CHK-002", category: "Pricing", criticality: "EXPECTED", status: "RECORDED_ABSENT", ruleCount: 0, note: "Record as no-average-model" },
+  { checkId: "CHK-003", category: "Pricing", criticality: "EXPECTED", status: "EXTRACTED", ruleCount: 3, note: "3 rule(s) extracted" },
+  { checkId: "CHK-004", category: "Pricing", criticality: "EXPECTED", status: "EXTRACTED", ruleCount: 3, note: "3 rule(s) extracted" },
+  { checkId: "CHK-005", category: "Pricing", criticality: "EXPECTED", status: "EXTRACTED", ruleCount: 1, note: "1 rule(s) extracted" },
+  { checkId: "CHK-006", category: "Pricing", criticality: "OPTIONAL", status: "SKIPPED", ruleCount: 0, note: "Optional check, no rule found" },
+  { checkId: "CHK-007", category: "Pricing", criticality: "EXPECTED", status: "EXTRACTED", ruleCount: 1, note: "1 rule(s) extracted" },
+  { checkId: "CHK-008", category: "Preauthorization", criticality: "MANDATORY", status: "MISSING_FLAGGED", ruleCount: 0, note: "Flag: no monetary preauth threshold found - confirm with payer" },
+  { checkId: "CHK-009", category: "Preauthorization", criticality: "MANDATORY", status: "EXTRACTED", ruleCount: 5, note: "5 rule(s) extracted" },
+  { checkId: "CHK-010", category: "Preauthorization", criticality: "MANDATORY", status: "EXTRACTED", ruleCount: 1, note: "1 rule(s) extracted" },
+  { checkId: "CHK-011", category: "Preauthorization", criticality: "EXPECTED", status: "EXTRACTED", ruleCount: 3, note: "3 rule(s) extracted" },
+  { checkId: "CHK-012", category: "Exclusions", criticality: "MANDATORY", status: "EXTRACTED", ruleCount: 3, note: "3 rule(s) extracted" },
+  { checkId: "CHK-013", category: "Documentation", criticality: "MANDATORY", status: "EXTRACTED", ruleCount: 2, note: "2 rule(s) extracted" },
+  { checkId: "CHK-014", category: "Documentation", criticality: "EXPECTED", status: "EXTRACTED", ruleCount: 2, note: "2 rule(s) extracted" },
+  { checkId: "CHK-015", category: "Documentation", criticality: "EXPECTED", status: "EXTRACTED", ruleCount: 2, note: "2 rule(s) extracted" },
+  { checkId: "CHK-016", category: "Utilization", criticality: "EXPECTED", status: "EXTRACTED", ruleCount: 8, note: "8 rule(s) extracted" },
+  { checkId: "CHK-017", category: "Utilization", criticality: "EXPECTED", status: "RECORDED_ABSENT", ruleCount: 0, note: "Record as no revisit-window rule" },
+  { checkId: "CHK-018", category: "Utilization", criticality: "OPTIONAL", status: "SKIPPED", ruleCount: 0, note: "Optional check, no rule found" },
+  { checkId: "CHK-019", category: "Claim Submission", criticality: "MANDATORY", status: "EXTRACTED", ruleCount: 3, note: "3 rule(s) extracted" },
+  { checkId: "CHK-020", category: "Pharmacy", criticality: "EXPECTED", status: "RECORDED_ABSENT", ruleCount: 0, note: "Record as no substitution policy" },
 ]
 
-const COVERAGE = [
-  { name: "Submission deadline", status: "EXTRACTED" as const },
-  { name: "Pre-authorisation", status: "EXTRACTED" as const },
-  { name: "Benefit limits", status: "EXTRACTED" as const },
-  { name: "Exclusions", status: "EXTRACTED" as const },
-  { name: "Payment terms", status: "EXTRACTED" as const },
-  { name: "Fraud / abuse clauses", status: "MISSING_FLAGGED" as const },
-  { name: "Tariff schedule", status: "RECORDED_ABSENT" as const },
+const LCT_META: ExpContractMeta = {
+  documentType: "Payer Contract",
+  payerName: "LCT AFRICA LIMITED",
+  healthcareProvider: "[Healthcare Service Provider - blank/to be filled]",
+  signedDate: "",
+  effectiveDate: "",
+  durationTerm: "2 Year(s)",
+  servicesCovered:
+    "Outpatient healthcare services, psychiatry and mental health, accident & emergency services, chronic/preexisting conditions, congenital conditions, external appliances & assistive devices, oncology services, radiology and imaging services, inpatient services, critical conditions, maternity/neonate and child health services, surgical packages (co-insured with SHIF)",
+  supersedes: "",
+  linkedMasterAgreement: "",
+  missingFields: ["signed_date", "effective_date", "healthcare_provider", "supersedes", "linked_master_agreement"],
+}
+
+const LCT_FLAGS = [
+  "CHK-008 · PREAUTH_THRESHOLD — no monetary preauth threshold found; confirm with payer.",
 ]
 
 export const EXP_EXTRACTIONS: ExpExtraction[] = [
   {
-    jobId: "aaeac46d",
+    id: 14,
+    jobId: "fd5fcd80",
     providerCode: "SP-2026-0004",
+    providerName: "ABC",
+    contractCode: "CTR-0002",
     insurerAccountId: "INS-BR-001",
-    contractFilename: "LCT -THE NAIROBI WOMENS HOSPITAL 2025.pdf",
+    insurerName: "Britam Health",
     status: "COMPLETED",
-    reviewStatus: "IN_REVIEW",
-    assigneeName: "Harshad Patel",
-    assignedBy: "Platform Administrator",
-    createdBy: "Platform Administrator",
-    created: "21 Jul 2026 · 10:16",
-    completed: "21 Jul 2026 · 10:19",
-    model: "claude-opus-4-8",
     current: true,
-    rules: RULES_BRITAM,
-    coverage: COVERAGE,
+    published: false,
+    publishedAt: null,
+    publishedByName: null,
+    reviewStatus: "IN_REVIEW",
+    assigneeId: 37,
+    assigneeName: "Harshad Patel",
+    assignedByName: "Platform Administrator",
+    assignedAt: "23 Jul 2026 · 12:39",
+    reviewDueAt: "28 Jul 2026",
+    reviewCompletedAt: null,
+    contractFileId: "FIL000092QQJQ4AUDEA5T",
+    contractFilename: "LCT -THE NAIROBI WOMENS HOSPITAL 2025.pdf",
+    model: "claude-opus-4-8",
+    metadata: LCT_META,
+    rules: LCT_RULES,
+    coverage: LCT_COVERAGE,
+    flags: LCT_FLAGS,
+    createdByName: "Platform Administrator",
+    createdAt: "23 Jul 2026 · 07:29",
+    completedAt: "23 Jul 2026 · 07:37",
   },
   {
+    id: 9,
     jobId: "9f2b7711",
     providerCode: "SP-2026-0004",
+    providerName: "ABC",
+    contractCode: "CTR-0001",
     insurerAccountId: "INS-BR-001",
-    contractFilename: "LCT -THE NAIROBI WOMENS HOSPITAL 2024.pdf",
+    insurerName: "Britam Health",
     status: "COMPLETED",
-    reviewStatus: "COMPLETED",
-    assigneeName: "James Otieno",
-    assignedBy: "Platform Administrator",
-    createdBy: "Platform Administrator",
-    created: "03 Jan 2026 · 09:02",
-    completed: "03 Jan 2026 · 09:05",
-    model: "claude-sonnet-5",
     current: false,
-    rules: RULES_BRITAM.map((r) => ({ ...r, status: "APPROVED" as ExpRuleStatus })),
-    coverage: COVERAGE,
+    published: true,
+    publishedAt: "05 Jan 2026 · 09:12",
+    publishedByName: "Approver One",
+    reviewStatus: "COMPLETED",
+    assigneeId: 40,
+    assigneeName: "James Otieno",
+    assignedByName: "Platform Administrator",
+    assignedAt: "03 Jan 2026 · 09:10",
+    reviewDueAt: "08 Jan 2026",
+    reviewCompletedAt: "04 Jan 2026 · 16:40",
+    contractFileId: "FIL000041AA",
+    contractFilename: "LCT -THE NAIROBI WOMENS HOSPITAL 2024.pdf",
+    model: "claude-sonnet-5",
+    metadata: { ...LCT_META, durationTerm: "1 Year(s)" },
+    rules: LCT_RULES.slice(0, 10).map((r) => ({ ...r, status: "APPROVED" as ExpRuleStatus, reviewedByName: "James Otieno", reviewedAt: "04 Jan 2026 · 16:40" })),
+    coverage: LCT_COVERAGE,
+    flags: [],
+    createdByName: "Platform Administrator",
+    createdAt: "03 Jan 2026 · 09:02",
+    completedAt: "03 Jan 2026 · 09:05",
   },
   {
+    id: 22,
     jobId: "cic1122a",
     providerCode: "SP-2026-0004",
+    providerName: "ABC",
+    contractCode: "CTR-0007",
     insurerAccountId: "INS-CIC-002",
-    contractFilename: "CIC-ABC-HOSPITAL-2025.pdf",
+    insurerName: "CIC Insurance Group",
     status: "COMPLETED",
-    reviewStatus: "IN_REVIEW",
-    assigneeName: "Harshad Patel",
-    assignedBy: "Platform Administrator",
-    createdBy: "Platform Administrator",
-    created: "18 Jul 2026 · 14:40",
-    completed: "18 Jul 2026 · 14:44",
-    model: "claude-opus-4-8",
     current: true,
-    rules: RULES_CIC,
-    coverage: COVERAGE.slice(0, 5),
+    published: false,
+    publishedAt: null,
+    publishedByName: null,
+    reviewStatus: "ASSIGNED",
+    assigneeId: 37,
+    assigneeName: "Harshad Patel",
+    assignedByName: "Platform Administrator",
+    assignedAt: "18 Jul 2026 · 14:40",
+    reviewDueAt: "25 Jul 2026",
+    reviewCompletedAt: null,
+    contractFileId: "FIL00007CIC",
+    contractFilename: "CIC-ABC-HOSPITAL-2025.pdf",
+    model: "claude-opus-4-8",
+    metadata: { ...LCT_META, payerName: "CIC INSURANCE GROUP", durationTerm: "3 Year(s)" },
+    rules: LCT_RULES.slice(0, 6).map((r) => ({ ...r, status: "PENDING" as ExpRuleStatus, reviewedByName: null, reviewedAt: null })),
+    coverage: LCT_COVERAGE.slice(0, 12),
+    flags: [],
+    createdByName: "Platform Administrator",
+    createdAt: "18 Jul 2026 · 14:40",
+    completedAt: "18 Jul 2026 · 14:44",
   },
 ]
 
@@ -253,8 +403,8 @@ export const EXP_PROVIDERS: ExpProvider[] = [
     approvedBy: "Approver One",
     services: ["Inpatient", "Outpatient", "Maternity", "Surgery", "ICU", "Pharmacy", "Laboratory"],
     audit: [
-      { id: "b1", action: "Contract extracted", detail: "Britam Health — 33 rules extracted from LCT 2025 contract.", by: "Platform Administrator", when: "21 Jul 2026 · 10:19", initials: "PA", tone: "success" },
-      { id: "b2", action: "Reviewer assigned", detail: "Harshad Patel assigned to review CIC extraction.", by: "Platform Administrator", when: "18 Jul 2026 · 14:45", initials: "PA", tone: "neutral" },
+      { id: "b1", action: "Contract extracted", detail: "Britam Health — 17 rules extracted from the LCT 2025 contract.", by: "Platform Administrator", when: "23 Jul 2026 · 07:37", initials: "PA", tone: "success" },
+      { id: "b2", action: "Reviewer assigned", detail: "Harshad Patel assigned to review the Britam extraction.", by: "Platform Administrator", when: "23 Jul 2026 · 12:39", initials: "PA", tone: "neutral" },
       { id: "b3", action: "Provider activated", detail: "Approved & activated.", by: "Approver One", when: "13 Jan 2026 · 09:30", initials: "AO", tone: "success" },
     ],
   },
@@ -329,7 +479,6 @@ export const getProvider = (code?: string) =>
 export const getInsurer = (accountId?: string) =>
   EXP_INSURERS.find((i) => i.accountId === accountId)
 
-/** All extractions for a provider⇆insurer pair, current first. */
 export const getExtractions = (providerCode?: string, insurerAccountId?: string) =>
   EXP_EXTRACTIONS.filter(
     (x) =>
@@ -341,7 +490,6 @@ export const getExtractions = (providerCode?: string, insurerAccountId?: string)
 export const getExtraction = (jobId?: string) =>
   EXP_EXTRACTIONS.find((x) => x.jobId === jobId)
 
-/** The current extraction for a pair (what the workspace card summarises). */
 export const currentExtraction = (
   providerCode?: string,
   insurerAccountId?: string

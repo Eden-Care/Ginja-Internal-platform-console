@@ -3,11 +3,13 @@ import { useLocation, useNavigate } from "react-router-dom"
 
 import { cn } from "@/lib/utils"
 import { HiIcon } from "@/components/hifi/icon"
-import { MiniBadge } from "@/components/console/tagpill"
+import { MiniBadge, type BadgeTone } from "@/components/console/tagpill"
 import { Breadcrumbs } from "@/components/console/breadcrumbs"
 import type { Crumb } from "@/lib/navigation"
 import { TabBar, type TabItem } from "@/components/console/tab-bar"
 import type {
+  ExpCoverageStatus,
+  ExpCriticality,
   ExpExtractionStatus,
   ExpReviewStatus,
   ExpRuleStatus,
@@ -55,11 +57,36 @@ export const RULE_TONE: Record<
   DISCARDED: "neutral",
   ARCHIVED: "info",
 }
-export const SEV_TONE: Record<ExpSeverity, "warning" | "info" | "neutral"> = {
+export const SEV_TONE: Record<ExpSeverity, BadgeTone> = {
+  CRITICAL: "error",
   HIGH: "warning",
   MEDIUM: "info",
   LOW: "neutral",
 }
+export const COV_LABEL: Record<ExpCoverageStatus, string> = {
+  EXTRACTED: "Extracted",
+  RECORDED_ABSENT: "Recorded absent",
+  MISSING_FLAGGED: "Missing — flagged",
+  SKIPPED: "Skipped",
+}
+export const COV_TONE: Record<ExpCoverageStatus, BadgeTone> = {
+  EXTRACTED: "success",
+  RECORDED_ABSENT: "neutral",
+  MISSING_FLAGGED: "warning",
+  SKIPPED: "neutral",
+}
+export const CRIT_TONE: Record<ExpCriticality, BadgeTone> = {
+  MANDATORY: "error",
+  EXPECTED: "info",
+  OPTIONAL: "neutral",
+}
+
+/** "SUBMISSION_DEADLINE" → "Submission deadline". */
+export const humanizeType = (t: string) =>
+  t.toLowerCase().replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase())
+
+/** confidence 0..1 → integer percent. */
+export const pct = (v: number) => Math.round(v * 100)
 
 export function SpStatusBadge({ status }: { status: ExpStatus }) {
   return <MiniBadge tone={SP_TONE[status]}>{status}</MiniBadge>

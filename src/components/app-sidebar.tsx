@@ -3,6 +3,7 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom"
 import {
   Building2Icon,
   ChevronsUpDownIcon,
+  ClipboardCheckIcon,
   DollarSignIcon,
   FileTextIcon,
   GalleryVerticalEndIcon,
@@ -129,6 +130,12 @@ export const navGroups: NavGroup[] = [
         icon: HospitalIcon,
         permId: "providers",
         count: 8,
+      },
+      {
+        title: "Provider review",
+        url: "/provider-review",
+        icon: ClipboardCheckIcon,
+        permId: "provider-review",
       },
       {
         title: "Insurers",

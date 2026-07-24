@@ -3677,6 +3677,7 @@ export const CONSOLE_ROLES: Record<ConsoleRoleKey, ConsoleRole> = {
       "view:approvals",
       "view:provisioning",
       "view:providers",
+      "view:provider-review",
       "view:insurers",
       "view:rule-review",
       "view:registry",

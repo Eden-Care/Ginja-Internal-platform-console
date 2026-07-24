@@ -91,6 +91,12 @@ export type InsurerDirectory = {
   summary: InsurerSummary
   companies: Insurer[]
   totalElements: number
+  /** Zero-based index of the returned page. */
+  page: number
+  /** Page size the server applied. */
+  size: number
+  /** Total number of pages for the current filter set. */
+  totalPages: number
 }
 
 export type AuditTone = "success" | "warning" | "neutral"
@@ -119,7 +125,6 @@ function fmtDate(iso: string) {
     return iso
   }
 }
-
 
 export function toInsurer(d: InsurerDTO): Insurer {
   return {

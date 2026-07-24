@@ -30,21 +30,38 @@ export type ListInsurersParams = {
   status?: "ACTIVE" | "INACTIVE"
   page?: number
   size?: number
+  /** Spring Data sort, e.g. `createdAt,desc` (newest first — the default). */
+  sort?: string
 }
 
-/** GET the directory — summary tiles + a page of companies (mapped). */
+/** GET the directory — summary tiles + a page of companies (mapped). Sorted by
+   `createdAt,desc` so freshly added insurers surface at the top. */
 export async function fetchInsurersDirectory(
   params: ListInsurersParams = {}
 ): Promise<InsurerDirectory> {
+  const { page = 0, size = 20, sort = "createdAt,desc", q, status } = params
   const dto = await apiGet<DirectoryDTO>(BASE, {
-    params: { page: 0, size: 200, ...params },
+    // axios drops `undefined` params, so unset filters are simply omitted.
+    params: { page, size, sort, q, status },
   })
   console.log(`[GET ${BASE}] directory`, dto)
   return {
     summary: dto.summary,
     companies: dto.companies.content.map(toInsurer),
     totalElements: dto.companies.total_elements,
+    page: dto.companies.page,
+    size: dto.companies.size,
+    totalPages: dto.companies.total_pages,
   }
+}
+
+/** GET the active-insurers lookup — a plain (unpaged) list of ACTIVE insurers,
+    accessible to ANY authenticated caller (unlike the ADMIN/SUPPORT-gated paged
+    directory). Same row shape as the directory. Used where every role needs the
+    insurer list (e.g. the service-provider record's Insurers section). */
+export async function fetchActiveInsurers(): Promise<Insurer[]> {
+  const dto = await apiGet<InsurerDTO[]>(`${BASE}/active`)
+  return (dto ?? []).map(toInsurer)
 }
 
 /** GET one insurer profile (Overview). */
@@ -77,7 +94,9 @@ export type CreateInsurerInput = {
 }
 
 /** POST create an insurer profile → the created insurer (mapped). */
-export async function createInsurer(input: CreateInsurerInput): Promise<Insurer> {
+export async function createInsurer(
+  input: CreateInsurerInput
+): Promise<Insurer> {
   const body = {
     name: input.name.trim(),
     country: input.country,

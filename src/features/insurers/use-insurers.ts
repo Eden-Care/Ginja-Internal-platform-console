@@ -13,6 +13,7 @@ import {
 import {
   createInsurer,
   deactivateInsurer,
+  fetchActiveInsurers,
   fetchInsurerAudit,
   fetchInsurerProfile,
   fetchInsurersDirectory,
@@ -30,6 +31,17 @@ export function useInsurersDirectory(params: ListInsurersParams = {}) {
     queryKey: insurerKeys.directory(params),
     queryFn: () => fetchInsurersDirectory(params),
     placeholderData: keepPreviousData,
+  })
+}
+
+/** The active-insurers lookup — every authed role can read this (the paged
+   directory is ADMIN/SUPPORT-only). Used by the SP record's Insurers section
+   and the insurer cockpit, so approvers can see the list too. */
+export function useActiveInsurers(enabled = true) {
+  return useQuery({
+    queryKey: insurerKeys.active(),
+    queryFn: fetchActiveInsurers,
+    enabled,
   })
 }
 

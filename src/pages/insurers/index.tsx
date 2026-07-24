@@ -11,6 +11,7 @@ import { Tagpill } from "@/components/console/tagpill"
 import { Note } from "@/components/console/note"
 import { Seg } from "@/components/console/form-atoms"
 import { LoadingSpinner } from "@/components/common/loading"
+import Pagination from "@/components/common/custom-pagination"
 import { HiIcon } from "@/components/hifi/icon"
 import { hifiBtn } from "@/components/hifi/button"
 import { useInsurersDirectory } from "@/features/insurers/use-insurers"
@@ -18,9 +19,21 @@ import type { Insurer } from "@/features/insurers/types"
 import { InsurerCreate } from "./components/insurer-create"
 import { InsurerCreated } from "./components/insurer-created"
 import { InsurerDrawer } from "./components/insurer-drawer"
-import { InsurerAvatar, InsurerStatus, RegionPill, insGrid } from "./components/shared"
+import {
+  InsurerAvatar,
+  InsurerStatus,
+  RegionPill,
+  insGrid,
+} from "./components/shared"
 
 type View = "list" | "create" | "created"
+
+/** Status segment label → the API `status` filter (undefined = All). */
+const STATUS_PARAM: Record<string, "ACTIVE" | "INACTIVE" | undefined> = {
+  All: undefined,
+  Active: "ACTIVE",
+  Inactive: "INACTIVE",
+}
 
 /**
  * Insurers directory (hi-fi `InsurersDirectory`) — the "Claim Clean-up (LAMU)"
@@ -37,6 +50,8 @@ export function InsurersPage() {
   const [q, setQ] = React.useState("")
   const [qDebounced, setQDebounced] = React.useState("")
   const [status, setStatus] = React.useState("All")
+  const [page, setPage] = React.useState(0)
+  const [size, setSize] = React.useState(20)
 
   // Debounce the search box so we hit the `q` endpoint at most ~3×/sec.
   React.useEffect(() => {
@@ -44,8 +59,16 @@ export function InsurersPage() {
     return () => clearTimeout(t)
   }, [q])
 
+  // Any change to the search/filter set resets to the first page.
+  React.useEffect(() => {
+    setPage(0)
+  }, [qDebounced, status])
+
   const { data, isLoading, isError, refetch } = useInsurersDirectory({
     q: qDebounced.trim() || undefined,
+    status: STATUS_PARAM[status],
+    page,
+    size,
   })
 
   if (view === "create")
@@ -70,11 +93,12 @@ export function InsurersPage() {
       />
     )
 
-  // `q` search is applied server-side (name / account id / country); only the
-  // status segment is filtered client-side over the returned page.
-  const companies = data?.companies ?? []
-  const list = companies.filter((x) => status === "All" || x.status === status)
+  // `q` search and the status segment are both applied server-side; the tiles
+  // (`summary`) stay over the full population, the list is the returned page.
+  const list = data?.companies ?? []
   const summary = data?.summary ?? { total: 0, active: 0, inactive: 0 }
+  const totalElements = data?.totalElements ?? 0
+  const totalPages = data?.totalPages ?? 0
 
   return (
     <div className="flex flex-col gap-5">
@@ -116,7 +140,7 @@ export function InsurersPage() {
       <div>
         {/* Toolbar */}
         <div className="flex flex-wrap items-center gap-[9px] pb-3.5">
-          <div className="flex h-[34px] min-w-[200px] max-w-[320px] flex-1 items-center gap-2 rounded-[8px] border border-input bg-background px-2.5">
+          <div className="flex h-[34px] max-w-[320px] min-w-[200px] flex-1 items-center gap-2 rounded-[8px] border border-input bg-background px-2.5">
             <SearchIcon className="size-[15px] shrink-0 text-muted-foreground" />
             <input
               value={q}
@@ -132,7 +156,7 @@ export function InsurersPage() {
             options={["All", "Active", "Inactive"]}
           />
           <Tagpill>
-            {list.length} of {summary.total}
+            {totalElements} of {summary.total}
           </Tagpill>
         </div>
 
@@ -158,11 +182,7 @@ export function InsurersPage() {
               <LoadingSpinner />
             </div>
           ) : isError ? (
-            <Note
-              tone="err"
-              icon={<TriangleAlertIcon />}
-              className="m-4"
-            >
+            <Note tone="err" icon={<TriangleAlertIcon />} className="m-4">
               Couldn’t load insurance companies.{" "}
               <button
                 className="font-semibold underline underline-offset-2"
@@ -198,7 +218,9 @@ export function InsurersPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="mono truncate text-[11.5px]">{x.accountId}</div>
+                  <div className="mono truncate text-[11.5px]">
+                    {x.accountId}
+                  </div>
                   <div className="min-w-0">
                     <RegionPill country={x.country} />
                   </div>
@@ -232,6 +254,20 @@ export function InsurersPage() {
             </>
           )}
         </Panel>
+
+        {!isLoading && !isError && totalElements > 0 ? (
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            totalElements={totalElements}
+            pageSize={size}
+            onPageChange={setPage}
+            onPageSizeChange={(v) => {
+              setSize(Number(v))
+              setPage(0)
+            }}
+          />
+        ) : null}
       </div>
 
       <InsurerDrawer

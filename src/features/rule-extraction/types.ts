@@ -73,10 +73,15 @@ export type ExtractionDTO = {
   id: number
   job_id: string
   account_id: string
+  provider_name: string | null
+  contract_code: string | null
   insurer_account_id: string | null
   insurer_name: string | null
   status: ExtractStatus
   current: boolean
+  published: boolean | null
+  published_at: string | null
+  published_by_name: string | null
   error: string | null
   contract_file_id: string | null
   contract_filename: string | null
@@ -98,6 +103,7 @@ export type ExtractionDTO = {
   assignee_name: string | null
   assigned_by_name: string | null
   assigned_at: string | null
+  review_due_at: string | null
   review_completed_at: string | null
 }
 
@@ -171,10 +177,17 @@ export type Extraction = {
   id: number
   jobId: string
   accountId: string
+  providerName: string
+  /** contract_code (e.g. CTR-0002); "" when the backend hasn't assigned one. */
+  contractCode: string
   insurerAccountId: string
   insurerName: string
   status: ExtractStatus
   current: boolean
+  published: boolean
+  /** Formatted, "—" when never published. */
+  publishedAt: string
+  publishedByName: string
   error: string
   contractFilename: string
   /** Legacy — new jobs upload only the contract (checks come from the
@@ -198,6 +211,8 @@ export type Extraction = {
   assignedBy: string
   /** Formatted, "—" when unassigned. */
   assigned: string
+  /** Formatted date-only, "" when the backend hasn't set a due date. */
+  reviewDueAt: string
   reviewCompleted: string
 }
 
@@ -225,6 +240,16 @@ const fmtDateTime = (iso: string | null) => {
   if (!iso) return "—"
   try {
     return format(new Date(iso), "dd MMM yyyy · HH:mm")
+  } catch {
+    return iso
+  }
+}
+
+/** Date-only — used for the review due date (no time component). */
+const fmtDate = (iso: string | null) => {
+  if (!iso) return ""
+  try {
+    return format(new Date(iso), "dd MMM yyyy")
   } catch {
     return iso
   }
@@ -271,10 +296,15 @@ export function toExtraction(d: ExtractionDTO): Extraction {
     id: d.id,
     jobId: d.job_id,
     accountId: d.account_id,
+    providerName: d.provider_name ?? "—",
+    contractCode: d.contract_code ?? "",
     insurerAccountId: d.insurer_account_id ?? "",
     insurerName: d.insurer_name ?? "—",
     status: d.status,
     current: d.current,
+    published: d.published ?? false,
+    publishedAt: fmtDateTime(d.published_at),
+    publishedByName: d.published_by_name ?? "",
     error: d.error ?? "",
     contractFilename: d.contract_filename ?? "—",
     checksFilename: d.checks_filename ?? null,
@@ -307,6 +337,7 @@ export function toExtraction(d: ExtractionDTO): Extraction {
     assigneeName: d.assignee_name ?? "",
     assignedBy: d.assigned_by_name ?? "",
     assigned: fmtDateTime(d.assigned_at),
+    reviewDueAt: fmtDate(d.review_due_at),
     reviewCompleted: fmtDateTime(d.review_completed_at),
   }
 }
@@ -375,6 +406,20 @@ export const COV_TONE: Record<CoverageStatus, BadgeTone> = {
   MISSING_FLAGGED: "error",
   RECORDED_ABSENT: "neutral",
   SKIPPED: "neutral",
+}
+
+export const COV_LABEL: Record<CoverageStatus, string> = {
+  EXTRACTED: "Extracted",
+  RECORDED_ABSENT: "Recorded absent",
+  MISSING_FLAGGED: "Missing — flagged",
+  SKIPPED: "Skipped",
+}
+
+/** Coverage-check criticality → badge tone (keyed by the API's string enum). */
+export const CRIT_TONE: Record<string, BadgeTone> = {
+  MANDATORY: "error",
+  EXPECTED: "info",
+  OPTIONAL: "neutral",
 }
 
 /** Category display order + icon (glyph names from `HiIcon`). */

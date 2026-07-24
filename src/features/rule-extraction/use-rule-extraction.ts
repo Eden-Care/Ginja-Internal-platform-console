@@ -11,6 +11,7 @@ import {
   fetchExtractionHistory,
   fetchExtractionJob,
   fetchExtractionsOverview,
+  publishRulesBook,
   reviewRule,
   setReviewStatus,
   startExtraction,
@@ -57,13 +58,15 @@ export function useCurrentExtraction(
   })
 }
 
-/** One extraction by job id (any status) — used to open superseded
-    history rows read-only. */
+/** One extraction by job id (any status) — drives a contract's rule-review
+    cockpit (current = editable, superseded = read-only). Polls every 5s while
+    the job is QUEUED/RUNNING so a freshly-uploaded contract goes live. */
 export function useExtractionJob(code: string, jobId: string | null) {
   return useQuery({
     queryKey: rxKeys.job(code, jobId ?? ""),
     queryFn: () => fetchExtractionJob(code, jobId!),
     enabled: !!code && !!jobId,
+    refetchInterval: (q) => (isLive(q.state.data) ? 5000 : false),
   })
 }
 
@@ -158,6 +161,20 @@ export function useSetReviewStatus() {
       insurerAccountId: string
       status: "IN_REVIEW" | "COMPLETED"
     }) => setReviewStatus(code, insurerAccountId, status),
+    onSuccess: (extraction, v) => apply(v.code, v.insurerAccountId, extraction),
+  })
+}
+
+export function usePublishRulesBook() {
+  const apply = useApplyExtraction()
+  return useMutation({
+    mutationFn: ({
+      code,
+      insurerAccountId,
+    }: {
+      code: string
+      insurerAccountId: string
+    }) => publishRulesBook(code, insurerAccountId),
     onSuccess: (extraction, v) => apply(v.code, v.insurerAccountId, extraction),
   })
 }

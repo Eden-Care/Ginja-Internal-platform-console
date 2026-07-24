@@ -1,4 +1,5 @@
 import * as React from "react"
+import { useSearchParams } from "react-router-dom"
 import { Loader2Icon, SearchIcon, TriangleAlertIcon } from "lucide-react"
 import { toast } from "sonner"
 
@@ -48,53 +49,33 @@ const SECTION_ICON: Record<string, string> = {
 const queueGrid =
   "grid items-center gap-[14px] grid-cols-[minmax(0,1.6fr)_128px_108px_34px] lg:grid-cols-[minmax(0,1.6fr)_140px_minmax(0,0.8fr)_120px_108px_34px]"
 
-/* ========================= REVIEW QUEUE ========================= */
-export function SPReviewQueue({
-  onOpen,
-  onHistory,
-  onBack,
-}: {
-  onOpen: (code: string) => void
-  onHistory: () => void
-  onBack: () => void
-}) {
+/* ===================== REVIEW QUEUE (tab 1) =====================
+   Onboardings awaiting approval. List only — the page header + tabs live in
+   ProviderReviewHub below. Rich review badge: open remarks → "N open",
+   else ready-to-activate → "Ready", else "In review". */
+function QueueTable({ onOpen }: { onOpen: (code: string) => void }) {
   const { data, isLoading, isError, refetch } = useReviewQueue()
-  const stats = data?.stats
+  const [q, setQ] = React.useState("")
   const queue = data?.queue ?? []
+  const list = queue.filter((x) =>
+    (x.name + x.displayId).toLowerCase().includes(q.toLowerCase())
+  )
 
   return (
-    <div className="flex flex-col gap-5">
-      <BackLink label="All providers" onClick={onBack} />
-      <ConsolePageHeader
-        title="Provider review queue"
-        sub="Onboardings awaiting your approval. Review each section, raise remarks, and activate when ready."
-        actions={
-          <Button variant="outline" className={hifiBtn} onClick={onHistory}>
-            <HiIcon name="history" />
-            Approved &amp; activity
-          </Button>
-        }
-      />
-
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <StatTile
-          tone="warning"
-          icon={<HiIcon name="clock" />}
-          value={stats?.awaitingReview ?? 0}
-          label="Awaiting review"
-        />
-        <StatTile
-          tone={stats?.openRemarks ? "error" : "neutral"}
-          icon={<HiIcon name="flag" />}
-          value={stats?.openRemarks ?? 0}
-          label="Open remarks"
-        />
-        <StatTile
-          tone="success"
-          icon={<HiIcon name="checkCircle" />}
-          value={stats?.readyToActivate ?? 0}
-          label="Ready to activate"
-        />
+    <div className="flex flex-col gap-3.5">
+      <div className="flex items-center gap-[9px]">
+        <div className="flex h-[34px] min-w-[200px] max-w-[340px] flex-1 items-center gap-2 rounded-[8px] border border-input bg-background px-2.5">
+          <SearchIcon className="size-[15px] shrink-0 text-muted-foreground" />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search providers awaiting review…"
+            className="min-w-0 flex-1 bg-transparent text-[13px] text-foreground outline-none placeholder:text-muted-foreground"
+          />
+        </div>
+        <Tagpill>
+          {list.length} of {queue.length}
+        </Tagpill>
       </div>
 
       <Panel className="overflow-hidden">
@@ -129,7 +110,7 @@ export function SPReviewQueue({
           </Note>
         ) : (
           <>
-            {queue.map((x, i) => (
+            {list.map((x, i) => (
               <div
                 key={x.code}
                 role="button"
@@ -177,7 +158,7 @@ export function SPReviewQueue({
                 </div>
               </div>
             ))}
-            {queue.length === 0 ? (
+            {list.length === 0 ? (
               <div className="m-4 flex flex-col items-center gap-2.5 rounded-[14px] border border-dashed border-input bg-muted/30 px-6 py-12 text-center">
                 <span className="grid size-[52px] place-items-center rounded-[14px] border bg-card text-muted-foreground shadow-xs [&>svg]:size-[22px]">
                   <HiIcon name="checkCircle" />
@@ -845,59 +826,186 @@ export function ProviderReview({
   )
 }
 
-/* ==================== APPROVED & ACTIVITY ==================== */
-export function SPApprovedHistory({
-  onOpen,
-  onBack,
-}: {
-  onOpen: (code: string) => void
-  onBack: () => void
-}) {
-  const [tab, setTab] = React.useState("review")
+/* ===================== APPROVED PROVIDERS (tab 2) ===================== */
+function ApprovedTable({ onOpen }: { onOpen: (code: string) => void }) {
   const [q, setQ] = React.useState("")
-
-  const queueQ = useReviewQueue()
-  // This tab lists every approved provider and filters client-side, so pull a
-  // large page rather than the directory's default 20.
+  // Lists every approved provider and filters client-side, so pull a large
+  // page rather than the directory's default 20.
   const approvedQ = useServiceProvidersDirectory({ status: "ACTIVE", size: 200 })
-
-  const inReview = queueQ.data?.queue ?? []
   const approved = approvedQ.data?.providers ?? []
   const approvedTotal = approvedQ.data?.summary.active ?? approved.length
-
-  const reviewList = inReview.filter((x) =>
-    (x.name + x.displayId).toLowerCase().includes(q.toLowerCase())
-  )
-  const approvedList = approved.filter((x) =>
+  const list = approved.filter((x) =>
     (x.name + x.displayId).toLowerCase().includes(q.toLowerCase())
   )
 
   return (
+    <div className="flex flex-col gap-3.5">
+      <div className="flex items-center gap-[9px]">
+        <div className="flex h-[34px] min-w-[200px] max-w-[340px] flex-1 items-center gap-2 rounded-[8px] border border-input bg-background px-2.5">
+          <SearchIcon className="size-[15px] shrink-0 text-muted-foreground" />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search approved providers…"
+            className="min-w-0 flex-1 bg-transparent text-[13px] text-foreground outline-none placeholder:text-muted-foreground"
+          />
+        </div>
+        <Tagpill>
+          {list.length} of {approvedTotal}
+        </Tagpill>
+      </div>
+      <Panel className="overflow-hidden">
+        <div
+          className={cn(
+            spGrid,
+            "border-b bg-muted/50 px-4 py-[10px] text-[10.5px] font-semibold tracking-[0.05em] text-muted-foreground uppercase"
+          )}
+        >
+          <span>Provider</span>
+          <span>Account ID</span>
+          <span className="hidden lg:block">Type</span>
+          <span>County</span>
+          <span className="hidden lg:block">Approved by</span>
+          <span>Status</span>
+          <span />
+        </div>
+        {list.map((x: ServiceProvider, i) => (
+          <div
+            key={x.code}
+            role="button"
+            tabIndex={0}
+            onClick={() => onOpen(x.code)}
+            onKeyDown={(e) => e.key === "Enter" && onOpen(x.code)}
+            className={cn(
+              spGrid,
+              "cursor-pointer border-t px-4 py-3 transition-colors hover:bg-muted/40",
+              i === 0 && "border-t-0"
+            )}
+          >
+            <div className="flex min-w-0 items-center gap-[11px]">
+              <SpAvatar name={x.name} />
+              <div className="min-w-0">
+                <div className="truncate text-[13.5px] font-semibold">
+                  {x.name}
+                </div>
+                <div className="truncate text-[11.5px] text-muted-foreground">
+                  Approved {x.approvedOn ?? "—"}
+                </div>
+              </div>
+            </div>
+            <div className="mono truncate text-[11.5px]">{x.displayId}</div>
+            <div className="hidden truncate text-[12px] text-muted-foreground lg:block">
+              {x.type}
+            </div>
+            <div className="min-w-0">
+              <RegionPill label={x.county} />
+            </div>
+            <div className="hidden truncate text-[11.5px] text-muted-foreground lg:block">
+              {x.approvedBy ?? "—"}
+            </div>
+            <div className="min-w-0">
+              <SpStatus status={x.status} />
+            </div>
+            <div className="flex justify-end text-muted-foreground [&>svg]:size-4">
+              <HiIcon name="chevronRight" />
+            </div>
+          </div>
+        ))}
+      </Panel>
+    </div>
+  )
+}
+
+/* ===================== AUDIT LOG (tab 3) ===================== */
+function AuditPanel() {
+  return (
+    <Panel>
+      <PanelHead icon={<HiIcon name="fileText" />} title="Approval audit log" />
+      <PanelBody>
+        <div className="flex flex-col items-center gap-2.5 rounded-[14px] border border-dashed border-input bg-muted/30 px-6 py-12 text-center">
+          <span className="grid size-[52px] place-items-center rounded-[14px] border bg-card text-muted-foreground shadow-xs [&>svg]:size-[22px]">
+            <HiIcon name="fileText" />
+          </span>
+          <p className="max-w-[52ch] text-[13px] leading-[1.55] text-muted-foreground [&_b]:font-semibold [&_b]:text-foreground">
+            <b>The cross-provider approval log is pending backend.</b>
+            <br />
+            Per-provider history is on each record’s <b>Audit trail</b> tab; a
+            combined approval activity feed isn’t exposed by the API yet.
+          </p>
+          <MiniBadge tone="info">Pending backend</MiniBadge>
+        </div>
+      </PanelBody>
+    </Panel>
+  )
+}
+
+/* ==================== PROVIDER REVIEW HUB ====================
+   The single landing for the approver flow (`/provider-review`). Tabs are
+   URL-backed via `?tab=` (default "queue" = no param, so the sidebar entry
+   lands straight on the actionable Review-queue list — no status-KPI screen
+   in between). `approved`/`audit` are the other two tabs. */
+const REVIEW_TABS = ["queue", "approved", "audit"] as const
+type ReviewTabKey = (typeof REVIEW_TABS)[number]
+
+export function ProviderReviewHub({
+  onOpenReview,
+  onOpenApproved,
+}: {
+  /** Open an onboarding under review (→ the section-by-section review). */
+  onOpenReview: (code: string) => void
+  /** Open an approved provider (→ its record page). */
+  onOpenApproved: (code: string) => void
+}) {
+  const [params, setParams] = useSearchParams()
+  const raw = params.get("tab") ?? ""
+  const tab: ReviewTabKey = (REVIEW_TABS as readonly string[]).includes(raw)
+    ? (raw as ReviewTabKey)
+    : "queue"
+  const setTab = (t: string) =>
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        if (t === "queue") next.delete("tab")
+        else next.set("tab", t)
+        return next
+      },
+      { replace: true }
+    )
+
+  // Drives the KPI strip + the tab count badges. The tables fetch their own
+  // data (deduped by react-query on the same keys).
+  const queueQ = useReviewQueue()
+  const approvedQ = useServiceProvidersDirectory({ status: "ACTIVE", size: 200 })
+  const stats = queueQ.data?.stats
+  const queueCount = queueQ.data?.queue.length ?? 0
+  const approvedCount =
+    approvedQ.data?.summary.active ?? approvedQ.data?.providers.length ?? 0
+
+  return (
     <div className="flex flex-col gap-5">
-      <BackLink label="Review queue" onClick={onBack} />
       <ConsolePageHeader
-        title="Provider approvals & activity"
-        sub="Providers awaiting review, everything you've approved, and the approval audit trail."
+        title="Provider review"
+        sub="Onboardings awaiting your approval, everything you've approved, and the approval audit trail."
       />
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <StatTile
-          tone={inReview.length ? "warning" : "neutral"}
+          tone="warning"
           icon={<HiIcon name="clock" />}
-          value={inReview.length}
-          label="In review"
+          value={stats?.awaitingReview ?? 0}
+          label="Awaiting review"
+        />
+        <StatTile
+          tone={stats?.openRemarks ? "error" : "neutral"}
+          icon={<HiIcon name="flag" />}
+          value={stats?.openRemarks ?? 0}
+          label="Open remarks"
         />
         <StatTile
           tone="success"
           icon={<HiIcon name="checkCircle" />}
-          value={approvedTotal}
-          label="Approved providers"
-        />
-        <StatTile
-          tone="neutral"
-          icon={<HiIcon name="fileText" />}
-          value="—"
-          label="Audit entries"
+          value={stats?.readyToActivate ?? 0}
+          label="Ready to activate"
         />
       </div>
 
@@ -906,16 +1014,16 @@ export function SPApprovedHistory({
         onChange={setTab}
         tabs={[
           {
-            k: "review",
-            label: "In review",
+            k: "queue",
+            label: "Review queue",
             icon: <HiIcon name="clock" />,
-            count: inReview.length,
+            count: queueCount,
           },
           {
             k: "approved",
             label: "Approved providers",
             icon: <HiIcon name="checkCircle" />,
-            count: approvedTotal,
+            count: approvedCount,
           },
           {
             k: "audit",
@@ -925,194 +1033,9 @@ export function SPApprovedHistory({
         ]}
       />
 
-      {tab === "review" ? (
-        <div className="flex flex-col gap-3.5">
-          <div className="flex items-center gap-[9px]">
-            <div className="flex h-[34px] min-w-[200px] max-w-[340px] flex-1 items-center gap-2 rounded-[8px] border border-input bg-background px-2.5">
-              <SearchIcon className="size-[15px] shrink-0 text-muted-foreground" />
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Search providers in review…"
-                className="min-w-0 flex-1 bg-transparent text-[13px] text-foreground outline-none placeholder:text-muted-foreground"
-              />
-            </div>
-            <Tagpill>
-              {reviewList.length} of {inReview.length}
-            </Tagpill>
-          </div>
-          <Panel className="overflow-hidden">
-            <div
-              className={cn(
-                queueGrid,
-                "border-b bg-muted/50 px-4 py-[10px] text-[10.5px] font-semibold tracking-[0.05em] text-muted-foreground uppercase"
-              )}
-            >
-              <span>Provider</span>
-              <span>Account ID</span>
-              <span className="hidden lg:block">Town</span>
-              <span className="hidden lg:block">Submitted</span>
-              <span>Review</span>
-              <span />
-            </div>
-            {reviewList.map((x, i) => (
-              <div
-                key={x.code}
-                role="button"
-                tabIndex={0}
-                onClick={() => onOpen(x.code)}
-                onKeyDown={(e) => e.key === "Enter" && onOpen(x.code)}
-                className={cn(
-                  queueGrid,
-                  "cursor-pointer border-t px-4 py-3 transition-colors hover:bg-muted/40",
-                  i === 0 && "border-t-0"
-                )}
-              >
-                <div className="flex min-w-0 items-center gap-[11px]">
-                  <SpAvatar name={x.name} />
-                  <div className="min-w-0">
-                    <div className="truncate text-[13.5px] font-semibold">
-                      {x.name}
-                    </div>
-                    <div className="truncate text-[11.5px] text-muted-foreground">
-                      Submitted {x.submittedAt}
-                    </div>
-                  </div>
-                </div>
-                <div className="mono truncate text-[11.5px]">{x.displayId}</div>
-                <div className="hidden min-w-0 lg:block">
-                  <RegionPill label={x.town} />
-                </div>
-                <div className="hidden truncate text-[11.5px] text-muted-foreground lg:block">
-                  {x.submittedAt}
-                </div>
-                <div className="min-w-0">
-                  {x.openRemarks > 0 ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-destructive/12 px-2 py-0.5 text-[11px] font-medium text-destructive [&>svg]:size-[10px]">
-                      <HiIcon name="flag" />
-                      {x.openRemarks} open
-                    </span>
-                  ) : (
-                    <MiniBadge tone="warning">Pending review</MiniBadge>
-                  )}
-                </div>
-                <div className="flex justify-end text-muted-foreground [&>svg]:size-4">
-                  <HiIcon name="chevronRight" />
-                </div>
-              </div>
-            ))}
-            {reviewList.length === 0 ? (
-              <div className="m-4 flex flex-col items-center gap-2.5 rounded-[14px] border border-dashed border-input bg-muted/30 px-6 py-12 text-center">
-                <span className="grid size-[52px] place-items-center rounded-[14px] border bg-card text-muted-foreground shadow-xs [&>svg]:size-[22px]">
-                  <HiIcon name="checkCircle" />
-                </span>
-                <p className="max-w-[46ch] text-[13px] leading-[1.55] text-muted-foreground [&_b]:font-semibold [&_b]:text-foreground">
-                  <b>Nothing awaiting review.</b>
-                  <br />
-                  All submitted providers have been actioned.
-                </p>
-              </div>
-            ) : null}
-          </Panel>
-        </div>
-      ) : null}
-
-      {tab === "approved" ? (
-        <div className="flex flex-col gap-3.5">
-          <div className="flex items-center gap-[9px]">
-            <div className="flex h-[34px] min-w-[200px] max-w-[340px] flex-1 items-center gap-2 rounded-[8px] border border-input bg-background px-2.5">
-              <SearchIcon className="size-[15px] shrink-0 text-muted-foreground" />
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Search approved providers…"
-                className="min-w-0 flex-1 bg-transparent text-[13px] text-foreground outline-none placeholder:text-muted-foreground"
-              />
-            </div>
-            <Tagpill>
-              {approvedList.length} of {approvedTotal}
-            </Tagpill>
-          </div>
-          <Panel className="overflow-hidden">
-            <div
-              className={cn(
-                spGrid,
-                "border-b bg-muted/50 px-4 py-[10px] text-[10.5px] font-semibold tracking-[0.05em] text-muted-foreground uppercase"
-              )}
-            >
-              <span>Provider</span>
-              <span>Account ID</span>
-              <span className="hidden lg:block">Type</span>
-              <span>County</span>
-              <span className="hidden lg:block">Approved by</span>
-              <span>Status</span>
-              <span />
-            </div>
-            {approvedList.map((x: ServiceProvider, i) => (
-              <div
-                key={x.code}
-                role="button"
-                tabIndex={0}
-                onClick={() => onOpen(x.code)}
-                onKeyDown={(e) => e.key === "Enter" && onOpen(x.code)}
-                className={cn(
-                  spGrid,
-                  "cursor-pointer border-t px-4 py-3 transition-colors hover:bg-muted/40",
-                  i === 0 && "border-t-0"
-                )}
-              >
-                <div className="flex min-w-0 items-center gap-[11px]">
-                  <SpAvatar name={x.name} />
-                  <div className="min-w-0">
-                    <div className="truncate text-[13.5px] font-semibold">
-                      {x.name}
-                    </div>
-                    <div className="truncate text-[11.5px] text-muted-foreground">
-                      Approved {x.approvedOn ?? "—"}
-                    </div>
-                  </div>
-                </div>
-                <div className="mono truncate text-[11.5px]">{x.displayId}</div>
-                <div className="hidden truncate text-[12px] text-muted-foreground lg:block">
-                  {x.type}
-                </div>
-                <div className="min-w-0">
-                  <RegionPill label={x.county} />
-                </div>
-                <div className="hidden truncate text-[11.5px] text-muted-foreground lg:block">
-                  {x.approvedBy ?? "—"}
-                </div>
-                <div className="min-w-0">
-                  <SpStatus status={x.status} />
-                </div>
-                <div className="flex justify-end text-muted-foreground [&>svg]:size-4">
-                  <HiIcon name="chevronRight" />
-                </div>
-              </div>
-            ))}
-          </Panel>
-        </div>
-      ) : null}
-
-      {tab === "audit" ? (
-        <Panel>
-          <PanelHead icon={<HiIcon name="fileText" />} title="Approval audit log" />
-          <PanelBody>
-            <div className="flex flex-col items-center gap-2.5 rounded-[14px] border border-dashed border-input bg-muted/30 px-6 py-12 text-center">
-              <span className="grid size-[52px] place-items-center rounded-[14px] border bg-card text-muted-foreground shadow-xs [&>svg]:size-[22px]">
-                <HiIcon name="fileText" />
-              </span>
-              <p className="max-w-[52ch] text-[13px] leading-[1.55] text-muted-foreground [&_b]:font-semibold [&_b]:text-foreground">
-                <b>The cross-provider approval log is pending backend.</b>
-                <br />
-                Per-provider history is on each record’s <b>Audit trail</b> tab;
-                a combined approval activity feed isn’t exposed by the API yet.
-              </p>
-              <MiniBadge tone="info">Pending backend</MiniBadge>
-            </div>
-          </PanelBody>
-        </Panel>
-      ) : null}
+      {tab === "queue" ? <QueueTable onOpen={onOpenReview} /> : null}
+      {tab === "approved" ? <ApprovedTable onOpen={onOpenApproved} /> : null}
+      {tab === "audit" ? <AuditPanel /> : null}
     </div>
   )
 }
